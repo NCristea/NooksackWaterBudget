@@ -1,1 +1,1 @@
-A test text file.
+A test text file. New text.
