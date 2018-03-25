@@ -1,0 +1,187 @@
+The following notes detail changes needed to be able to compile the code. Each section starts with the file name.
+
+CalculateDemand.f90
+line 28: typo (. changed to %, . is C++ syntax)
+
+original 				call find1(MonthlyDemand%InYearDemandType,User(i).InYearDemandType, &
+---
+change 				call find1(MonthlyDemand%InYearDemandType,User(i)%InYearDemandType, &
+=============================================================================================================
+calv46sn_v7.f
+lines 28 and 29: In UNIX file names are case sensitive, even in FORTRAN.
+24 additional case changes for include file names were made.
+
+original       INCLUDE 'tdims_v7.INC'
+original       INCLUDE 'LUNS.INC'
+---
+change       INCLUDE 'Tdims_v7.inc'
+change       INCLUDE 'Luns.inc'
+
+line 694: The message was "Error: ‘a’ argument of ‘sngl’ intrinsic  must be REAL"
+
+original 		P=brain(js,istep)*3600./sngl(interv)/1000. !mm/int *3600s/h / (s/int) / (1000mm/m) = m/hr for snowueb
+---
+change 		P=brain(js,istep)*3600./real(interv)/1000. !mm/int *3600s/h / (s/int) / (1000mm/m) = m/hr for snowueb
+
+line 781: The message was "Error: IF clause  requires a scalar LOGICAL expression"
+
+original 	if (nooksack) then
+---
+change 	if (nooksack .eq. 1) then
+
+lines 1212 and 1278: A violation of a legacy requirement line position
+and length constraints from the keypunch era for files with .f suffix.
+
+original 	INTEGER LHEADS(MAX_LAKES,MAX_LHEADS), LOFLOWS(MAX_LAKES,MAX_LHEADS)
+---
+change 	  INTEGER LHEADS(MAX_LAKES,MAX_LHEADS)
+change 	  integer LOFLOWS(MAX_LAKES,MAX_LHEADS)
+=============================================================================================================
+hydatasn_v7.f
+line 78: The message was "Error: Logicals  must be compared with .eqv. instead of =="
+
+original 	if (od == .false.) then
+---
+change 	if (od .eqv. .false.) then
+
+line 779: The message was "Error: Logicals  must be compared with .eqv. instead of .eq."
+
+original 			if ( it.eq.it_save+1 .and. i_reset_flag.eq..false.) then
+---
+change 			if ( it.eq.it_save+1 .and. i_reset_flag.eqv..false.) then
+=============================================================================================================
+mddata_v10_7.f
+line 1238 and 1325: Legacy line position and length constraint as above.
+
+original 	INTEGER LHEADS(MAX_LAKES,MAX_LHEADS), LOFLOWS(MAX_LAKES,MAX_LHEADS)
+---
+change 	INTEGER LHEADS(MAX_LAKES,MAX_LHEADS)
+change 	integer LOFLOWS(MAX_LAKES,MAX_LHEADS)
+=============================================================================================================
+PTRATE.FOR
+lines 86, 89, 92, 121 and 122: Type cast to double for second argument of dsign() is needed.
+
+original 	IF(ABS(X21) .LT. 0.1)X21=DSIGN(0.1d0,X21)
+---
+change 	IF(ABS(X21) .LT. 0.1)X21=DSIGN(0.1d0,dble(X21))
+=============================================================================================================
+toplim_v7.f
+line 33 added.
+change       integer stat
+The error was at lines 175 and 176, lines 228 and 229, and lines 288 and 289: The message was
+"Error: Function ‘eof’ has no IMPLICIT type"
+
+original 	DO WHILE (.NOT. EOF(2))
+original 		READ(2,'(a)') TEXT
+---
+change 	stat = 0
+change 	DO WHILE (stat .eq. 0)
+change 		READ(2,'(a)', iostat=stat) TEXT
+
+lines 139, 143, 155, 159, 219, 223, 240, 281: The message was "Error: Logicals  must be compared
+with .eqv. instead of =="
+
+original 	IF(ext == .FALSE.) THEN
+---
+change 	IF(ext .eqv. .FALSE.) THEN
+
+lines 734, 736, lines 748 and 749, and lines 772 and 773, and lines 778 through 780: Legacy line
+position and length constraint as in two instances above.
+
+original 	ALLOCATE (LAKE_REACH(MAX_LAKES),LZERO(MAX_LAKES),LK_LINE(MAX_LAKES))
+---
+change 	ALLOCATE (LAKE_REACH(MAX_LAKES),LZERO(MAX_LAKES))
+change 	allocate (LK_LINE(MAX_LAKES))
+=============================================================================================================
+topmoddgt_v7.f
+lines 553 through 556: A note in the compiler documentation states that "A variable FORMAT expression is
+format statement which includes angle brackets enclosing a Fortran expression: FORMAT(IoriginalNchange). GNU Fortran
+does not support this legacy extension."
+
+original 		write(lundat,2000)ymd,  ! RPI 25/3/2004 removed the +19000000 as now comes from micdh
+original      *			(surfrunoff(i),i=1,nka(ISUB)),
+original      *			(soilwetness(i),i=1,nka(ISUB))
+original 2000			format(1x,original1+nka(ISUB)changeI8,originalnka(ISUB)changeF6.2)
+---
+change             write(lundat,'(1x)')
+change             do 2000 i=1,1+nka(isub)
+change  2000           write(lundat,'(i8)') ymd
+change             do 2001 i=1,nka(isub)
+change  2001           write(lundat,'(f6.2)') surfrunoff(i)
+change             do 2002 i=1,nka(isub)
+change  2002           write(lundat,'(f6.2)') soilwetness(i)
+=============================================================================================================
+watermgmt.f90
+line 375: The message was "undefined reference to `int4_'". FORTRAN currently has 'int', 'int2', 'int8'
+and long intrinsics, but no 'int4'.
+
+original DOY=int4((i8nowsecs-i8StartofCalendarYearsecs)/86400)
+---
+change DOY=int((i8nowsecs-i8StartofCalendarYearsecs)/86400)
+=============================================================================================================
+Write_Output_line.f90
+line 55: fid2 is used but undeclared.
+
+original 	integer timestep,fid
+---
+change 	integer timestep,fid,fid2
+
+=============================================================================================================
+Runtime problems
+=============================================================================================================
+toplim_v7.f
+Added four test string fragment containers to line 38:
+      CHARACTER(LEN=200) TEXT, str1, str2, str3, str4
+
+Added after line 173:
+	  ! prepare for long test strings
+	  str1 = 'Following identifies the reaches to be used as r'
+	  str2 = 'esponse time series and output time series'
+      str3 = 'The number of points in the overland flow distan'
+      str4 = 'ce distribution'
+
+Then changed
+		ELSEIF (TEXT == 'Following identifies the reaches to be used as r
+     &esponse time series and output time series') THEN
+and
+		IF (TEXT == 'The number of points in the overland flow distan
+     &ce distribution') THEN
+
+to
+		ELSEIF (TEXT == trim(str1) // trim(str2)) THEN
+and
+        if (text == trim(str3) // trim(str4)) then
+
+The problem was that the line continuation in the two lines testing for matches in the modelspec.dat file
+had white space gaps, so the tests always failed.
+=============================================================================================================
+hydatasn_v7.f
+
+line 138 and 144 changed from
+INQUIRE(FILE='TOPINP.DAT' ,OPENED=OD,EXIST=ext) ! RPI 15/8/2003 added EXIST
+OPEN(UNIT=20,FILE= 'TOPINP.DAT',STATUS='OLD',access='sequential')
+to
+INQUIRE(FILE='topinp.dat' ,OPENED=OD,EXIST=ext) ! RPI 15/8/2003 added EXIST
+OPEN(UNIT=20,FILE= 'topinp.dat',STATUS='OLD',access='sequential')
+
+Likewise for lines 154, 160, 207, 216, 247 and 249
+=============================================================================================================
+read_inputs.f90
+
+lines 23, 39, 51, 126, 135, 151, 176, 192, 216, 244, 261, 271, 283, 295, 331, and 338:
+If using UNIX or MAC the directory seperator must be changed from '\' to '/'.
+
+Write_Output_Tables.f90
+
+As above for lines 14,27,40,54,221,240,265,290,314,338,362,387,410,435,459,483,506 and 523
+
+=============================================================================================================
+Write_output_Tables.f90
+
+Add line 51
+        if (allocated(StaticOutput%UserFlowLinks)) then
+and at line 66
+        else
+            write(6,*) "No UserFlowLInks data allocated"
+        endif
+
