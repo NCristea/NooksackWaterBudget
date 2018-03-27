@@ -21,16 +21,15 @@
 
 #include "topnet.hh"
 
-using namespace Eigen;
+using namespace std;
 
-
-int iposn(const int Nrch, const ArrayXXi &linkR, const int ii)
+int iposn(const int Nrch, const vector<vector<int> > &linkR, const int ii)
 {
 	// Function that gives the position of the array element which has the reach number ii.
 	int i;
 
 	for (i = 0; i < Nrch; i++) {
-		if (linkR(0,i) == ii) {
+		if (linkR[0][i] == ii) {
 			return i;
 		}
 	}

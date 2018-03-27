@@ -20,7 +20,7 @@
 #ifndef TYPES_HH
 #define TYPES_HH
 
-#include <Eigen/Dense>
+#include <vector>
 
 const int MaxMeasuredFlowSites = 100;
 const int MaxNumTimesteps      = 366*60;
@@ -57,8 +57,8 @@ struct DrainageType {
        int n_in;
        int n_taken;
        int j_unallocated;
-       Eigen::Array<int,Eigen::Dynamic,1> ifound_in;
-       Eigen::Array<int,Eigen::Dynamic,1> ifound_taken;
+       std::vector<int> ifound_in;
+       std::vector<int> ifound_taken;
 };
 
 struct StreamNodeType {
@@ -107,8 +107,8 @@ struct ReservoirType {
        int isn;
        int n_in;
        int n_taken;
-       Eigen::Array<int,Eigen::Dynamic,1> ifound_in;
-       Eigen::Array<int,Eigen::Dynamic,1> ifound_taken;
+       std::vector<int> ifound_in;
+       std::vector<int> ifound_taken;
 };
 
 struct UserType {

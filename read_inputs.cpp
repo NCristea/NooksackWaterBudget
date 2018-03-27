@@ -52,11 +52,11 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	expected_numcols = 5;
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, nrows); //NumTimesteps	AllocationMode	StartDate	StartOfWaterYear
 
-	RunControl.NumTimesteps       = real_array(0,0); //ignore
-	RunControl.AllocationMode     = real_array(0,1); //use
-	RunControl.StartDate          = real_array(0,2); //ignore
-	RunControl.StartOfWaterYearmm = real_array(0,3); //use
-	RunControl.StartOfWaterYeardd = real_array(0,4); //use
+	RunControl.NumTimesteps       = real_array[0][0]; //ignore
+	RunControl.AllocationMode     = real_array[0][1]; //use
+	RunControl.StartDate          = real_array[0][2]; //ignore
+	RunControl.StartOfWaterYearmm = real_array[0][3]; //use
+	RunControl.StartOfWaterYeardd = real_array[0][4]; //use
 
 	//call datevec(RunControl%StartDate,90000,	&
 	//			RunControl%StartDateyyyy,RunControl%StartDatemm,RunControl%StartDatedd,hh,mi,ss)
@@ -66,7 +66,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	//  hh,mi,ss)
 
 	fileName = dirname + "/" + "basinpars.txt";
-	expected_numcols = 45;
+	expected_numcols = 45;  // each line has 45 numbers
 	ncommentlines = 1;
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumDrainage); //CatchID,DrainageID,NodeID,CatchArea
 	Drainage.resize(NumDrainage);
@@ -74,13 +74,13 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	//CatchID, DownCatchID, DrainID, NodeId, Reach_number, Outlet_X, Outlet_Y, direct_area, f, k, dth1, dth2,
 	// soilc, c, psif, chv, can_capacity, cr, Albedo, Lapse_rate, average_elevation, lambda, std_dev_of_lambda
 	for (i = 0; i < NumDrainage; i++) {
-		Drainage(i).DrainageID     = real_array(i,0);
-		Drainage(i).DSDrainage     = real_array(i,1);
-		Drainage(i).RealDrainageID = real_array(i,2);
-		Drainage(i).NodeID         = real_array(i,3);
-		Drainage(i).CatchArea      = real_array(i,7);
-		Drainage(i).ifound_in.resize(1000);
-		Drainage(i).ifound_taken.resize(1000);
+		Drainage[i].DrainageID     = real_array[i][0];
+		Drainage[i].DSDrainage     = real_array[i][1];
+		Drainage[i].RealDrainageID = real_array[i][2];
+		Drainage[i].NodeID         = real_array[i][3];
+		Drainage[i].CatchArea      = real_array[i][7];
+		Drainage[i].ifound_in.resize(1000);
+		Drainage[i].ifound_taken.resize(1000);
 	}
 
 	fileName = dirname + "/" + "nodelinks.txt";
@@ -89,15 +89,15 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumStreamNode); //NodeID,DownNodeID,DrainageID,NodeCatchID,DoutFlag,Area
 	StreamNode = new StreamNodeType[NumStreamNode];
 	for (i = 0; i < NumStreamNode; i++) {
-		StreamNode[i].NodeID         = real_array(i,0);
-		StreamNode[i].DownNodeID     = real_array(i,1);
-		StreamNode[i].RealDrainageID = real_array(i,2);
-		StreamNode[i].ProjNodeId     = real_array(i,3);
-		StreamNode[i].DOutFlag       = real_array(i,4);
-		StreamNode[i].LocalArea      = real_array(i,6);
-		StreamNode[i].TotalArea      = real_array(i,7);
-		StreamNode[i].X              = real_array(i,8);
-		StreamNode[i].Y              = real_array(i,9);
+		StreamNode[i].NodeID         = real_array[i][0];
+		StreamNode[i].DownNodeID     = real_array[i][1];
+		StreamNode[i].RealDrainageID = real_array[i][2];
+		StreamNode[i].ProjNodeId     = real_array[i][3];
+		StreamNode[i].DOutFlag       = real_array[i][4];
+		StreamNode[i].LocalArea      = real_array[i][6];
+		StreamNode[i].TotalArea      = real_array[i][7];
+		StreamNode[i].X              = real_array[i][8];
+		StreamNode[i].Y              = real_array[i][9];
 		StreamNode[i].AreaInDrainage = StreamNode[i].TotalArea;
 	}
 
@@ -111,7 +111,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		ifound = new int[NumStreamNode];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumStreamNode; n++) {
-			if (StreamNode[n].RealDrainageID == Drainage(i).RealDrainageID) {
+			if (StreamNode[n].RealDrainageID == Drainage[i].RealDrainageID) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
@@ -120,7 +120,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		//i_outlet is the row in the StreamNode table for the outlet of this drainage
 		//StreamNode(i_outlet)%DownNodeID is the node which that StreamNode flows to
 		for (j = 0; j < nfound; j++) {
-			StreamNode[ifound[j]-1].DrainageID = Drainage(i).DrainageID;
+			StreamNode[ifound[j]-1].DrainageID = Drainage[i].DrainageID;
 		}
 		delete [] ifound;
 	}
@@ -135,7 +135,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		ifound = new int[NumStreamNode];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumStreamNode; n++) {
-			if (StreamNode[n].RealDrainageID == Drainage(i-1).RealDrainageID && StreamNode[n].DOutFlag == IsDrainageOutlet) {
+			if (StreamNode[n].RealDrainageID == Drainage[i-1].RealDrainageID && StreamNode[n].DOutFlag == IsDrainageOutlet) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
@@ -149,7 +149,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		ifound = new int[NumStreamNode];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumStreamNode; n++) {
-			if (StreamNode[n].RealDrainageID == Drainage(i-1).RealDrainageID) {
+			if (StreamNode[n].RealDrainageID == Drainage[i-1].RealDrainageID) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
@@ -177,7 +177,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 				ifound = new int[NumStreamNode];
 				ifound[nfound] = 0;
 				for (n = 0; n < NumStreamNode; n++) {
-					if (StreamNode[n].DownNodeID == StreamNode[j-1].NodeID && StreamNode[n].DrainageID != Drainage(i-1).DrainageID) { 	//A&(~B)
+					if (StreamNode[n].DownNodeID == StreamNode[j-1].NodeID && StreamNode[n].DrainageID != Drainage[i-1].DrainageID) { 	//A&(~B)
 						nfound++;
 						ifound[nfound-1] = n+1;
 					}
@@ -194,7 +194,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 						area = StreamNode[ifound_2[kk-1]-1].TotalArea;
 						//now work downstream removing this area from all nodes within this drainage
 						k = j;
-						while (StreamNode[k-1].DrainageID == Drainage(i-1).DrainageID && nfound > 0) {
+						while (StreamNode[k-1].DrainageID == Drainage[i-1].DrainageID && nfound > 0) {
 							StreamNode[k-1].AreaInDrainage = StreamNode[k-1].AreaInDrainage - area;
 							// find1()
 							nfound = 0; //none found
@@ -242,10 +242,10 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumMeasuredFlowInfo); //MeasuredFlowID	DrainageID	ColInMeasFlow
 	MeasuredFlowInfo = new MeasuredFlowInfoType[NumMeasuredFlowInfo];
 	for (i = 0; i < NumMeasuredFlowInfo; i++) {
-		MeasuredFlowInfo[i].MeasuredFlowID	= real_array(i,0);
-		MeasuredFlowInfo[i].DrainageID		= real_array(i,1);
-		MeasuredFlowInfo[i].ColInMeasFlow	= real_array(i,2);
-		MeasuredFlowInfo[i].ScalingFactor	= real_array(i,3);
+		MeasuredFlowInfo[i].MeasuredFlowID	= real_array[i][0];
+		MeasuredFlowInfo[i].DrainageID		= real_array[i][1];
+		MeasuredFlowInfo[i].ColInMeasFlow	= real_array[i][2];
+		MeasuredFlowInfo[i].ScalingFactor	= real_array[i][3];
 	}
 
 	//convert any reference to a DrainageID into a CatchID
@@ -256,12 +256,12 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		ifound = new int[NumDrainage];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumDrainage; n++) {
-			if (Drainage(n).RealDrainageID == MeasuredFlowInfo[i].RealDrainageID) {
+			if (Drainage[n].RealDrainageID == MeasuredFlowInfo[i].RealDrainageID) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
 		}
-		MeasuredFlowInfo[i].DrainageID = Drainage(ifound[0]-1).DrainageID;
+		MeasuredFlowInfo[i].DrainageID = Drainage[ifound[0]-1].DrainageID;
 		delete [] ifound;
 	}
 #ifdef LNWB
@@ -304,7 +304,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		ifound = new int[nSites];
 		ifound[nfound] = 0;
 		for (n = 0; n < nSites; n++) {
-			if (integer_array(n,0) == (int)(MeasuredFlowInfo[i-1].ColInMeasFlow)) {
+			if (integer_array[n][0] == (int)(MeasuredFlowInfo[i-1].ColInMeasFlow)) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
@@ -336,20 +336,18 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumReservoir);
 	Reservoir = new ReservoirType[NumReservoir];
 	for (i = 0; i < NumReservoir; i++) {
-		Reservoir[i].ReservoirID   = real_array(i,0);
-		Reservoir[i].DrainageID    = real_array(i,1);
-		Reservoir[i].InOffStream   = real_array(i,2);
-		Reservoir[i].RightID       = real_array(i,3);
-		Reservoir[i].StoreMax      = real_array(i,4);
-		Reservoir[i].StoreInitial  = real_array(i,5);
-		Reservoir[i].StoreMin      = real_array(i,6);
-		Reservoir[i].MaxInflow     = real_array(i,7);
-		Reservoir[i].MaxWithdrawal = real_array(i,8);
-		Reservoir[i].MinEnvRelease = real_array(i,9);
-		Reservoir[i].ifound_in.resize(1000);
-		Reservoir[i].ifound_taken.resize(1000);
-		Reservoir[i].ifound_in    = 0;
-		Reservoir[i].ifound_taken = 0;
+		Reservoir[i].ReservoirID   = real_array[i][0];
+		Reservoir[i].DrainageID    = real_array[i][1];
+		Reservoir[i].InOffStream   = real_array[i][2];
+		Reservoir[i].RightID       = real_array[i][3];
+		Reservoir[i].StoreMax      = real_array[i][4];
+		Reservoir[i].StoreInitial  = real_array[i][5];
+		Reservoir[i].StoreMin      = real_array[i][6];
+		Reservoir[i].MaxInflow     = real_array[i][7];
+		Reservoir[i].MaxWithdrawal = real_array[i][8];
+		Reservoir[i].MinEnvRelease = real_array[i][9];
+		Reservoir[i].ifound_in.resize(1000,0);          // initialized to zero
+		Reservoir[i].ifound_taken.resize(1000,0);       // initialized to zero
 		//	Reservoir(:)%LossRate=real_array(:,11)
 	}
 
@@ -361,12 +359,12 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		ifound = new int[NumDrainage];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumDrainage; n++) {
-			if (Drainage(n).RealDrainageID == Reservoir[i-1].RealDrainageID) {
+			if (Drainage[n].RealDrainageID == Reservoir[i-1].RealDrainageID) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
 		}
-		Reservoir[i-1].DrainageID = Drainage(ifound[0]-1).DrainageID;
+		Reservoir[i-1].DrainageID = Drainage[ifound[0]-1].DrainageID;
 		delete [] ifound;
 	}
 
@@ -379,21 +377,21 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	User = new UserType[NumUser+2*NumReservoir];
 	//allocate (User(NumUser+2*NumReservoir))
 	for (i = 0; i < NumUser; i++) {
-		User[i].UserID           = real_array(i,0);
-		User[i].UsersType        = real_array(i,1);
-		User[i].RealPOU_ID       = real_array(i,2);
-		User[i].DemandVble       = real_array(i,3);
-		User[i].DemandRate       = real_array(i,4);
-		User[i].InYearDemandType = real_array(i,5);
-		User[i].ReturnFlowID     = real_array(i,6);
-		User[i].SourceMixingID   = real_array(i,7);
-		User[i].NumSources       = real_array(i,8);
+		User[i].UserID           = real_array[i][0];
+		User[i].UsersType        = real_array[i][1];
+		User[i].RealPOU_ID       = real_array[i][2];
+		User[i].DemandVble       = real_array[i][3];
+		User[i].DemandRate       = real_array[i][4];
+		User[i].InYearDemandType = real_array[i][5];
+		User[i].ReturnFlowID     = real_array[i][6];
+		User[i].SourceMixingID   = real_array[i][7];
+		User[i].NumSources       = real_array[i][8];
 	}
 
 	for (i = 1; i <= NumUser; i++) {
 		for (j = 1; j <= User[i-1].NumSources; j++) {
-			User[i-1].SourceID[j-1] = real_array(i-1,9+2*j-2);
-			User[i-1].RightID[j-1]  = real_array(i-1,9+2*j-1);
+			User[i-1].SourceID[j-1] = real_array[i-1][9+2*j-2];
+			User[i-1].RightID[j-1]  = real_array[i-1][9+2*j-1];
 		}
 	}
 
@@ -404,12 +402,12 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		ifound = new int[NumDrainage];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumDrainage; n++) {
-			if (Drainage(n).RealDrainageID == User[i-1].RealPOU_ID) {
+			if (Drainage[n].RealDrainageID == User[i-1].RealPOU_ID) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
 		}
-		User[i-1].POU_ID = Drainage(ifound[0]-1).DrainageID;
+		User[i-1].POU_ID = Drainage[ifound[0]-1].DrainageID;
 		delete [] ifound;
 	}
 
@@ -419,11 +417,11 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumSource); //SourceID	Type	SourceLocationID	PhysicalDailyMax	PhysicalAnnMax
 	Source = new SourceType[NumSource+2*NumReservoir];
 	for (i = 0; i < NumSource; i++) {
-		Source[i].SourceID         = real_array(i,0);
-		Source[i].Type             = real_array(i,1);
-		Source[i].SourceLocationID = real_array(i,2);
-		Source[i].PhysicalDailyMax = real_array(i,3);
-		Source[i].PhysicalAnnMax   = real_array(i,4);
+		Source[i].SourceID         = real_array[i][0];
+		Source[i].Type             = real_array[i][1];
+		Source[i].SourceLocationID = real_array[i][2];
+		Source[i].PhysicalDailyMax = real_array[i][3];
+		Source[i].PhysicalAnnMax   = real_array[i][4];
 	}
 	//convert references to a DrainageID into the CatchID
 	for (i = 1; i <= NumSource; i++) {
@@ -433,13 +431,13 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		ifound = new int[NumDrainage];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumDrainage; n++) {
-			if (Drainage(n).RealDrainageID == Source[i-1].RealSourceLocationID) {
+			if (Drainage[n].RealDrainageID == Source[i-1].RealSourceLocationID) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
 		}
 		if (nfound == 1) {
-			Source[i-1].SourceLocationID = Drainage(ifound[0]-1).DrainageID;
+			Source[i-1].SourceLocationID = Drainage[ifound[0]-1].DrainageID;
 		}
 		delete [] ifound;
 	}
@@ -451,10 +449,10 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumRights);
 	Rights = new RightsType[NumRights];
 	for (i = 0; i < NumRights; i++) {
-		Rights[i].RightID       = real_array(i,0);
-		Rights[i].PriorityDate  = real_array(i,1);
-		Rights[i].LegalDailyMax = real_array(i,2);
-		Rights[i].LegalAnnMax   = real_array(i,3);
+		Rights[i].RightID       = real_array[i][0];
+		Rights[i].PriorityDate  = real_array[i][1];
+		Rights[i].LegalDailyMax = real_array[i][2];
+		Rights[i].LegalAnnMax   = real_array[i][3];
 	}
 
 	fileName = dirname + "/" + "SourceMixing.txt";
@@ -464,12 +462,12 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumSourceMixing);
 	SourceMixing = new SourceMixingType[NumSourceMixing];
 	for (i = 0; i < NumSourceMixing; i++) {
-		SourceMixing[i].SourceMixingID = real_array(i,0);
-		SourceMixing[i].UsersSourceNum = real_array(i,1);
-		SourceMixing[i].Units          = real_array(i,2);
-		SourceMixing[i].Amount         = real_array(i,3);
-		SourceMixing[i].SeasonNumber   = real_array(i,4);
-		SourceMixing[i].SeasonsDefnID  = real_array(i,5);
+		SourceMixing[i].SourceMixingID = real_array[i][0];
+		SourceMixing[i].UsersSourceNum = real_array[i][1];
+		SourceMixing[i].Units          = real_array[i][2];
+		SourceMixing[i].Amount         = real_array[i][3];
+		SourceMixing[i].SeasonNumber   = real_array[i][4];
+		SourceMixing[i].SeasonsDefnID  = real_array[i][5];
 	}
 
 	fileName = dirname + "/" + "SeasonsDefn.txt";
@@ -479,11 +477,11 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumSeasonsDefn);
 	SeasonsDefn = new SeasonsDefnType[NumSeasonsDefn];
 	for (i = 0; i < NumSeasonsDefn; i++) {
-		SeasonsDefn[i].SeasonsDefnID = real_array(i,0);
+		SeasonsDefn[i].SeasonsDefnID = real_array[i][0];
 	}
 	for (i = 1; i <= NumSeasonsDefn; i++) {
 		for (j = 1; j <= 4; j++) {
-			SeasonsDefn[i-1].StartDaySeason[j-1] = real_array(i-1,j);
+			SeasonsDefn[i-1].StartDaySeason[j-1] = real_array[i-1][j];
 		}
 	}
 
@@ -495,17 +493,17 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	ReturnFlow = new ReturnFlowType[NumReturnFlow + 2*NumReservoir];
 	WWTP_list = new int[2*(NumReturnFlow + 2*NumReservoir)];
 	for (i = 0; i < NumReturnFlow; i++) {
-		ReturnFlow[i].ReturnFlowID     = real_array(i,0);
-		ReturnFlow[i].NumReturnFlows   = real_array(i,1);
-		ReturnFlow[i].ReturnFlowsUnits = real_array(i,2);
+		ReturnFlow[i].ReturnFlowID     = real_array[i][0];
+		ReturnFlow[i].NumReturnFlows   = real_array[i][1];
+		ReturnFlow[i].ReturnFlowsUnits = real_array[i][2];
 	}
 	for (i = 1; i <= NumReturnFlow; i++) {
 		j = ReturnFlow[i-1].NumReturnFlows;
 		for (j = 1; j <= User[i-1].NumSources; j++) {
-			ReturnFlow[i-1].ReturnFlowsAmt[j-1]  = real_array(i-1,3+4*j-4);
-			ReturnFlow[i-1].ReturnFlowsType[j-1] = real_array(i-1,3+4*j-3);
-			ReturnFlow[i-1].ReturnFlowsLocn[j-1] = real_array(i-1,3+4*j-2);
-			ReturnFlow[i-1].WWTP_ID[j-1]         = real_array(i-1,3+4*j-1);
+			ReturnFlow[i-1].ReturnFlowsAmt[j-1]  = real_array[i-1][3+4*j-4];
+			ReturnFlow[i-1].ReturnFlowsType[j-1] = real_array[i-1][3+4*j-3];
+			ReturnFlow[i-1].ReturnFlowsLocn[j-1] = real_array[i-1][3+4*j-2];
+			ReturnFlow[i-1].WWTP_ID[j-1]         = real_array[i-1][3+4*j-1];
 			// find1()
 			nfound = 0; //none found
 			ifound = new int[NumWWTP];
@@ -528,13 +526,13 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 				ifound = new int[NumDrainage];
 				ifound[nfound] = 0;
 				for (n = 0; n < NumDrainage; n++) {
-					if (Drainage(n).RealDrainageID == ReturnFlow[i-1].RealReturnFlowsLocn[j-1]) {
+					if (Drainage[n].RealDrainageID == ReturnFlow[i-1].RealReturnFlowsLocn[j-1]) {
 						nfound++;
 						ifound[nfound-1] = n+1;
 					}
 				}
 				for (n = 0; n < MaxNumReturnFlows; n++) {
-					ReturnFlow[i-1].ReturnFlowsLocn[n] = Drainage(ifound[0]-1).DrainageID;
+					ReturnFlow[i-1].ReturnFlowsLocn[n] = Drainage[ifound[0]-1].DrainageID;
 				}
 				delete [] ifound;
 			}
@@ -562,11 +560,11 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumMonthlyDemand);
 	MonthlyDemand = new MonthlyDemandType[NumMonthlyDemand];
 	for (i = 0; i < NumMonthlyDemand; i++) {
-		MonthlyDemand[i].InYearDemandType = real_array(i,0);
+		MonthlyDemand[i].InYearDemandType = real_array[i][0];
 	}
 	for (i = 1; i <= NumMonthlyDemand; i++) {
 		for (j = 1; j <= 12; j++) {
-			MonthlyDemand[i-1].Month[j-1] = real_array(i-1,j);
+			MonthlyDemand[i-1].Month[j-1] = real_array[i-1][j];
 		}
 	}
 #if TRACE

@@ -46,11 +46,11 @@ int Append_To_Output_Tables(const int Timestep, const int dt,
     }
 	caller = "Append_To_Output_Tables";
 #endif
-	DateTime_yyyymmdd_hhmmss(Timestep-1, 0) = yyyymmdd; //Timestep	Date	Time
-	DateTime_yyyymmdd_hhmmss(Timestep-1, 1) = hhmmss; //Timestep	Date	Time
+	DateTime_yyyymmdd_hhmmss[Timestep-1][0] = yyyymmdd; //Timestep	Date	Time
+	DateTime_yyyymmdd_hhmmss[Timestep-1][1] = hhmmss; //Timestep	Date	Time
 
 	for (i = 1; i <= NumLink; i++) {
-		FlowInLinks_cms(Timestep-1,i-1) = Link(i-1).Flow/(double)(dt); //m3/s = m3/step / (s/step)
+		FlowInLinks_cms[Timestep-1][i-1] = Link[i-1].Flow/(double)(dt); //m3/s = m3/step / (s/step)
 	}
 
 	// considered writing outputs as we go here to avoid having to save all the time steps
@@ -69,7 +69,7 @@ int Append_To_Output_Tables(const int Timestep, const int dt,
 	}
 
 	for (i = 1; i <= nfound; i++) {
-		ReservoirStorage_m3(Timestep-1,Node[ifound[i-1]-1].SelfID-1) = Node[ifound[i-1]-1].Store;
+		ReservoirStorage_m3[Timestep-1][Node[ifound[i-1]-1].SelfID-1] = Node[ifound[i-1]-1].Store;
 	}
 	delete [] ifound;
 	// Flow through stream nodes
@@ -91,7 +91,7 @@ int Append_To_Output_Tables(const int Timestep, const int dt,
 		if (StreamNode[i-1].DOutFlag == 1) { //we need to propagate  this flow to any internal stream nodes
 			//  DGT 8/21/05 replaced DrainageOutFlow by Link%Flow because DrainageOutFlow is lacking management
 			//  effects like diversions
-			ThisDrainageOutflow = Link(StreamNode[i-1].DrainageID*3-1).Flow/(double)dt;  // DGT 8/21/05 Rely on the fact that LinkID is 3*DrainageID
+			ThisDrainageOutflow = Link[StreamNode[i-1].DrainageID*3-1].Flow/(double)dt;  // DGT 8/21/05 Rely on the fact that LinkID is 3*DrainageID
 			//RAW 29-Aug-2005 look for user that is InStreamReservoirReleaseUseCode
 			//This is the user that sends spill flow and environmental releases to the downstream drainage
 			//To make this code faster, do this find2 ahead of time in the first call to watermgmt, and store the results

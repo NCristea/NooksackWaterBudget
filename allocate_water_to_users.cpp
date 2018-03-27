@@ -23,14 +23,13 @@ using namespace constant_definitions;
 using namespace input_structures;
 using namespace other_structures;
 using namespace std;
-using namespace Eigen;
 
 int TrialFlow(const double DemandByUserOnSource, const int i, const int j, const int j_source,
 	const int NumRights, double &Qtry);
 
 int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLink, const int NumUser, const int NumReservoir,
 	const int NumSource, const int NumRights, const int NumSourceMixing, int *DrainageOrder, const int NumDrainage,
-	const int NumReturnFlow, const int NumUserSource, ArrayXd &volume_irrig_sup, double *groundwater_to_take, ArrayXd &DrainageOutFlow)
+	const int NumReturnFlow, const int NumUserSource, vector<double> &volume_irrig_sup, double *groundwater_to_take, vector<double> &DrainageOutFlow)
 {
 	int i_count, i, j, ii, k, n, j_source, ilink, inode, j_srcmx, i_count_max, iFeasible, nfound, *ifound;
 	double DemandByUserOnSource, Qtry0, Qtry, Capacity, AllocatedFlow;
@@ -61,7 +60,7 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 			//  Reservoir release is spill due to fill and spill operation rule.
 			//  The demand associated with a reservoir release user is the storage in excess of capacity
 			ilink = User[i-1].LinkSourceToUser[0];
-			inode = Link(ilink-1).USNode;
+			inode = Link[ilink-1].USNode;
 			User[i-1].DemandToday = max(Node[inode-1].Store - Node[inode-1].StoreMax, User[i-1].Demand[Timestep-1]);
 			User[i-1].Deficit[Timestep-1] = User[i-1].DemandToday;
 			User[i-1].Demand[Timestep-1] = User[i-1].DemandToday;
@@ -69,7 +68,7 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 		} else if (User[i-1].UsersType == ReservoirFillUseCode) {
 			// Reservoir fill user requests difference between capacity and storage
 			ilink = User[i-1].LinkUserToReturnflow[0];
-			inode = Link(ilink-1).DSNode;
+			inode = Link[ilink-1].DSNode;
 			User[i-1].DemandToday = max(Node[inode-1].StoreMax - Node[inode-1].Store, 0.0);
 			User[i-1].Deficit[Timestep-1] = User[i-1].DemandToday;
 			User[i-1].Demand[Timestep-1] = User[i-1].DemandToday;
@@ -105,13 +104,13 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 			Capacity = Qtry;  // 10/5/05 Ross and Dave think that Capacity does not need to be initialized here
 			AllocatedFlow = 0.0;
 			for (n = 0; n < NumLink; n++) {
-				LinkSave(n).Title        = Link(n).Title;
-				LinkSave(n).LinkCode     = Link(n).LinkCode;
-				LinkSave(n).IntExtCode   = Link(n).IntExtCode;
-				LinkSave(n).USNode       = Link(n).USNode;
-				LinkSave(n).DSNode       = Link(n).DSNode;
-				LinkSave(n).Flow         = Link(n).Flow;
-				LinkSave(n).ReturnFlowID = Link(n).ReturnFlowID;
+				LinkSave[n].Title        = Link[n].Title;
+				LinkSave[n].LinkCode     = Link[n].LinkCode;
+				LinkSave[n].IntExtCode   = Link[n].IntExtCode;
+				LinkSave[n].USNode       = Link[n].USNode;
+				LinkSave[n].DSNode       = Link[n].DSNode;
+				LinkSave[n].Flow         = Link[n].Flow;
+				LinkSave[n].ReturnFlowID = Link[n].ReturnFlowID;
 			}
 			for (n = 0; n < NumNode; n++) {
 				NodeSave[n].Title      = Node[n].Title;
@@ -124,7 +123,7 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 				NodeSave[n].DrainageID = Node[n].DrainageID;
 				NodeSave[n].SelfID     = Node[n].SelfID;
 			}
-//double T0 = (double)clock()/(double)CLOCKS_PER_SEC;cout << "Qtry " << fixed << setw(8) << setprecision(2) << Qtry << '\n';
+
 			i_count = 1;
 			i_count_max = 100;
 			while (Qtry > 0.01*Qtry0 && AllocatedFlow == 0.0 && i_count <= i_count_max) {
@@ -148,13 +147,13 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 					//Qtry=Qtry*.99;
 					Qtry = max(0.0, min(Qtry+Capacity, Qtry0*(1.0 - (double)(i_count)/(double)(i_count_max))));
 					for (n = 0; n < NumLink; n++) {
-						Link(n).Title        = LinkSave(n).Title;
-						Link(n).LinkCode     = LinkSave(n).LinkCode;
-						Link(n).IntExtCode   = LinkSave(n).IntExtCode;
-						Link(n).USNode       = LinkSave(n).USNode;
-						Link(n).DSNode       = LinkSave(n).DSNode;
-						Link(n).Flow         = LinkSave(n).Flow;
-						Link(n).ReturnFlowID = LinkSave(n).ReturnFlowID;
+						Link[n].Title        = LinkSave[n].Title;
+						Link[n].LinkCode     = LinkSave[n].LinkCode;
+						Link[n].IntExtCode   = LinkSave[n].IntExtCode;
+						Link[n].USNode       = LinkSave[n].USNode;
+						Link[n].DSNode       = LinkSave[n].DSNode;
+						Link[n].Flow         = LinkSave[n].Flow;
+						Link[n].ReturnFlowID = LinkSave[n].ReturnFlowID;
 					}
 					for (n = 0; n < NumNode; n++) {
 						Node[n].Title      = NodeSave[n].Title;
@@ -170,11 +169,7 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 					i_count++;
 				} //iFeasible == 1
 			} // while.  Here we are done iterating.  Assignments below are permanent
-/*double T1 = (double)clock()/(double)CLOCKS_PER_SEC;
-double deltaT = T1 - T0;
-if (deltaT > 1.0e-3) {
-    cout << scientific << setw(6) << setprecision(1) << deltaT << " seconds for AllocateWaterToUsers()\n";
-} */
+
 			User[i-1].Deficit[Timestep-1] = max(0.0, User[i-1].Deficit[Timestep-1] - Qtry);
 			User[i-1].Withdrawal[Timestep-1] = User[i-1].Withdrawal[Timestep-1] + Qtry;
 			User[i-1].VolumeToDateSource[j-1] = Qtry + User[i-1].VolumeToDateSource[j-1];
@@ -184,7 +179,7 @@ if (deltaT > 1.0e-3) {
 			//  type 8 is irrigation with demand specified by user files
 			//		if (User[i-1].UsersType == -1 .or. User[i-1].UsersType == 7 .or. User[i-1].UsersType == 8) {
 			if (User[i-1].UsersType == SoilMoistureIrrigationUseCode || User[i-1].UsersType == FixedDemandIrrigationUseCode) {
-				volume_irrig_sup(User[i-1].POU_ID-1) += Qtry;
+				volume_irrig_sup[User[i-1].POU_ID-1] += Qtry;
 			} //User[i-1].UsersType == -1
 			if (Source[j_source-1].Type == GroundwaterSourceCode) {
 				groundwater_to_take[User[i-1].POU_ID-1] += Qtry;
@@ -206,7 +201,7 @@ if (deltaT > 1.0e-3) {
 	// elseif the sourcenode has no storage then recalculate Flow in all links of LinkType = 2  UNALLC, by adjusting the unallocated flow at every node THISNODE-ID so that there is water balance at the node. Inflow is Sum of Flow in all links with LinkDSNode=THISNODE-ID.   AllocatedOutflow is Sum of Flow in all links with LinkUSNode=THISNODE-ID and LinkType<>2  UNALLC.  Flow in LinkType=2  UNALLC is Inflow- AllocatedOutflow. Process the nodes from upstream to downstream. If all unallocated flows are non-negative then this allocation of Qtry is feasible otherwise it is not feasible.
 	// If the attempted allocation of Qtry was not feasible then subtract recently-added Flow in links LINK-ID RETURNLINK-ID and SINKNODE-ID, else if it was feasible then update the users stats for the year to date
 	// if Qtry is not too small, reduce Qtry and return to step 2.4.1.5, otherwise set Qtry=0
-	// Weve now allocated as much water as possible to this user from this source
+	// We've now allocated as much water as possible to this user from this source
 	// Go on to the next source for this user
 	// Go on to the next user
 	// Might need to embed another loop in here so that we process users in priority order 12123123412345, rather than 12345

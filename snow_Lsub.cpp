@@ -20,7 +20,6 @@
 #include "topnet.hh"
 #include "snow.hh"
 
-using namespace Eigen;
 using namespace std;
 
 //   Lumped snowmelt module can be called outside  (With depletion curve)
@@ -72,14 +71,14 @@ using namespace std;
 // baout,out  -- (basin output and point snowmelt output)
 
 int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
-	const int nStep, ArrayXXd &inpt, ArrayXd &sitev, ArrayXd &statev,
-	const ArrayXd &param, ArrayXi &iflag, const ArrayXd &dtbar, const int nstepday,
-    double &cump, double &cume, double &cummr, ArrayXd &outv,
-    ArrayXd &tsbackup, ArrayXd &tavebackup,
+	const int nStep, vector<vector<double> > &inpt, vector<double> &sitev, vector<double> &statev,
+	const vector<double> &param, vector<int> &iflag, const vector<double> &dtbar, const int nstepday,
+    double &cump, double &cume, double &cummr, vector<double> &outv,
+    vector<double> &tsbackup, vector<double> &tavebackup,
     const int ndepletionpoints, double **dfc, const int modelelement, const int jj)
 {
 	double lat;
-	ArrayXd mtime(5);      // YJS pass to reflect the change of Snow
+	vector<double> mtime(5);      // YJS pass to reflect the change of Snow
 	// real dfc(ndepletionpoints,2)
 
 	// Constant data set
@@ -107,24 +106,24 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 	caller = "snowLSub";
 #endif
 	// Unravel state variables
-	afrac    = statev(6);
-	baw      = statev(1);
-	wmax     = statev(5);
-	meltflag = statev(7);
-	wtgt     = statev(8);     // target snow water equivalent for snowfall hysteresis loops during melt
-	wtgtmax  = statev(9);
-	aftgt    = statev(10);
-	irad     = iflag(0);
-	slope    = sitev(5);
-	azi      = sitev(6);
-	lat      = sitev(7);
+	afrac    = statev[6];
+	baw      = statev[1];
+	wmax     = statev[5];
+	meltflag = statev[7];
+	wtgt     = statev[8];     // target snow water equivalent for snowfall hysteresis loops during melt
+	wtgtmax  = statev[9];
+	aftgt    = statev[10];
+	irad     = iflag[0];
+	slope    = sitev[5];
+	azi      = sitev[6];
+	lat      = sitev[7];
 	// debugging code to stop at a specific date
 	//       if ((year .eq. 1960) && (month .eq. 10) &&
 	//      + (day .eq. 27) && ! (hour .gt. 8) &&
 	//     + (modelelement .eq. 110))then
 	// 	   year=year
 	// 	endif
-double afracStart = afrac;
+
     for (iit = 1; iit <= nStep; iit++) {    // time loop
 		if (afrac > 0.0 && baw > 0.0) {
 			//   See discussion in "depletion curve logic.doc".  Revised to avoid spikes this was causing.
@@ -149,43 +148,43 @@ double afracStart = afrac;
 			wtgtmax  = 0.0;
 			meltflag = 1.0;
 		}
-		statev(1) = scaw;
+		statev[1] = scaw;
 
-		//    DGT 7/26/05.  Statev(1) in the lumped model stores the average temperature except in the case
+		//    DGT 7/26/05.  statev[1] in the lumped model stores the average temperature except in the case
 		//    when liquid water is present in which case it stores the liquid fraction.
 		//    The assumption is that these quantities remain constant during depletion curve adjustments to W
 		//    and are used to reinstate a physically realistic U.
-		cg   = param(4-1);    //  Ground heat capacity (nominally 2.09 KJ/kg/C)
-		rhog = param(8-1);   //  Soil Density (nominally 1700 kg/m^3)
-		de   = param(11-1);    //  Thermally active depth of soil (0.1 m)
+		cg   = param[3];    //  Ground heat capacity (nominally 2.09 KJ/kg/C)
+		rhog = param[7];   //  Soil Density (nominally 1700 kg/m^3)
+		de   = param[10];    //  Thermally active depth of soil (0.1 m)
 
-		if (statev(0) < 0.0) {
+		if (statev[0] < 0.0) {
 			//  Here energy content state variable was temperature and needs to be converted to energy
-			statev(0) = statev(0)*(rhog*de*cg + rhow*scaw*cs);
+			statev[0] = statev[0]*(rhog*de*cg + rhow*scaw*cs);
 		} else {
 			if (scaw > 0.0) {
 			//  Here energy content state variable was liquid fraction
-				statev(0) = statev(0)*rhow*scaw*hf;
+				statev[0] = statev[0]*rhow*scaw*hf;
 			} else {
 				//  Here energy content variable was temperature.  scaw is 0 so energy is only of soil
-				statev(0) = statev(0)*rhog*de*cg;
+				statev[0] = statev[0]*rhog*de*cg;
 			}
 		}
 
 		//    ***************** This is start of point model
 		//
 		//    From the  input list
-		rh     = inpt(4-1,0);
-		qsiobs = inpt(5-1,0);
-		qnetob = inpt(6-1,0);
-		trange = inpt(7-1,0);
-		ta     = inpt(1-1,0);
+		rh     = inpt[3][0];
+		qsiobs = inpt[4][0];
+		qnetob = inpt[5][0];
+		trange = inpt[6][0];
+		ta     = inpt[0][0];
 		hyri(year, month, day, hour, dt, slope, azi, lat, hri, coszen);
-		inpt(7-1,0) = coszen;
+		inpt[6][0] = coszen;
 		if (irad <= 1) {
 			atf(atff, trange, month, dtbar, bca, bcc);
 			if (irad == 0) {  // need to estimate radiation based on air temp.
-				inpt(5-1,0) = atff*io*hri;
+				inpt[4][0] = atff*io*hri;
 			} else {
 				//       Need to call HYRI for horizontal surface to perform horizontal
 				//       measurement adjustment
@@ -194,9 +193,9 @@ double afracStart = afrac;
 				//       not it indicates a potential measurement problem. i.e. moonshine
 				if (hri0 > 0.0) {
 					atfimplied = min(qsiobs/(hri0*io), 0.9); // To avoid unreasonably large radiation when hri0 is small
-					inpt(5-1,0) = atfimplied*hri*io;
+					inpt[4][0] = atfimplied*hri*io;
 				} else {
-					inpt(5-1,0) = qsiobs;
+					inpt[4][0] = qsiobs;
 					if (qsiobs != 0.0) {
 						cerr << "Warning, you have nonzero nightime";
 						cerr << " incident radiation of " << qsiobs;
@@ -206,17 +205,17 @@ double afracStart = afrac;
 			}
 			//         cloud cover fraction dgt 10/13/94
 			cf = 1.0 - atff/bca;
-			qlif(inpt(6-1,0), ta, rh, tk, sbc, cf);
+			qlif(inpt[5][0], ta, rh, tk, sbc, cf);
 			iradfl = 0.0;
 		} else {
 			iradfl = 1.0;
-			inpt(5-1,0) = qnetob;
+			inpt[4][0] = qnetob;
 		}
-		iflag(1-1) = iradfl;
+		iflag[0] = iradfl;
 		updatetime(year, month, day, hour, dt);
 
-		if (iflag(2-1) == 1) {
-			cout << "iflag(2) " << iflag(1) << " iflag(3) " << iflag(3-1) << endl;
+		if (iflag[1] == 1) {
+			cout << "iflag(2) " << iflag[1] << " iflag(3) " << iflag[2] << endl;
 			//for (i = 0; i < 7; ++i) {
                 //cout <<
 		   //write(iflag(3),*)year,month,day,hour,atff,hri,(inpt(i-1,0),i=1,7)
@@ -224,11 +223,11 @@ double afracStart = afrac;
 		}
 
 		//     set modeling time
-		mtime(0) = (double)year;
-		mtime(1) = (double)month;
-		mtime(2) = (double)day;
-		mtime(3) = (double)hour;
-		mtime(4) = modelelement;   // This used to know where we are for debugging
+		mtime[0] = (double)year;
+		mtime[1] = (double)month;
+		mtime[2] = (double)day;
+		mtime[3] = (double)hour;
+		mtime[4] = modelelement;   // This used to know where we are for debugging
 
 		//    cumulative variables used for single time step over snow covered area
 		cump  = 0.0;
@@ -240,8 +239,8 @@ double afracStart = afrac;
 		//  ************************ End of point model
 
 		//      DeltaW = Change in water equivalent
-		deltaw = statev(2-1) - scaw;
-		if (outv(2-1) > 0.0 && deltaw > 0.0) {   // Here an increase in snow water equivalent due to snowfall
+		deltaw = statev[1] - scaw;
+		if (outv[1] > 0.0 && deltaw > 0.0) {   // Here an increase in snow water equivalent due to snowfall
 			if (meltflag == 1) {
 				meltflag = 0.0;   //  start new excursion
 				wtgt = baw;
@@ -302,10 +301,10 @@ double afracStart = afrac;
 				//        DGT 7/26/05  Since snow is disappearing here we should make sure energy behaves properly
 				//        Set energy content to 0.  There was snow so any energy was in liquid fraction not temperature greater
 				//        than 0 and that is now gone.
-				if (statev(0) >= 0.0) {
-					statev(0) = 0.0;
+				if (statev[0] >= 0.0) {
+					statev[0] = 0.0;
 					// 			else
-					// 				statev(1)=statev(1)    ! redundant but debugging to see if this ever occurs
+					// 				statev[1]=statev[1]    ! redundant but debugging to see if this ever occurs
 				}
 			}
 			baswin = cummr*afrac + cump*(1.0 - afrac);
@@ -321,13 +320,13 @@ double afracStart = afrac;
 				afracnew = min(ablat(wref/wmax, ndepletionpoints, dfc), afrac);
 			}
 		}
-		//   DGT 7/25/05.  Save in statev(1) the energy state variable that persists through depletion curve
+		//   DGT 7/25/05.  Save in statev[1] the energy state variable that persists through depletion curve
 		//    baw and scaw adjustments
-		//
-		if (statev(0) <= 0.0) {
+
+		if (statev[0] <= 0.0) {
 			//  Here convert energy to temperature - using statev(2) output from the point model prior to
 			//  depletion curve adjustments
-			statev(0) = statev(0)/(rhog*de*cg + rhow*statev(1)*cs);
+			statev[0] = statev[0]/(rhog*de*cg + rhow*statev[1]*cs);
 		} else {
 			if (baw > 0.0) {
 				//   Here snow water equivalent is positive and energy content positive so
@@ -335,66 +334,66 @@ double afracStart = afrac;
 				//  Note - this is a strictly greater than.  A tolerance could be considered
 				//  Note also that the test is on baw because depletion curve adjustments may result in this
 				//  being 0 when statev(2) is not so then the temperature inter
-				if (statev(1) <= 0.0) {
+				if (statev[1] <= 0.0) {
 					if (baw > 1.0e-6) {
 						//   Due to arithmetic precision in the division and multiplication by afrac
 						//    baw > 0 can occur when statev(2) = 0.  Only consider this an error if > 1e-6
 						cerr << "error, baw > 0, statev(2) <= 0.0\n";
 						baw = 0.0;
-						statev(0) = 0.0;
+						statev[0] = 0.0;
 					} else {
 						baw = 0.0;
 						//   Here energy content is positive and snow water equivalent is 0 so
 						//   energy content state variable is the average soil temperature
-						statev(0) = statev(0)/(rhog*de*cg);
+						statev[0] = statev[0]/(rhog*de*cg);
 					}
 				} else {
-					statev(0) = statev(0)/(rhow*statev(1)*hf);
+					statev[0] = statev[0]/(rhow*statev[1]*hf);
 				}
 			} else {
-				if (statev(1) > 0.0) {
+				if (statev[1] > 0.0) {
 					//   Here baw was 0 but statev(2) is positive.  This can occur due to depletion curve adjustments
 					//   Treat this as a case where snow water equivalent is 0 but disregard the previous energy content
 					//   because it is greater than 0 and reflects liquid water fraction which has been removed.
-					statev(0) = 0.0;
+					statev[0] = 0.0;
 					cerr << "Liquid fraction energy content set to 0\n";
 					cerr << "because depletion curve set W to 0\n";
 				} else {
 					//   Here energy content is positive and snow water equivalent is 0 so
 					//   energy content state variable is the average soil temperature
-					statev(0) = statev(0)/(rhog*de*cg);
+					statev[0] = statev[0]/(rhog*de*cg);
 				}
 			}
 		}
 		//    Output variables
-		outv(15-1) = baw;
-		outv(16-1) = afrac;
+		outv[14] = baw;
+		outv[15] = afrac;
 		if (afracnew == 1)
-			outv(16-1) = afracnew;  // output old Afrac unless in increased because old Afrac was used in mass balances
+			outv[15] = afracnew;  // output old Afrac unless in increased because old Afrac was used in mass balances
 		afrac = afracnew;
-		outv(17-1) = meltflag;
-		outv(18-1) = wtgt;
-		outv(19-1) = wtgtmax;
-		outv(20-1) = wmax;
-		outv(21-1) = aftgt;
-		outv(22-1) = baswin;
-		outv(23-1) = basub;
-		if (iflag(2-1) == 1) {
-			cout << iflag(3-1) << " ";
+		outv[16] = meltflag;
+		outv[17] = wtgt;
+		outv[18] = wtgtmax;
+		outv[19] = wmax;
+		outv[20] = aftgt;
+		outv[21] = baswin;
+		outv[22] = basub;
+		if (iflag[1] == 1) {
+			cout << iflag[2] << " ";
 			for (i = 15; i <= 23; i++) {
-				cout << outv(i-1) << " ";
+				cout << outv[i-1] << " ";
 			}
 		}
 	}// end of time step loop
 
-	iflag(1-1)   = irad;  // reinstate iflag(1) for next call
-	statev(2-1)  = baw;
-	statev(6-1)  = wmax;
-	statev(7-1)  = afrac;
-	statev(8-1)  = meltflag;
-	statev(9-1)  = wtgt;
-	statev(10-1) = wtgtmax;
-	statev(11-1) = aftgt;
+	iflag[0]   = irad;  // reinstate iflag(1) for next call
+	statev[1]  = baw;
+	statev[5]  = wmax;
+	statev[6]  = afrac;
+	statev[7]  = meltflag;
+	statev[8]  = wtgt;
+	statev[9] = wtgtmax;
+	statev[10] = aftgt;
 #if TRACE
 	caller = save_caller;
 	if (ncalls < MAX_TRACE) {
@@ -412,7 +411,7 @@ double afracStart = afrac;
 double ablat(const double DimBaw, const int ndfc, double **dfc)
 {
 	//       Function to interpolate dimensionless depletion curve
-	double Afrac;
+	double Afrac = 0.0;
 	int i;
 	//     DimBaw is dimensionless Basin Average Water Equivalent corresponding to column (1) of dfc
 	//     ndfc is number of points rows in dfc
@@ -429,7 +428,7 @@ double ablat(const double DimBaw, const int ndfc, double **dfc)
 					Afrac = dfc[0][1];   // DGT 7/25/05 to avoid Afrac ever being interpolated as 0 and avoid divide by 0 errors
 				} else {
 					if (dfc[i-1][0] >= DimBaw) {
-						Afrac = dfc[i-1-1][2-1] + (dfc[i-1][2-1] - dfc[i-1-1][2-1])*(DimBaw - dfc[i-1-1][1-1])/(dfc[i-1][1-1] - dfc[i-1-1][1-1]);   // assumes points not repeated in the first column of dfc
+						Afrac = dfc[i-1-1][1] + (dfc[i-1][1] - dfc[i-1-1][1])*(DimBaw - dfc[i-1-1][0])/(dfc[i-1][0] - dfc[i-1-1][0]);   // assumes points not repeated in the first column of dfc
 						goto L1000;
 					}
 				}

@@ -19,7 +19,6 @@
 
 #include "topnet.hh"
 
-using namespace Eigen;
 using namespace std;
 
 // warning, Ross has subverted the meaning of qinst for nooksack
@@ -46,19 +45,19 @@ int soil(const double sr, const double r2, double &r3, double &rie, double &rd, 
 	const double ak0fzrdt, const double c, const double soilc,
 	const double psif, const bool global, const double ad_cap, double &ad_now);
 
-int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, const double Lambda,
+int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const int *Nka, const double Lambda,
 	double **atb, double **pka, const int *nd, double **cl, double **pd, const double units,
-	Array<int,Dynamic,1> &irr, const bool modwrt, const int ipsub, const int ipatb, const int stim,
+	vector<int> &irr, const bool modwrt, const int ipsub, const int ipatb, const int stim,
 	const double r, const double pet, const long int interval, const double art_drainage, const double rate_irrig,
 	const int imonth, const int ndata, const int mps, const int mpe, double &qinst_out, double &dr_out,
 	const int ndump, int *ntdh, const int istep, const int maxC, double &zbm, const int maxA,
 	const int maxSlp, const int maxInt, double &sumr, double &sumq, double &sumae,
 	double &s0, double &q0, double &sr, double &cv, double &aciem,
 	double &acsem, double &sumpe, double &sumie, double &sumqb, double &sumce,
-	double &sumsle, double &sumr1, double &qb, ArrayXd &qinst, ArrayXd &dr, double &sumqv,
+	double &sumsle, double &sumr1, double &qb, vector<double> &qinst, vector<double> &dr, double &sumqv,
 	double &sumse, double &zbar, const double zbar_new, double **tdh, double &zr, double &ak0fzrdt, double &logoqm,
 	double &qvmin, double &dth, double &sumad, double &evap_mm, double &qlat_mm,
-	const int ipflag, ArrayXd &rirr, const int js)
+	const int ipflag, vector<int> &rirr, const int js)
 {
 	//         reversed the  order of DR and QINST back to what they were 25/9/98
 	//   DGT had problems with qinst flows not preserving mass balance so resorted
@@ -126,7 +125,7 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 	static double dt, temp, zbarn;
 	static double acse, qlatin;
 
-	static ArrayXd srz(maxA), suz(maxA);
+	//static vector<double> srz(maxA), suz(maxA);
 
 	const double i4max = 2147000000.0;
 	// rpi 14/7/03 - turn scalars into arrays for removal of time loop
@@ -135,8 +134,8 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 
 	// landcare
 	static int ymd, hms;
-	static Array<int,Dynamic,1> surfrunoff(maxA);
-	static ArrayXd soilwetness(maxA);
+	static vector<int> surfrunoff(maxA);
+	static vector<double> soilwetness(maxA);
 	//
 	static int idebug, jt;
 	static int nmin, jtdh, itdh;
@@ -166,21 +165,21 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 	//      OPEN(UNIT=30,FILE='testclpd.txt',STATUS='unknown')
 	idebug = 0; // put this > 0 to write water balance data to toperror.txt
 	//   unravelling basin properties
-	area       = Sp(1-1,isub-1);
-	szf        = Sp(2-1,isub-1);
-	ak0        = Sp(3-1,isub-1);
-	dth1       = Sp(4-1,isub-1);
-	dth2       = Sp(5-1,isub-1);
-	soilc      = Sp(6-1,isub-1)*(dth1 + dth2);
-	c          = Sp(7-1,isub-1);
-	psif       = Sp(8-1,isub-1);
-	chv        = Sp(9-1,isub-1);
-	cc         = Sp(10-1,isub-1);
-	cr         = Sp(11-1,isub-1);   //  Ratio by which evaporation from interception
-	fi         = Sp(15-1,isub-1); // raw 12-jan-2005 fraction impervious
-	fsprinkler = Sp(21-1,isub-1);
-	crop_coeff = Sp(25+imonth-1,isub-1);
-	ccompr2::t0 = Sp(25+12,isub-1);
+	area       = Sp[0][isub-1];
+	szf        = Sp[1][isub-1];
+	ak0        = Sp[2][isub-1];
+	dth1       = Sp[3][isub-1];
+	dth2       = Sp[4][isub-1];
+	soilc      = Sp[5][isub-1]*(dth1 + dth2);
+	c          = Sp[6][isub-1];
+	psif       = Sp[7][isub-1];
+	chv        = Sp[8][isub-1];
+	cc         = Sp[9][isub-1];
+	cr         = Sp[10][isub-1];   //  Ratio by which evaporation from interception
+	fi         = Sp[14][isub-1]; // raw 12-jan-2005 fraction impervious
+	fsprinkler = Sp[20][isub-1];
+	crop_coeff = Sp[24+imonth][isub-1];
+	ccompr2::t0 = Sp[25+12][isub-1];
 	//    Derived parameters
 	//      T0 = AK0/szf RAW special for nooksack 21-March-2005
 	te = ccompr2::t0;   //  No spatial variability in Hyd conductivity yet
@@ -258,8 +257,8 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 			icv0msg++;
 			cv0 = cc;
 		}
-		irr  = 0;		// array assignment
-	    rirr = 0.0;		// array assignment
+		fill(irr.begin(), irr.end(), 0);
+		fill(rirr.begin(), rirr.end(), 0);
 		zbar = zbar0;
 		sr   = sr0;
 		cv   = cv0;
@@ -294,11 +293,11 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 			qb = q0*exp(temp);
 	    }
 		//  initialise output array
-		qinst = 0.0;	// Array assignment
-		dr = 0.0;		// Array assignment
-      	qinst(0) = qb/units*area/interval;  // dgt converts m/ts to mm^3/sec
-		qinst_out = qinst(0); // rpi 16/7/2003 - needed to get at qinst
-		dr_out = dr(0);   // dgt 6/10/05 - to capture dr out rather than use irr which suffers from rounding
+		fill(qinst.begin(), qinst.end(), 0.0);
+		fill(dr.begin(), dr.end(), 0.0);
+      	qinst[0] = qb/units*area/interval;  // dgt converts m/ts to mm^3/sec
+		qinst_out = qinst[0]; // rpi 16/7/2003 - needed to get at qinst
+		dr_out = dr[0];   // dgt 6/10/05 - to capture dr out rather than use irr which suffers from rounding
 		// and does not occur if printing is off
 		for (it = 1; it <= min(ntdh[isub-1]-1, ndata); it++) {   // dgt 3/16/98  just in case ndth > ndata
 			// added by rpi to transfer out initial baseflow for indepth to use
@@ -307,9 +306,9 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 				temp -= tdh[jt-1][isub-1];
 			}
         	temp = max(0.0, temp);  // dgt 5/26/98   guard against small negative
-			qinst(it) = qinst(0)*temp;
+			qinst[it] = qinst[0]*temp;
 			// dr(1,1) gets over-written below so value has to go into it+1 (fortran indexing, it in C indexing)
-			dr(it) = qinst(0)*temp;     // mass conservative time step integrated flow mm^3/ts
+			dr[it] = qinst[0]*temp;     // mass conservative time step integrated flow mm^3/ts
 		}
 		goto L4992;
 	} // time0
@@ -534,8 +533,8 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 		}
 		// Landcare, surfrunoff in um/timestep (rsei is in m),
 		// soilwetness is saturated depth as a fraction of soil depth = (ZR-ZI)/ZR = 1-ZI/ZR
-		surfrunoff(i-1) = min((rsei + riei)*1.0e6, i4max) + 0.5;
-		soilwetness(i-1) = min(1.0, max(0.0, 1.0 - (zbar + (Lambda - (atb[i-2][isub-1] + atb[i-1][isub-1])*0.5)/szf)/zr));
+		surfrunoff[i-1] = min((rsei + riei)*1.0e6, i4max) + 0.5;
+		soilwetness[i-1] = min(1.0, max(0.0, 1.0 - (zbar + (Lambda - (atb[i-2][isub-1] + atb[i-1][isub-1])*0.5)/szf)/zr));
 
 		//      if (isub  ==  87 && ipflag  ==  1 && istep  ==  245)then
 		//	  write(3284,*)i,r3i,ets
@@ -576,8 +575,8 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 	//	roff=rofex+rofrex   //  total runoff
 	//      if ( modwrt && (isub  ==  ipsub) ) then
 	if ( modwrt ) {
-		  irr(6) = min( roff*1.0e6, i4max ) + 0.5; //um/timestep
-		  rirr(6) = roff*1000.0;   // units for rirr are mm wherever possible
+		  irr[6] = min( roff*1.0e6, i4max ) + 0.5; //um/timestep
+		  rirr[6] = roff*1000.0;   // units for rirr are mm wherever possible
 	}
 
 	//   What follows is an analytic integral of
@@ -636,12 +635,12 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 	//  use time delay histogram to route runoff (assumed known)
 	// rpi 31/7/2002 for neq=0 purposes we have to let this convolution go
 	// beyond m values to m+ntdh values
-	for (itdh = 1; itdh <= ntdh[isub-1]; itdh++) {
-		dr(itdh-1) = dr(itdh-1) + qlat*tdh[itdh-1][isub-1];
-		qinst(itdh-1) += qlatin*tdh[itdh-1][isub-1];
+	for (itdh = 0; itdh < ntdh[isub-1]; itdh++) {
+		dr[itdh] += qlat*tdh[itdh][isub-1];
+		qinst[itdh] += qlatin*tdh[itdh][isub-1];
 	}
-	qinst_out = qinst(0); // rpi 16/7/2003 - needed to get at qinst
-	dr_out = dr(0);  // dgt 6/10/05 to get at dr
+	qinst_out = qinst[0]; // rpi 16/7/2003 - needed to get at qinst
+	dr_out = dr[0];  // dgt 6/10/05 to get at dr
 
 	sumae += sume;
 
@@ -664,41 +663,41 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 			cerr << " ***** message about sr0 exceeding soilc exceeded a total of " << dec << setw(6) << isr0msg << " times\n";
 		if (icv0msg > 10 && (it == 1 && isub == 1))
 			cerr << " ***** message about cv0 exceeding soilc exceeded a total of " << dec << setw(6) << icv0msg << " times\n";
-		irr(1-1)  = it;
+		irr[0]  = it;
 		// fluxes to go into irr as um/hr
-		// need 1d3/area for irr(2,) since dr is in mm^3/int, not m/int like qv
+		// need 1d3/area for irr[2,) since dr is in mm^3/int, not m/int like qv
 		// dr is now in mm^3/sec therefore need interval which is time step in seconds
-		irr(1-1)  = min( dr(0)*1.0e3/(area)*interval, i4max ) + 0.5;  // rpi 16/7/2003 changed it to 1 in dr() um/timestep
-	    rirr(2-1) = dr(0)*interval/area;   // in mm
+		irr[1]  = min( dr[0]*1.0e3/(area)*interval, i4max ) + 0.5;  // rpi 16/7/2003 changed it to 1 in dr() um/timestep
+	    rirr[1] = dr[0]*interval/area;   // in mm
 		// added the following 3 lines - see above
-	    irr(3-1)   = min( qb*1.0e6, i4max ) + 0.5; //um/timestep
-		rirr(3-1)  = qb*1000.0;  // mm
-	    irr(4-1)   = min( qv*1.0e6, i4max) + 0.5; //um/timestep
-		rirr(4-1)  = qv*1000.0; // mm
-	    irr(5-1)   = min( rofex*1.0e6, i4max ) + 0.5; //um/timestep
-	    rirr(5-1)  = rofex*1000.0; // mm
-	    irr(6-1)   = min( rofrex*1.0e6, i4max ) + 0.5; //um/timestep
-		rirr(6-1)  = rofrex*1000.0; //mm
-	    irr(8-1)   = acie*100.0; //percentage
-		rirr(8-1)  = acie*100.0;
-	    irr(9-1)   = acse*100.0; //percentage
-		rirr(9-1)  = acse*100.0;
-	    irr(11-1)  = min( zbar*1.0e6, i4max) + 0.5; //micrometre
-		rirr(11-1) = zbar*1000.0;  //mm
+	    irr[2]   = min( qb*1.0e6, i4max ) + 0.5; //um/timestep
+		rirr[2]  = qb*1000.0;  // mm
+	    irr[3]   = min( qv*1.0e6, i4max) + 0.5; //um/timestep
+		rirr[3]  = qv*1000.0; // mm
+	    irr[4]   = min( rofex*1.0e6, i4max ) + 0.5; //um/timestep
+	    rirr[4]  = rofex*1000.0; // mm
+	    irr[5]   = min( rofrex*1.0e6, i4max ) + 0.5; //um/timestep
+		rirr[5]  = rofrex*1000.0; //mm
+	    irr[7]   = acie*100.0; //percentage
+		rirr[7]  = acie*100.0;
+	    irr[8]   = acse*100.0; //percentage
+		rirr[8]  = acse*100.0;
+	    irr[10]  = min( zbar*1.0e6, i4max) + 0.5; //micrometre
+		rirr[10] = zbar*1000.0;  //mm
 		// revised next two lines, since cv and sr replace srz and suz 17/4/98
-	    irr(10-1)  = min( cv*1.0e6, i4max) + 0.5; //micrometre
-		rirr(10-1) = cv*1000.0;  //mm
-	    irr(12-1)  = min( sr*1.0e6, i4max) + 0.5; //micrometre
-		rirr(12-1) = sr*1000.0; //mm
-		irr(13-1)  = min(pet*units*1.0e6, i4max) + 0.5;   // dgt added pet !um/timestep
-		rirr(13-1) = pet;   // mm
-		irr(14-1)  = min(sume*1.0e6, i4max)+0.5;   // dgt added actual et ! rpi 22/3/2004 removed the subscript as unnecessary
-		rirr(14-1) = sume*1000.0; // mm
+	    irr[9]  = min( cv*1.0e6, i4max) + 0.5; //micrometre
+		rirr[9] = cv*1000.0;  //mm
+	    irr[11]  = min( sr*1.0e6, i4max) + 0.5; //micrometre
+		rirr[11] = sr*1000.0; //mm
+		irr[12]  = min(pet*units*1.0e6, i4max) + 0.5;   // dgt added pet !um/timestep
+		rirr[12] = pet;   // mm
+		irr[13]  = min(sume*1.0e6, i4max)+0.5;   // dgt added actual et ! rpi 22/3/2004 removed the subscript as unnecessary
+		rirr[13] = sume*1000.0; // mm
 		s1 = -zbar*dth1 + sr + cv;
 		bal = sumr - sumq - sumae + (s0 - s1);
-	    irr(15-1) = min(bal*1.0e9, i4max) + 0.5; //dgt mass balance discrepancy
+	    irr[14] = min(bal*1.0e9, i4max) + 0.5; //dgt mass balance discrepancy
 		//            in units of m x e-9, i.e. 1000 ths of mm.
-		rirr(15-1)=bal*1000.0; //mm
+		rirr[14] = bal*1000.0; //mm
 
 		if ( idebug > 0 ) {
 			cerr << "it=" << it << "water balance: bal=" << bal << " sumr=" << sumr << '\n';
@@ -726,14 +725,14 @@ int topmod(double **si, const ArrayXXd &Sp, const int isub, const int *Nka, cons
 
 L4992:	if (ntdh[isub-1] > 1) {
 		for (jtdh = 1; jtdh <= ntdh[isub-1]-1; jtdh++) {
-			dr(jtdh-1) = dr(jtdh);
-			qinst(jtdh-1) = qinst(jtdh);
+			dr[jtdh-1] = dr[jtdh];
+			qinst[jtdh-1] = qinst[jtdh];
 		}
-		dr(ntdh[isub-1]-1)    = 0.0;
-		qinst(ntdh[isub-1]-1) = 0.0;
+		dr[ntdh[isub-1]-1]    = 0.0;
+		qinst[ntdh[isub-1]-1] = 0.0;
 	} else {
-			dr(0)    = 0.0;
-			qinst(0) = 0.0;
+			dr[0]    = 0.0;
+			qinst[0] = 0.0;
 	}
 	//-------------------------------------------------------------
 #if TRACE
@@ -929,7 +928,7 @@ int intercept(double &cv, const double rit, double &ae, const double delt, const
 	return 0;
 }
 
-int irrigation(const double Sr, const ArrayXXd &Sp, const int js, const long int interval, const int maxSlp, double &Dapp)
+int irrigation(const double Sr, const vector<vector<double> > &Sp, const int js, const long int interval, const int maxSlp, double &Dapp)
 {
 	//REAL*8 Sp(NSP,MAXSLP)
 	double dthres, dgoal, zmax, thetathresh;
@@ -947,15 +946,15 @@ int irrigation(const double Sr, const ArrayXXd &Sp, const int js, const long int
     }
     caller = "irrigation";
 #endif
-    zr      = Sp(5,js-1); //metres
+    zr      = Sp[5][js-1]; //metres
 	//	DTH1=Sp(4,js)
-    dth2    = Sp(4,js-1);
+    dth2    = Sp[4][js-1];
 	//	DTH=dth1+dth2
 
-	dthres = Sp(22,js-1);  // 0.7   min(Sp(23,JS),soilc) metres   DGT 8/16/05 changed to fraction of plant available soil water
-	dgoal  = Sp(24,js-1);   // 0.95  min(Sp(25,JS),soilc) metres  DGT 8/16/05 changed to fraction
+	dthres = Sp[22][js-1];  // 0.7   min(Sp(23,JS),soilc) metres   DGT 8/16/05 changed to fraction of plant available soil water
+	dgoal  = Sp[24][js-1];   // 0.95  min(Sp(25,JS),soilc) metres  DGT 8/16/05 changed to fraction
 	//ieff   = Sp[21][js-1]; //dimensionless
-	zmax   = Sp(23,js-1); //metres/day
+	zmax   = Sp[23][js-1]; //metres/day
 	//		 21 - SprinklerFractionOfIrrigation	(n.b. Fortran index)
 	//		 22 - IrrigationEfficiency
 	//		 23 - D_Thresh

@@ -20,7 +20,7 @@
 #include "topnet.hh"
 #include "types.hh"
 
-using namespace Eigen;
+using namespace std;
 
 int NumDrainage;
 int NumStreamNode;
@@ -39,8 +39,8 @@ int NumBaseflow;
 int NumWWTP;
 
 namespace data_array {
-	ArrayXXd real_array;
-	ArrayXXi integer_array;
+	vector<vector<double> > real_array;
+	vector<vector<int> > integer_array;
 	double **dble_array;
 	bool real_array_allocated    = false;
 	bool integer_array_allocated = false;
@@ -53,15 +53,15 @@ namespace TimeVaryingOutput {
 	//	real, allocatable :: TotalRunoff_cms(:,:) //Timestep,Location
 	//	real, allocatable :: Baseflow_cms(:,:) //Timestep,Location
 	//	real, allocatable :: Artificial_Drainage(:,:) //Timestep,Location
-	ArrayXXd FlowInLinks_cms;			//Timestep,Location
+	vector<vector<double> > FlowInLinks_cms;			//Timestep,Location
 	double *FlowAtStreamNodes_cms;		//Location
-	ArrayXXd ReservoirStorage_m3;		//Timestep,Location
-	ArrayXXi DateTime_yyyymmdd_hhmmss;		//Timestep, yyyymmdd/hhmmss
+	vector<vector<double> > ReservoirStorage_m3;		//Timestep,Location
+	vector<vector<int> > DateTime_yyyymmdd_hhmmss;		//Timestep, yyyymmdd/hhmmss
 }
 
 namespace input_structures {
 	RunControlType RunControl;
-	Array<DrainageType,Dynamic,1> Drainage;
+	vector<DrainageType> Drainage;
 	StreamNodeType *StreamNode;
 	MeasuredFlowInfoType *MeasuredFlowInfo;
 	MeasuredFlowDataType *MeasuredFlowData;
@@ -80,12 +80,12 @@ namespace input_structures {
 }
 
 namespace other_structures {
-	NodeType              *Node;
-	Array<LinkType,Dynamic,1> Link;
-	UserSourceTableType   *UserSourceTable;
+	NodeType             *Node;
+	vector<LinkType>      Link;
+	UserSourceTableType  *UserSourceTable;
 	StaticOutputTableType StaticOutput;
-	NodeType              *NodeSave;
-	Array<LinkType,Dynamic,1> LinkSave;
-	int                   *UserSourceOrder;
-	int                   *WWTP_list;
+	NodeType             *NodeSave;
+	vector<LinkType>      LinkSave;
+	int                  *UserSourceOrder;
+	int                  *WWTP_list;
 }

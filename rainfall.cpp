@@ -22,7 +22,6 @@
 #include <unistd.h>
 
 using namespace std;
-using namespace Eigen;
 
 // *******************************************************************
 //          SUBROUTINE  RAINFILL_DOIT
@@ -35,7 +34,7 @@ using namespace Eigen;
 // File name is hard-coded 'rainfill.txt'.
 // If the file is not present, the code doesn't do any filling
 
-int rainfill_doit(ArrayXd &train, const int it, const int Ngauge, ArrayXXd &rcoeff, ArrayXXi &fsite, const int *nfill,
+int rainfill_doit(vector<double> &train, const int it, const int Ngauge, vector<vector<double> > &rcoeff, vector<vector<int> > &fsite, const int *nfill,
 	bool &i_reset_flag, int &it_save_old, const int maxGauge)
 {
 	int itry, iok, ig, ig1, ifill;
@@ -59,12 +58,12 @@ int rainfill_doit(ArrayXd &train, const int it, const int Ngauge, ArrayXXd &rcoe
 		iok = 0;
 		for (ig = 1; ig <= Ngauge; ig++) {	//check each gauge to see if it's missing
 			cerr << "Gauge " << ig << '\n';
-			if (miss(train(ig-1), nfill[ig-1])) {
+			if (miss(train[ig-1], nfill[ig-1])) {
 				ifill = 0;					//if this gauge is missing try to fill it using available eqns
 				for (im = 1; im <= abs(nfill[ig-1]); im++) {
-					ig1 = fsite(ig-1,im-1); //fill it if it's not already done
+					ig1 = fsite[ig-1][im-1]; //fill it if it's not already done
 					if (ig != ig1) { //first decide whether we have some data to fill with
-						canfill = !miss(train(ig1-1), nfill[ig1-1]);
+						canfill = !miss(train[ig1-1], nfill[ig1-1]);
 					} else {
 						if (it > 1) {
 							canfill = !miss(train_last[ig-1], nfill[ig-1]);
@@ -74,9 +73,9 @@ int rainfill_doit(ArrayXd &train, const int it, const int Ngauge, ArrayXXd &rcoe
 					}
 					if ((ifill == 0) && canfill) { //if we haven't filled it yet and there's data available at the fill site then do it
 						if (ig != ig1) {
-							train(ig-1) *= rcoeff(ig-1,im-1);
+							train[ig-1] *= rcoeff[ig-1][im-1];
 						} else {
-							train(ig-1) = train_last[ig-1]*rcoeff(ig-1,im-1);
+							train[ig-1] = train_last[ig-1]*rcoeff[ig-1][im-1];
 						}
 						ifill = 1;
 						//write(errlun,*)'ig,im,ig1,train(ig1,it),rcoeff(ig-1,im-1),train(ig,it)'
@@ -86,7 +85,7 @@ int rainfill_doit(ArrayXd &train, const int it, const int Ngauge, ArrayXXd &rcoe
 				iok = iok+ifill;
 			} else {
 				iok++;
-				train_last[ig-1] = train(ig-1);
+				train_last[ig-1] = train[ig-1];
 			}
 		}
 	}
@@ -101,9 +100,9 @@ int rainfill_doit(ArrayXd &train, const int it, const int Ngauge, ArrayXXd &rcoe
 		}
 		for (ig = 1; ig <= Ngauge; ig++) {
 			if (it > 1) {
-				train(ig-1) = train_last[ig-1];
+				train[ig-1] = train_last[ig-1];
 			} else {
-				train(ig-1) = 0;
+				train[ig-1] = 0;
 			}
 		}
 	} else {
@@ -131,8 +130,8 @@ bool miss(const double train, const int nfill)
 //     SUBROUTINE  RAINFILL_READ
 // ******************************************************************
 
-int rainfill_read(const string rainfill_file, const int Ngauge, const int *rsite,
-	ArrayXXd &rcoeff, ArrayXXi &fsite, int *nfill, int &fillflag, const int maxGauge)
+int rainfill_read(const string rainfill_file, const int Ngauge, const int *rsite, vector<vector<double> > &rcoeff,
+    vector<vector<int> > &fsite, int *nfill, int &fillflag, const int maxGauge)
 {
 
 	int ig, is[maxGauge], i, ierr, j;
@@ -178,9 +177,9 @@ int rainfill_read(const string rainfill_file, const int Ngauge, const int *rsite
 
 		if (ierr == 0) {
 			nfill[ig-1] = nfill0;
-			for (i = 1; i <= abs(nfill0); i++) {
-				rcoeff(ig-1,i-1) = rcoeff0[i-1];
-				fsite(ig-1,i-1)  = is[i-1];
+			for (i = 0; i < abs(nfill0); i++) {
+				rcoeff[ig-1][i] = rcoeff0[i];
+				fsite[ig-1][i]  = is[i];
 			}
 		}
 	}

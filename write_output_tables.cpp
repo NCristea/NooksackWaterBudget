@@ -23,102 +23,134 @@
 using namespace data_array;
 using namespace constant_definitions; //define names for numeric codes (types of nodes, links, users, etc)
 using namespace other_structures;
-using namespace Eigen;
 using namespace std;
 
-int write_integers_to_text(const string filenm, const Array<string,Dynamic,1> &headers,
+int write_integers_to_text(const string filenm, const vector<string> &headers,
 	const int nrows, const int ncols);
-int write_struct_to_text(const string filenm, const Array<string,Dynamic,1> &headers, const int nrows, const int ncols,
+int write_struct_to_text(const string filenm, const vector<string> &headers, const int nrows, const int ncols,
 	const int icall);
 
 int Write_Static_Output_Tables(const string dirname, const int NumUserSourceReturn)
 {
 	// tables to write: StreamFlowLinks, DrainageID, DrainageInfo and UserFlowLinks
-	Array<string,Dynamic,1> headers(10);
+	vector<string> headers(10);
 	string filenm;
 	int ncols, nrows, n;
-
+#if TRACE
+	static int ncalls = 0;
+	string save_caller = caller;
+	if (ncalls < MAX_TRACE) {
+        traceFile << setw(30) << caller << " -> Write_Static_Output_Tables(" << ncalls << ")" << std::endl;
+    }
+	caller = "Write_Static_Output_Tables";
+#endif
 	//this StreamFlowLinks table has a row for every drainage, telling us which column of the LinkFlow
 	//table will tell us the outflow for this drainage
-	headers(0) = "DrainageID";
-	headers(1)= "LinkID";
+	headers[0] = "DrainageID";
+	headers[1] = "LinkID";
 	ncols = 2;
     filenm = dirname + "/" + "StreamFlowLinks.txt";
 	nrows = StaticOutput.StreamFlowLinksSize; // size(StaticOutput%StreamFlowLinks)
 
-	integer_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
 	for (n = 0; n < nrows; n++) {
-		integer_array(n,0) = StaticOutput.StreamFlowLinks[n].DrainageID;
-		integer_array(n,1) = StaticOutput.StreamFlowLinks[n].LinkID;
+		integer_array[n][0] = StaticOutput.StreamFlowLinks[n].DrainageID;
+		integer_array[n][1] = StaticOutput.StreamFlowLinks[n].LinkID;
 	}
 	write_integers_to_text(filenm, headers, nrows, ncols);
 
 	//this DrainageID table has a row for every drainage, telling us the connection between the TopnetID of a
 	//drainage, and the externally specified Drainage Number
-	headers(0) = "TopnetID";
-	headers(1) = "DrainageID";
+	headers[0] = "TopnetID";
+	headers[1] = "DrainageID";
 	ncols = 2;
     filenm = dirname + "/" + "DrainageID.txt";
 	nrows = StaticOutput.DrainageIDSize; // size(StaticOutput%DrainageID)
-	integer_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
 	for (n = 0; n < nrows; n++) {
-		integer_array(n,0) = StaticOutput.DrainageID[n].TopnetID;
-		integer_array(n,1) = StaticOutput.DrainageID[n].DrainageID;
+		integer_array[n][0] = StaticOutput.DrainageID[n].TopnetID;
+		integer_array[n][1] = StaticOutput.DrainageID[n].DrainageID;
 	}
     write_integers_to_text(filenm, headers, nrows, ncols);
 
 	//this DrainageInfo table provides the connections back from each UserSourceReturnFlow combo
 	// to the SourceDrainageFlows and DestinationDrainageFlows tables
-	headers(0) = "UsrSrcRtn_ID";
-	headers(1) = "User_ID";
-	headers(2) = "UsersType";
-	headers(3) = "SrcDrainID";
-	headers(4) = "DestDrainID";
-	headers(5) = "WWTP_ID";
+	headers[0] = "UsrSrcRtn_ID";
+	headers[1] = "User_ID";
+	headers[2] = "UsersType";
+	headers[3] = "SrcDrainID";
+	headers[4] = "DestDrainID";
+	headers[5] = "WWTP_ID";
 	ncols = 6;
     filenm = dirname + "/" + "DrainageInfo.txt";
 	nrows = StaticOutput.DrainageInfoSize; // size(StaticOutput%DrainageInfo)
-	integer_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
 	for (n = 0; n < nrows; n++) {
-		integer_array(n,0) = StaticOutput.DrainageInfo[n].UserSrceReturn_ID;
-		integer_array(n,1) = StaticOutput.DrainageInfo[n].User_ID;
-		integer_array(n,2) = StaticOutput.DrainageInfo[n].UsersType;
-		integer_array(n,3) = StaticOutput.DrainageInfo[n].SourceDrainageID;
-		integer_array(n,4) = StaticOutput.DrainageInfo[n].DestinationDrainageID;
-		integer_array(n,5) = StaticOutput.DrainageInfo[n].WWTP_ID;
+		integer_array[n][0] = StaticOutput.DrainageInfo[n].UserSrceReturn_ID;
+		integer_array[n][1] = StaticOutput.DrainageInfo[n].User_ID;
+		integer_array[n][2] = StaticOutput.DrainageInfo[n].UsersType;
+		integer_array[n][3] = StaticOutput.DrainageInfo[n].SourceDrainageID;
+		integer_array[n][4] = StaticOutput.DrainageInfo[n].DestinationDrainageID;
+		integer_array[n][5] = StaticOutput.DrainageInfo[n].WWTP_ID;
 	}
     write_integers_to_text(filenm, headers, nrows, ncols);
 
 	//this UserFlowLinks table provides the connections back from each User to the LinkFlow table
-	headers(0) = "UserID";
-	headers(1) = "SourceDrainage";
-	headers(2) = "DestinationDrainage";
-	headers(3) = "TakeLinkID";
-	headers(4) = "ReturnLinkID";
-	headers(5) = "UsersType";
+	headers[0] = "UserID";
+	headers[1] = "SourceDrainage";
+	headers[2] = "DestinationDrainage";
+	headers[3] = "TakeLinkID";
+	headers[4] = "ReturnLinkID";
+	headers[5] = "UsersType";
 	ncols = 6;
     filenm = dirname + "/" + "UserFlowLinks.txt";
 	nrows = StaticOutput.UserFlowLinksSize;	// size(StaticOutput%UserFlowLinks)	This wasn't allocated and used in the Fortran code.
-	integer_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
 	for (n = 0; n < nrows; n++) {
-		integer_array(n,0) = StaticOutput.UserFlowLinks[n].UserID;
-		integer_array(n,1) = StaticOutput.UserFlowLinks[n].SourceDrainage;
-		integer_array(n,2) = StaticOutput.UserFlowLinks[n].DestinationDrainage;
-		integer_array(n,3) = StaticOutput.UserFlowLinks[n].TakeLinkID;
-		integer_array(n,4) = StaticOutput.UserFlowLinks[n].ReturnLinkID;
-		integer_array(n,5) = StaticOutput.UserFlowLinks[n].UsersType;
+		integer_array[n][0] = StaticOutput.UserFlowLinks[n].UserID;
+		integer_array[n][1] = StaticOutput.UserFlowLinks[n].SourceDrainage;
+		integer_array[n][2] = StaticOutput.UserFlowLinks[n].DestinationDrainage;
+		integer_array[n][3] = StaticOutput.UserFlowLinks[n].TakeLinkID;
+		integer_array[n][4] = StaticOutput.UserFlowLinks[n].ReturnLinkID;
+		integer_array[n][5] = StaticOutput.UserFlowLinks[n].UsersType;
 	}
     write_integers_to_text(filenm, headers, nrows, ncols);
-
+#if TRACE
+	caller = save_caller;
+	if (ncalls < MAX_TRACE) {
+        traceFile << setw(30) << caller << " <- Leaving Write_Static_Output_Tables(" << ncalls << ")\n" << endl;
+    }
+    ncalls++;
+#endif
 	return 0;
 }
 
 
-int write_integers_to_text(const string filenm, const Array<string,Dynamic,1> &headers, const int nrows, const int ncols)
+int write_integers_to_text(const string filenm, const vector<string> &headers, const int nrows, const int ncols)
 {
 	//write out a data array that has  columns of integer data
 	string str;
 	int i, j;
+#if TRACE
+	static int ncalls = 0;
+	string save_caller = caller;
+	if (ncalls < MAX_TRACE) {
+        traceFile << setw(30) << caller << " -> write_integers_to_text(" << ncalls << ")" << std::endl;
+    }
+	caller = "write_integers_to_text";
+#endif
 	ofstream outFile(filenm.c_str());
 	if (!outFile.is_open()) {
 			cerr << "Failed to open '" << filenm << "'\n";
@@ -127,17 +159,23 @@ int write_integers_to_text(const string filenm, const Array<string,Dynamic,1> &h
 		cout << "Writing to '" << filenm << "'\n";
 	}
 	for (j = 0; j < ncols; j++) {
-		outFile << headers(j) << " ";
+		outFile << headers[j] << " ";
 	}
 	outFile << '\n';
 	for (i = 0; i < nrows; i++) {
 		for (j = 0; j < ncols; j++) {
-			outFile << " " << dec << setw(9) << integer_array(i,j);
+			outFile << " " << dec << setw(9) << integer_array[i][j];
 		}
 		outFile << '\n';
 	}
 	outFile.close();
-
+#if TRACE
+	caller = save_caller;
+	if (ncalls < MAX_TRACE) {
+        traceFile << setw(30) << caller << " <- Leaving write_integers_to_text(" << ncalls << ")\n" << endl;
+    }
+    ncalls++;
+#endif
 	return 0;
 }
 
@@ -154,16 +192,23 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	int i, irf_ind, i_src, iuslink, icall, it, irf;
 	int j, jr, k, id, j_ret, jrf, js, j_src, jsrc;
 	int n, nusr, nrf, nrows, nv, ncols, nsrc, nfound, *ifound;
-	double sumreturnflow, rf_to_this_dest, proportion_flow_from_this_source, flow;
+	double sumreturnflow, rf_to_this_dest = 0.0, proportion_flow_from_this_source, flow;
 	string fmtstr;
-	Array<string,Dynamic,1> headers;
+	vector<string> headers;
 
 	string filenm, LocationTypeString;
 	ostringstream location;
-	ArrayXXd WWTP_Outflows_cms = ArrayXXd::Zero(NumTimesteps*NumWWTP, 3);
+	vector<vector<double> > WWTP_Outflows_cms(NumTimesteps*NumWWTP,vector<double>(3, 0.0));  // NumTimesteps*NumWWTP columns
 	double sumsourceflow;
 	int usernode, k0;
-
+#if TRACE
+	static int ncalls = 0;
+	string save_caller = caller;
+	if (ncalls < MAX_TRACE) {
+        traceFile << setw(30) << caller << " -> Write_TimeVaryingOutput_Tables(" << ncalls << ")" << std::endl;
+    }
+	caller = "Write_TimeVaryingOutput_Tables";
+#endif
 	// 3 tables to create: 1 with WWTP flows, 1 with all flows from sources to users, 1 with all flows from users to destinations
 	// build WWTP times series from FlowInLinks
 	// for every returnflow of every user, if there's a WWTP on the rf path, add this flow
@@ -204,10 +249,10 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 					ifound = new int[NumLink];
 					ifound[nfound] = 0;
 					for (n = 0; n < NumLink; n++) {
-						//cout << Link(n).LinkCode << " " << ReturnFlowLinkCode << " && ";
-						//cout << Link(n).USNode << " " << usernode << " && ";
-						//cout << Link(n).ReturnFlowID << " " << j << '\n';
-						if (Link(n).LinkCode == ReturnFlowLinkCode && Link(n).USNode == usernode && Link(n).ReturnFlowID == j) {
+						//cout << Link[n].LinkCode << " " << ReturnFlowLinkCode << " && ";
+						//cout << Link[n].USNode << " " << usernode << " && ";
+						//cout << Link[n].ReturnFlowID << " " << j << '\n';
+						if (Link[n].LinkCode == ReturnFlowLinkCode && Link[n].USNode == usernode && Link[n].ReturnFlowID == j) {
 							nfound++;
 							ifound[nfound-1] = n+1;
 						}
@@ -228,12 +273,12 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 
 					for (k = 1; k <= NumTimesteps; k++) {
 						k0 = (ifound[0]-1)*NumTimesteps + k;
-						WWTP_Outflows_cms(k0-1,0) = k;
-						WWTP_Outflows_cms(k0-1,1) = id;
+						WWTP_Outflows_cms[k0-1][0] = k;
+						WWTP_Outflows_cms[k0-1][1] = id;
 						if (j_ret >= 1) {
-                            WWTP_Outflows_cms(k0-1,2) += FlowInLinks_cms(k-1,j_ret-1);
+                            WWTP_Outflows_cms[k0-1][2] += FlowInLinks_cms[k-1][j_ret-1];
 						} else {
-						    WWTP_Outflows_cms(k0-1,2) = 0.0;
+						    WWTP_Outflows_cms[k0-1][2] = 0.0;
 						    //cerr << "write_output_tables: k = " << k << " no link found\n";
 						}
 					}
@@ -249,8 +294,7 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	// estimate the proportion of that retrun flow which comes from each source, by using the proportion of water taken from each source
 	k = 0;
 	nusr = StaticOutput.DrainageInfoSize; // size(StaticOutput%DrainageInfo,1)
-	ArrayXXd SourceDrainageFlows(nusr*NumTimesteps, 3);
-	SourceDrainageFlows = 0.0;
+	vector<vector<double> > SourceDrainageFlows(nusr*NumTimesteps,vector<double>(3, 0.0));  // nusr*NumTimesteps columns
 	for (i = 1; i <= NumUser; i++) {
 		// find2() find user node
 		nfound = 0; //none found
@@ -270,14 +314,14 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 		ifound = new int[NumLink];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumLink; n++) {
-			if (Link(n).LinkCode == ReturnFlowLinkCode && Link(n).USNode == usernode) {
+			if (Link[n].LinkCode == ReturnFlowLinkCode && Link[n].USNode == usernode) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
 		}
-		Array<int,Dynamic,1> irf_list(nfound);
+		vector<int> irf_list(nfound);
 		for (n = 0; n < nfound; n++) {
-			irf_list(n) = ifound[n];
+			irf_list[n] = ifound[n];
 		}
 		nrf = nfound;    //RAW 4-Jul-2005 changed ifound(1) to ifound(1:nfound) - will only matter if a user has >1 return flow
 		delete [] ifound;
@@ -287,14 +331,14 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 		ifound = new int[NumLink];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumLink; n++) {
-			if (Link(n).LinkCode == UserAbstractionLinkCode && Link(n).DSNode == usernode) {
+			if (Link[n].LinkCode == UserAbstractionLinkCode && Link[n].DSNode == usernode) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
 		}
-		Array<int,Dynamic,1> isrc_list(nfound);
+		vector<int> isrc_list(nfound);
 		for (n = 0; n < nfound; n++) {
-			isrc_list(n) = ifound[n];
+			isrc_list[n] = ifound[n];
 		}
 		nsrc = nfound;
 		delete [] ifound;
@@ -323,7 +367,7 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 			ifound = new int[NumLink];
 			ifound[nfound] = 0;
 			for (n = 0; n < NumLink; n++) {
-				if (Link(n).LinkCode == UserAbstractionLinkCode && Link(n).USNode == i_src && Link(n).DSNode == usernode) {
+				if (Link[n].LinkCode == UserAbstractionLinkCode && Link[n].USNode == i_src && Link[n].DSNode == usernode) {
 					nfound++;
 					ifound[nfound-1] = n+1;
 				}
@@ -352,15 +396,15 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 						sumreturnflow = 0;
 						for (jrf = 1; jrf <= nrf; jrf++) {
 							if (jrf == StaticOutput.DrainageInfo[k-1].RF_counter)
-								rf_to_this_dest = FlowInLinks_cms(it-1,irf_list(jrf-1)-1);
-							sumreturnflow += FlowInLinks_cms(it-1,irf_list(jrf-1)-1);
+								rf_to_this_dest = FlowInLinks_cms[it-1][irf_list[jrf-1]-1];
+							sumreturnflow += FlowInLinks_cms[it-1][irf_list[jrf-1]-1];
 						} //jrf
 						sumsourceflow = 0;
 						for (jsrc = 1; jsrc <= nsrc; jsrc++) {
-							sumsourceflow += FlowInLinks_cms(it-1,isrc_list(jsrc-1)-1);
+							sumsourceflow += FlowInLinks_cms[it-1][isrc_list[jsrc-1]-1];
 						} //jsrc
 						if (sumsourceflow > 0) {
-							proportion_flow_from_this_source = FlowInLinks_cms(it-1,iuslink-1)/sumsourceflow;
+							proportion_flow_from_this_source = FlowInLinks_cms[it-1][iuslink-1]/sumsourceflow;
 						} else {
 							proportion_flow_from_this_source = 1.0;
 						}
@@ -372,9 +416,9 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 							flow = 0.0;
 						}
 						k0 = (k-1)*NumTimesteps + it;
-						SourceDrainageFlows(k0-1,0) = it;
-						SourceDrainageFlows(k0-1,1) = k;
-						SourceDrainageFlows(k0-1,2) = flow;
+						SourceDrainageFlows[k0-1][0] = it;
+						SourceDrainageFlows[k0-1][1] = k;
+						SourceDrainageFlows[k0-1][2] = flow;
 					} //it
 				} //jr
 			} //j_ret
@@ -382,23 +426,27 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	} //i
 
 	icall = 1;
-
-	nv = DateTime_yyyymmdd_hhmmss.cols();//.extent(secondDim);//second dimension is location
-	nrows = DateTime_yyyymmdd_hhmmss.rows();//.extent(firstDim);
+    nv = DateTime_yyyymmdd_hhmmss[0].size();    //second dimension is location
+    nrows = DateTime_yyyymmdd_hhmmss.size();
+	//nv = DateTime_yyyymmdd_hhmmss.cols();//.extent(secondDim);//second dimension is location
+	//nrows = DateTime_yyyymmdd_hhmmss.rows();//.extent(firstDim);
 	LocationTypeString = "Drainage";
 	filenm = dirname + "/" + "DateTime_yyyymmdd_hhmmss.txt";
 	headers.resize(nv+1);
-	headers(0) = "TimeStep";
-	headers(1) = "yyyymmdd";
-	headers(2) = "hhmmss";
+	headers[0] = "TimeStep";
+	headers[1] = "yyyymmdd";
+	headers[2] = "hhmmss";
 	ncols = 1 + nv;
-	integer_array.resize(nrows, ncols);
-	for (j = 1; j <= nrows; j++) {
-		integer_array(j-1,0) = j;
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
+	for (j = 0; j < nrows; j++) {
+		integer_array[j][0] = j+1;
 	}
-    for (i = 1; i <= nv; i++) {
-    	for (j = 1; j <= nrows; j++) {
-			integer_array(j-1,i) = DateTime_yyyymmdd_hhmmss(j-1,i-1);
+    for (i = 0; i < nv; i++) {
+    	for (j = 0; j < nrows; j++) {
+			integer_array[j][i+1] = DateTime_yyyymmdd_hhmmss[j][i];
     	}
     }
 	write_struct_to_text(filenm, headers, nrows, ncols, icall);
@@ -478,27 +526,33 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	//	call write_struct_to_text(filenm,headers,nrows,ncols,icall)
 
 	icall++;
-	nv = FlowInLinks_cms.cols();//.extent(secondDim); 	//second dimension is location
-	nrows = FlowInLinks_cms.rows();//.extent(firstDim);
+	nv = FlowInLinks_cms[0].size();//.extent(secondDim); 	//second dimension is location
+	nrows = FlowInLinks_cms.size();//.extent(firstDim);
 	LocationTypeString = "LinkID";
 	filenm = dirname + "/" + "FlowInLinks_cms.txt";
 	headers.resize(nv+1);
-	headers(0) = "TimeStep";
+	headers[0] = "TimeStep";
 	for (i = 1; i <= nv; i++) {
 		location << dec << setw(3) << i;
-		headers(i) = LocationTypeString + location.str();
+		headers[i] = LocationTypeString + location.str();
 		location.clear();
 		location.str("");
 	}
 	ncols = 1 + nv;
-	integer_array.resize(nrows, ncols);
-	real_array.resize(nrows, ncols);
-	for (j = 1; j <= nrows; j++) {
-		integer_array(j-1,0) = j;
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
+	real_array.resize(nrows, vector<double>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        real_array[j].resize(ncols);
+    }
+	for (j = 0; j < nrows; j++) {
+		integer_array[j][0] = j+1;
 	}
     for (i = 1; i <= nv; i++) {
 		for (j = 1; j <= nrows; j++) {
-			real_array(j-1,i) = FlowInLinks_cms(j-1,i-1);
+			real_array[j-1][i] = FlowInLinks_cms[j-1][i-1];
 		}
 	};
 	write_struct_to_text(filenm, headers, nrows, ncols, icall);
@@ -528,27 +582,33 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	//	call write_struct_to_text(filenm,headers,nrows,ncols,icall)
 
 	icall++;
-	nv = ReservoirStorage_m3.cols();//.extent(secondDim);	//second dimension is location
-	nrows = ReservoirStorage_m3.rows();//.extent(firstDim);
+	nv = ReservoirStorage_m3[0].size();//.extent(secondDim);	//second dimension is location
+	nrows = ReservoirStorage_m3.size();//.extent(firstDim);
 	LocationTypeString = "Reservoir";
 	filenm = dirname + "/" + "ReservoirStorage_m3.txt";
 	headers.resize(nv+1);
-	headers(0) = "TimeStep";
+	headers[0] = "TimeStep";
 	for (i = 1; i <= nv; i++) {
 		location << dec << setw(3) << i;
-		headers(i) = LocationTypeString + location.str();
+		headers[i] = LocationTypeString + location.str();
 		location.clear();
 		location.str("");
 	}
 	ncols = 1 + nv;
-	integer_array.resize(nrows, ncols);
-	real_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
+	real_array.resize(nrows, vector<double>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        real_array[j].resize(ncols);
+    }
 	for (j = 1; j <= nrows; j++) {
-		integer_array(j-1,0) = j;
+		integer_array[j-1][0] = j;
 	}
     for (i = 1; i <= nv; i++) {
 		for (j = 1; j <= nrows; j++) {
-			real_array(j-1,i) = ReservoirStorage_m3(j-1,i-1);
+			real_array[j-1][i] = ReservoirStorage_m3[j-1][i-1];
 		}
 	};
 	write_struct_to_text(filenm, headers, nrows, ncols, icall);
@@ -608,22 +668,28 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	LocationTypeString = "       User";
 	filenm = dirname + "/" + "UserDemand_cms.txt";
 	headers.resize(nv+1);
-	headers(0) = "TimeStep";
+	headers[0] = "TimeStep";
 	for (i = 1; i <= nv; i++) {
 		location << dec << setw(3) << i;
-		headers(i) = LocationTypeString + location.str();
+		headers[i] = LocationTypeString + location.str();
 		location.clear();
 		location.str("");
 	}
 	ncols = 1 + nv;
-	integer_array.resize(nrows, ncols);
-	real_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
+	real_array.resize(nrows, vector<double>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        real_array[j].resize(ncols);
+    }
 	for (j = 1; j <= nrows; j++) {
-		integer_array(j-1,0) = j;
+		integer_array[j-1][0] = j;
 	}
     for (i = 1; i <= nv; i++) {
 		for (j = 1; j <= nrows; j++) {
-			real_array(j-1,i) = User[i-1].Demand[j-1]/86400.0;
+			real_array[j-1][i] = User[i-1].Demand[j-1]/86400.0;
 		}
 	};
 	write_struct_to_text(filenm, headers, nrows, ncols, icall);
@@ -634,22 +700,28 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	LocationTypeString = "       User";
 	filenm = dirname + "/" + "UserDeficit_cms.txt";
 	headers.resize(nv+1);
-	headers(0) = "TimeStep";
+	headers[0] = "TimeStep";
 	for (i = 1; i <= nv; i++) {
 		location << dec << setw(3) << i;
-		headers(i) = LocationTypeString + location.str();
+		headers[i] = LocationTypeString + location.str();
 		location.clear();
 		location.str("");
 	}
 	ncols = 1 + nv;
-	integer_array.resize(nrows, ncols);
-	real_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
+	real_array.resize(nrows, vector<double>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        real_array[j].resize(ncols);
+    }
 	for (j = 1; j <= nrows; j++) {
-		integer_array(j-1,0) = j;
+		integer_array[j-1][0] = j;
 	}
     for (i = 1; i <= nv; i++) {
 		for (j = 1; j <= nrows; j++) {
-			real_array(j-1,i) = User[i-1].Deficit[j-1]/86400.0;
+			real_array[j-1][i] = User[i-1].Deficit[j-1]/86400.0;
 		}
 	};
 	write_struct_to_text(filenm, headers, nrows, ncols, icall);
@@ -660,109 +732,140 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	LocationTypeString = "       User";
 	filenm = dirname + "/" + "UserWithdrawal_cms.txt";
 	headers.resize(nv+1);
-	headers(0) = "TimeStep";
+	headers[0] = "TimeStep";
 	for (i = 1; i <= nv; i++) {
 		location << dec << setw(3) << i;
-		headers(i) = LocationTypeString + location.str();
+		headers[i] = LocationTypeString + location.str();
 		location.clear();
 		location.str("");
 	}
 	ncols = 1 + nv;
-	integer_array.resize(nrows, ncols);
-	real_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
+	real_array.resize(nrows, vector<double>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        real_array[j].resize(ncols);
+    }
 	for (j = 1; j <= nrows; j++) {
-		integer_array(j-1,0) = j;
+		integer_array[j-1][0] = j;
 	}
     for (i = 1; i <= nv; i++) {
 		for (j = 1; j <= nrows; j++) {
-			real_array(j-1,i) = User[i-1].Withdrawal[j-1]/86400.0;
+			real_array[j-1][i] = User[i-1].Withdrawal[j-1]/86400.0;
 		}
 	};
 	write_struct_to_text(filenm, headers, nrows, ncols, icall);
 
 
 	icall = -1;
-	nv = WWTP_Outflows_cms.cols();//.extent(secondDim); 	//second dimension is NOT location
-	nrows = WWTP_Outflows_cms.rows();//.extent(firstDim);
+	nv = WWTP_Outflows_cms[0].size();//.extent(secondDim); 	//second dimension is NOT location
+	nrows = WWTP_Outflows_cms.size();//.extent(firstDim);
 	filenm = dirname + "/" + "WWTP_Outflows_cms.txt";
 	headers.resize(3);
-	headers(0) = "TimeStep";
-	headers(1) = "WWTP_ID";
-	headers(2) = "Flow_cms";
+	headers[0] = "TimeStep";
+	headers[1] = "WWTP_ID";
+	headers[2] = "Flow_cms";
 	ncols = 3;
-	integer_array.resize(nrows, ncols);
-	real_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
+	real_array.resize(nrows, vector<double>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        real_array[j].resize(ncols);
+    }
 	for (j = 1; j <= nrows; j++) {
-		integer_array(j-1,0) = WWTP_Outflows_cms(j-1,0);
-		integer_array(j-1,1) = WWTP_Outflows_cms(j-1,1);
+		integer_array[j-1][0] = static_cast<int>(WWTP_Outflows_cms[j-1][0]);
+		integer_array[j-1][1] = static_cast<int>(WWTP_Outflows_cms[j-1][1]);
 	}
 	for (j = 1; j <= nrows; j++) {
-		real_array(j-1,2) = WWTP_Outflows_cms(j-1,2);
+		real_array[j-1][2] = WWTP_Outflows_cms[j-1][2];
 	}
 	write_struct_to_text(filenm, headers, nrows, ncols, icall);
 
 
 	icall = -1;
-	nv = SourceDrainageFlows.cols();//.extent(secondDim); 	//second dimension is NOT location
-	nrows = SourceDrainageFlows.rows();//.extent(firstDim);
+	nv = SourceDrainageFlows[0].size();//.extent(secondDim); 	//second dimension is NOT location
+	nrows = SourceDrainageFlows.size();//.extent(firstDim);
 	filenm = dirname + "/" + "SourceDrainageFlows.txt";
 	headers.resize(3);
-	headers(0) = "TimeStep";
-	headers(1) = "UsrSrcRtn_ID";
-	headers(2) = " Flow_cms";
+	headers[0] = "TimeStep";
+	headers[1] = "UsrSrcRtn_ID";
+	headers[2] = " Flow_cms";
 	ncols = 3;
-	integer_array.resize(nrows, ncols);
-	real_array.resize(nrows, ncols);
+	integer_array.resize(nrows,vector<int>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        integer_array[j].resize(ncols);
+    }
+	real_array.resize(nrows, vector<double>(ncols));
+	for (int j = 0; j < nrows; ++j) {
+        real_array[j].resize(ncols);
+    }
 	for (j = 1; j <= nrows; j++) {
-		integer_array(j-1,0) = SourceDrainageFlows(j-1,0);
-		integer_array(j-1,1) = SourceDrainageFlows(j-1,1);
+		integer_array[j-1][0] = SourceDrainageFlows[j-1][0];
+		integer_array[j-1][1] = SourceDrainageFlows[j-1][1];
 	}
 	for (j = 1; j <= nrows; j++) {
-		real_array(j-1,2) = SourceDrainageFlows(j-1,2);
+		real_array[j-1][2] = SourceDrainageFlows[j-1][2];
 	}
 	write_struct_to_text(filenm, headers, nrows, ncols, icall);
-
+#if TRACE
+	caller = save_caller;
+	if (ncalls < MAX_TRACE) {
+        traceFile << setw(30) << caller << " <- Leaving Write_TimeVaryingOutput_Tables(" << ncalls << ")\n" << endl;
+    }
+    ncalls++;
+#endif
 	return 0;
 }
 
 
-int write_struct_to_text(const string filenm, const Array<string,Dynamic,1> &headers, const int nrows, const int ncols,
+int write_struct_to_text(const string filenm, const vector<string> &headers, const int nrows, const int ncols,
 	const int icall)
 {
 	// write out a data array that has 1 columns of integer data, and then columns of real data
 	string str;
 	string realfmt;
-
 	int i, j;
+#if TRACE
+	static int ncalls = 0;
+	string save_caller = caller;
+	if (ncalls < MAX_TRACE) {
+        traceFile << setw(30) << caller << " -> write_struct_to_text(" << ncalls << ")" << std::endl;
+    }
+	caller = "write_struct_to_text";
+#endif
 	ofstream outFile(filenm.c_str());
 	cout << "Writing to '" << filenm << "'\n";
 
 	for (j = 0; j < ncols; j++) {
-		outFile << setw(18) << headers(j);
+		outFile << setw(18) << headers[j];
 	}
 	outFile << '\n';
 	if (icall > 1) {
 		for (i = 0; i < nrows; i++) {
-			outFile << dec << setw(18) << integer_array(i,0);
+			outFile << dec << setw(18) << integer_array[i][0];
 			for (j = 1; j < ncols; j++) {
-				outFile << fixed << setw(18) << setprecision(7) << real_array(i,j);
+				outFile << fixed << setw(18) << setprecision(7) << real_array[i][j];
 			}
 			outFile << '\n';
 		}
 	} else if (icall == 1) {
 		for (i = 0; i < nrows; i++) {
-			outFile << dec << setw(18) << integer_array(i,0);
+			outFile << dec << setw(18) << integer_array[i][0];
 			for (j = 1; j < ncols; j++) {
-				outFile << dec << setw(18) << integer_array(i,j);
+				outFile << dec << setw(18) << integer_array[i][j];
 			}
 			outFile << '\n';
 		}
 	} else if (icall < 0) {
 		for (i = 0; i < nrows; i++) {
-			outFile << dec << setw(12) << integer_array(i,0);
-			outFile << dec << setw(12) << integer_array(i,1);
+			outFile << dec << setw(12) << integer_array[i][0];
+			outFile << dec << setw(12) << integer_array[i][1];
 			//for (j = 1; j < ncols; j++) {
-				outFile << scientific << setw(18) << setprecision(7) << real_array(i,2);
+				outFile << scientific << setw(18) << setprecision(7) << real_array[i][2];
 			//}
 			outFile << '\n';
 
@@ -771,7 +874,13 @@ int write_struct_to_text(const string filenm, const Array<string,Dynamic,1> &hea
 		cerr << "illegal call to write_struct_to_text with icall= " << icall << '\n';
 	}
 	outFile.close();
-
+#if TRACE
+	caller = save_caller;
+	if (ncalls < MAX_TRACE) {
+        traceFile << setw(30) << caller << " <- Leaving write_struct_to_text(" << ncalls << ")\n" << endl;
+    }
+    ncalls++;
+#endif
 return 0;
 }
 

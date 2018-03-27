@@ -109,7 +109,7 @@ int BuildNodeStructure(const int NumDrainage, int &NumUser, const int NumReservo
 				ifound = new int[NumDrainage];
 				ifound[nfound] = 0;
 				for (n = 0; n < NumDrainage; n++) {
-					if (Drainage(n).DrainageID == Reservoir[i-1].DrainageID) {
+					if (Drainage[n].DrainageID == Reservoir[i-1].DrainageID) {
 						nfound++;
 						ifound[nfound-1] = n+1;
 					}
@@ -117,7 +117,7 @@ int BuildNodeStructure(const int NumDrainage, int &NumUser, const int NumReservo
 				j_source = ifound[0]; //problem if nfound<>1
 				delete [] ifound;
 
-				ReturnFlowsLocation = Drainage(j_source-1).DSDrainage;
+				ReturnFlowsLocation = Drainage[j_source-1].DSDrainage;
 				ReservoirReleaseUseCode = InStreamReservoirReleaseUseCode;
 				break;
 			case OffStreamReservoirCode:

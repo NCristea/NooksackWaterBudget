@@ -22,13 +22,12 @@
 using namespace constant_definitions;
 using namespace input_structures;
 using namespace other_structures;
-using namespace Eigen;
 using namespace std;
 
 int BalanceFlowsAtStreamNodes(const int NumNode, const int NumLink, int *DrainageOrder,
-	const int NumDrainage, ArrayXd &DrainageOutFlow)
+	const int NumDrainage, vector<double> &DrainageOutFlow)
 {
-	Array<int,Dynamic,1> ifound_in(1000), ifound_taken(1000);
+	vector<int> ifound_in(1000), ifound_taken(1000);
 	int n, i, j, ii, n_in, n_taken, j_unallocated;
 	double flow_in, flow_taken;
 
@@ -46,28 +45,28 @@ int BalanceFlowsAtStreamNodes(const int NumNode, const int NumLink, int *Drainag
 
 	for (ii = 1; ii <= NumDrainage; ii++) {
 		i = DrainageOrder[ii-1];
-		n_in = Drainage(i-1).n_in;
+		n_in = Drainage[i-1].n_in;
 
 		for (n = 0; n < n_in; n++) {
-			ifound_in(n) = Drainage(i-1).ifound_in(n);
+			ifound_in[n] = Drainage[i-1].ifound_in[n];
 		}
-		n_taken = Drainage(i-1).n_taken;
+		n_taken = Drainage[i-1].n_taken;
 		for (n = 0; n < n_taken; n++) {
-			ifound_taken(n) = Drainage(i-1).ifound_taken(n);
+			ifound_taken[n] = Drainage[i-1].ifound_taken[n];
 		}
-		j_unallocated = Drainage(i-1).j_unallocated;
+		j_unallocated = Drainage[i-1].j_unallocated;
 
 		flow_in = 0.0;
 		for (j = 0; j < n_in; j++) {
-			flow_in += Link(ifound_in(j)-1).Flow;
+			flow_in += Link[ifound_in[j]-1].Flow;
 		}
 		flow_taken = 0.0;
 		for (j = 0; j < n_taken; j++) {
-			flow_taken += Link(ifound_taken(j)-1).Flow;
+			flow_taken += Link[ifound_taken[j]-1].Flow;
 		}
 
-		Link(j_unallocated-1).Flow = flow_in - flow_taken;
-		DrainageOutFlow(i-1) = Link(j_unallocated-1).Flow;
+		Link[j_unallocated-1].Flow = flow_in - flow_taken;
+		DrainageOutFlow[i-1] = Link[j_unallocated-1].Flow;
 	}
 
 #if TRACE

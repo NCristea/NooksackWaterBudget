@@ -23,7 +23,6 @@
 #include <sstream>
 
 using namespace std;
-using namespace Eigen;
 
 ofstream topErrorFile;
 
@@ -32,11 +31,11 @@ ofstream topErrorFile;
 // This version, V2, has enhanced checking for missing data in the RAMS input and rainfilling
 // V3 also has checking/matching of the flow sites with reaches.
 int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
-	ArrayXXd &bRain, double **flow, int &iret, ArrayXd &temper, double *dewp, double *trange, double **dtBar,
-	const int Ns, ArrayXXd &wrg, ArrayXXi &lrg, const double *elevtg, double **bTmax, double **bTmin, double
-	**bTdew, double **bdtBar, const ArrayXXd &Sp, const int maxGauge, const int maxInt, const int maxSites,
-	const int maxResponse, const int maxTGauge, double *wind2m, ArrayXXd &wrg1,
-	int &idebugoutput, int &idebugbasin, int &idebugcase)
+	vector<vector<double> >  &bRain, double **flow, int &iret, vector<double> &dewp, vector<double> &trange, double **dtBar,
+	const int Ns, vector<vector<double> >&wrg, vector<vector<int> > &lrg, const double *elevtg, double **bTmax, double **bTmin, double
+	**bTdew, double **bdtBar, const vector<vector<double> > &Sp, const int maxGauge, const int maxInt, const int maxSites,
+	const int maxResponse, const int maxTGauge, double *wind2m, vector<vector<double> > &wrg1,
+	int &idebugoutput, int &idebugbasin, int &idebugcase)   // Note that temper was passed in here but has has no use.
 {
 	int date, hour;
 	int  ntri, jj, ij;
@@ -44,9 +43,10 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 
 	long itemp1, itemp2, itemp3;
 	int kk;
-	ArrayXd tempr(maxSites), tempr_last(maxSites);
-	ArrayXXd tempt(maxSites,3);
-	double *tempf, *tempf_last;
+	vector<double> tempr(maxSites), tempr_last(maxSites);
+	vector<vector<double> > tempt(maxSites,vector<double>(3));
+
+	vector<double> tempf, tempf_last;
 
 	int i, j, nwind, wsite[1];
 	//	integer*4 dsite(maxsites) dsite holds the flow site no's
@@ -62,8 +62,8 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 	DIR *dp;
 	string testStr, inLine;
 
-	ArrayXXd rcoeff(maxGauge,maxGauge);
-	ArrayXXi fsite(maxGauge,maxGauge);
+	vector<vector<double> > rcoeff(maxGauge,vector<double>(maxGauge));
+	vector<vector<int> > fsite(maxGauge,vector<int>(maxGauge));
 
 	//	REAL*4 RAIN_FACTOR           defined in globaly in namespace rain
 	//	COMMON /RAIN1/ RAIN_FACTOR
@@ -184,11 +184,11 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 	}
 	rainFile.close();
 
-	for (i = 1; i <= maxGauge; i++) {
-		for (j = 1; j <= maxGauge; j++) {
-			fsite(i-1,j-1) = 0;
+	for (i = 0; i < maxGauge; i++) {
+		for (j = 0; j < maxGauge; j++) {
+			fsite[i][j] = 0;
 		}
-		nfill[i-1] = 0;
+		nfill[i] = 0;
 	}
 
 	rainfill_file = "rainfill.txt";
@@ -227,7 +227,7 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 	getline(rainFile, inLine, '\n');
 	i = 0;
 L203: for (jj = 0; jj < ntri; jj++) {
-		rainFile >> tempr(jj);
+		rainFile >> tempr[jj];
 	}
 	rainFile >> date >> hour;
     td8micsec(date, hour, itemp1);
@@ -259,7 +259,7 @@ L203: for (jj = 0; jj < ntri; jj++) {
 		cerr << " Missing data replaced with last given value\n";
 		itemp3 += interval;
 		for (jj = 0; jj < ntri; jj++) {
-			tempr(jj) = tempr_last(jj);
+			tempr[jj] = tempr_last[jj];
 		}
 	}
 
@@ -274,17 +274,17 @@ L203: for (jj = 0; jj < ntri; jj++) {
 
 	// Calculate basin rainfalls - code transferred from CALCTS
 	for (js = 0; js < Ns; js++) {				// for each subbasin
-		bRain(js,i-1) = 0.0;		 			// "brain" has basin rain time series
+		bRain[js][i-1] = 0.0;		 			// "brain" has basin rain time series
 		for (kg = 1; kg <= maxGauge; kg++) {	// get brain by adding weighted "rain"
-			if (lrg(js,kg-1) > 0) {
-				bRain(js,i-1) += tempr(lrg(js,kg-1)-1)*wrg(js,kg-1); // mm to um
+			if (lrg[js][kg-1] > 0) {
+				bRain[js][i-1] += tempr[lrg[js][kg-1]-1]*wrg[js][kg-1]; // mm to um
 			}
 		}
 	}
 
 	itemp3 = itemp1;	// Finished filling, so update itemp3 AND TEMPR_LAST in case neede at next time step
 	for (jj = 0; jj < ntri; jj++) {
-		tempr_last(jj) = tempr(jj);
+		tempr_last[jj] = tempr[jj];
 	}
 	// reset number of values if missing data at end of record
 	if ( i_reset_flag ) {
@@ -302,7 +302,7 @@ L203: for (jj = 0; jj < ntri; jj++) {
 	// to wait until Ross has done any filling required.
 	for (i = 0; i < m; i++) {
 		for (jj = 0; jj < Ns; jj++) {
-			bRain(jj,i) *= rain::rain_factor;
+			bRain[jj][i] *= rain::rain_factor;
 		}
 	}
 
@@ -323,7 +323,7 @@ L203: for (jj = 0; jj < ntri; jj++) {
 	}
 	getline(windFile, inLine, '\n');	// read the rest of the line
 	i = 0;
-L3103: if (!(windFile >> tempr(0) >> date >> hour))
+L3103: if (!(windFile >> tempr[0] >> date >> hour))
 		goto L3101;
 
 	td8micsec(date, hour, itemp1);
@@ -336,7 +336,7 @@ L3103: if (!(windFile >> tempr(0) >> date >> hour))
 			goto L3103;
 	}
 	i++;
-	wind2m[i-1] = tempr(0);
+	wind2m[i-1] = tempr[0];
 	if (i == 1) {  // First time through so need to set up values for itemp3 & TEMPR_LAST
 		itemp3 = itemp1 - interval;
 	}
@@ -373,10 +373,10 @@ L3101: if (m != i) {
 	}
 L3104: ;
 	// put in default temperatures if there's no temperature data
-	for (i = 1; i <= m; i++) {
-		temper(i-1) = 10.0;
-		dewp[i-1]   = 7.0;
-		trange[i-1] = 10.0;
+	for (i = 0; i < m; i++) {
+		//temper[i] = 10.0; // not used
+		dewp[i]   = 7.0;
+		trange[i] = 10.0;
 	}
 	i = m;
 	date = 0;
@@ -401,9 +401,9 @@ L3104: ;
 	}
 	getline(tmaxtmintdewFile, inLine, '\n');	// read the rest of the line
 	i = 0;
-L303: for (jj = 1; jj <= ntri; jj++) {
-		for (js = 1; js <= 3; js++) {
-			if (!(tmaxtmintdewFile >> tempt(jj-1,js-1)))
+L303: for (jj = 0; jj < ntri; jj++) {
+		for (js = 0; js < 3; js++) {
+			if (!(tmaxtmintdewFile >> tempt[jj][js]))
 				goto L301;
 		}
 	}
@@ -431,15 +431,15 @@ L682: 	if (itemp1-itemp3 < interval) {
 		cerr << " Missing data replaced with last given value\n";
 		itemp3 = itemp3 + interval;
 		//  4/23/07  DGT added code below to implement missing within IF
-		for (js = 1; js <= Ns; js++) {			 // for each subbasin
-			bTmax[js-1][i-1] = 0.0;		 // "bTmax" has basin tmax time series
-			bTmin[js-1][i-1] = 0.0;		 // "bTmin" has basin tmax time series
-			bTdew[js-1][i-1] = 0.0;		 // "bTdew" has basin tmax time series
+		for (js = 0; js < Ns; js++) {			 // for each subbasin
+			bTmax[js][i-1] = 0.0;		 // "bTmax" has basin tmax time series
+			bTmin[js][i-1] = 0.0;		 // "bTmin" has basin tmax time series
+			bTdew[js][i-1] = 0.0;		 // "bTdew" has basin tmax time series
 			for (kg = 1; kg <= maxTGauge; kg++) { // get bTmax by adding using lapse to get from gauge_elev to basin_elev, plus spatial weighting on tmax
-				if (lrg(js-1,kg-1) > 0) {  // Interpolation weights
-            	    bTmax[js-1][i-1] += wrg1(js-1,kg-1)*(tempt(lrg(js-1,kg-1),0) + Sp(12,js-1)*(elevtg[lrg(js-1,kg-1)-1] - Sp(13,js-1)));
-            	    bTmin[js-1][i-1] += wrg1(js-1,kg-1)*(tempt(lrg(js-1,kg-1),1) + Sp(12,js-1)*(elevtg[lrg(js-1,kg-1)-1] - Sp(13,js-1)));
-            	    bTdew[js-1][i-1] += wrg1(js-1,kg-1)*(tempt(lrg(js-1,kg-1),2) + Sp(12,js-1)*(elevtg[lrg(js-1,kg-1)-1] - Sp(13,js-1)));
+				if (lrg[js][kg-1] > 0) {  // Interpolation weights
+            	    bTmax[js][i-1] += wrg1[js][kg-1]*(tempt[lrg[js][kg-1]][0] + Sp[12][js]*(elevtg[lrg[js][kg-1]-1] - Sp[13][js]));
+            	    bTmin[js][i-1] += wrg1[js][kg-1]*(tempt[lrg[js][kg-1]][1] + Sp[12][js]*(elevtg[lrg[js][kg-1]-1] - Sp[13][js]));
+            	    bTdew[js][i-1] += wrg1[js][kg-1]*(tempt[lrg[js][kg-1]][2] + Sp[12][js]*(elevtg[lrg[js][kg-1]-1] - Sp[13][js]));
 				}
 			}
 		}
@@ -448,15 +448,15 @@ L682: 	if (itemp1-itemp3 < interval) {
 			goto L682;
 	}
 	// Calculate basin temps - code adapted from basin rain raw 9-dec-2004
- 	for (js = 1; js <= Ns; js++) {			 // for each subbasin
-		bTmax[js-1][i-1] = 0.0;		 // "bTmax" has basin tmax time series
-		bTmin[js-1][i-1] = 0.0;		 // "bTmin" has basin tmax time series
-		bTdew[js-1][i-1] = 0.0;		 // "bTdew" has basin tmax time series
+ 	for (js = 0; js < Ns; js++) {			 // for each subbasin
+		bTmax[js][i-1] = 0.0;		 // "bTmax" has basin tmax time series
+		bTmin[js][i-1] = 0.0;		 // "bTmin" has basin tmax time series
+		bTdew[js][i-1] = 0.0;		 // "bTdew" has basin tmax time series
 		for (kg = 1; kg <= maxTGauge; kg++) { // get bTmax by adding using lapse to get from gauge_elev to basin_elev, plus spatial weighting on tmax
-			if (lrg(js-1,kg-1) > 0) {  //  Interpolation weights
-				bTmax[js-1][i-1] += wrg1(js-1,kg-1)*(tempt(lrg(js-1,kg-1)-1,0) + Sp(12,js-1)*(elevtg[lrg(js-1,kg-1)-1] - Sp(13,js-1)));
-				bTmin[js-1][i-1] += wrg1(js-1,kg-1)*(tempt(lrg(js-1,kg-1)-1,1) + Sp(12,js-1)*(elevtg[lrg(js-1,kg-1)-1] - Sp(13,js-1)));
-				bTdew[js-1][i-1] += wrg1(js-1,kg-1)*(tempt(lrg(js-1,kg-1)-1,2) + Sp(12,js-1)*(elevtg[lrg(js-1,kg-1)-1] - Sp(13,js-1)));
+			if (lrg[js][kg-1] > 0) {  //  Interpolation weights
+				bTmax[js][i-1] += wrg1[js][kg-1]*(tempt[lrg[js][kg-1]-1][0] + Sp[12][js]*(elevtg[lrg[js][kg-1]-1] - Sp[13][js]));
+				bTmin[js][i-1] += wrg1[js][kg-1]*(tempt[lrg[js][kg-1]-1][1] + Sp[12][js]*(elevtg[lrg[js][kg-1]-1] - Sp[13][js]));
+				bTdew[js][i-1] += wrg1[js][kg-1]*(tempt[lrg[js][kg-1]-1][2] + Sp[12][js]*(elevtg[lrg[js][kg-1]-1] - Sp[13][js]));
 			}
 		}
  	}
@@ -464,14 +464,14 @@ L682: 	if (itemp1-itemp3 < interval) {
 	if ( i < m )
 		goto L303;
 
-	for (js = 1; js <= Ns; js++) {
+	for (js = 0; js < Ns; js++) {
 		for (i = 0; i < 12; i++) {
-			bdtBar[i][js-1] = 0;
+			bdtBar[i][js] = 0;
 		}
 		for (kg = 1; kg <= maxTGauge; kg++) { // get basin average dtbar by averaging dtbar values for gauges
-			if (lrg(js-1,kg-1) > 0) {
+			if (lrg[js][kg-1] > 0) {
 				for (kk = 1; kk <= 12; kk++) {
-					bdtBar[kk-1][js-1] += wrg1(js-1,kg-1)*dtBar[kk-1][lrg(js-1,kg-1)-1];  // WRG1 Interpolation weights
+					bdtBar[kk-1][js] += wrg1[js][kg-1]*dtBar[kk-1][lrg[js][kg-1]-1];  // WRG1 Interpolation weights
 				}
 			}
 		}
@@ -531,12 +531,8 @@ L304: ;
 			cerr << " Setting Neq = ntri\n";
 			Neq = ntri;
 		}
-		tempf = new double[ntri];
-		tempf_last = new double[ntri];
-		for (jj = 0; jj < ntri; jj++) {
-			tempf[jj] = 0.0;
-			tempf_last[jj] = 0.0;
-		}
+		tempf.resize(ntri,0.0);
+		tempf_last.resize(ntri,0.0);
 	} else {
 		getline(streamflow_calibrationFile, inLine, '\n');
 	}
@@ -582,20 +578,20 @@ L782:	if (itemp1-itemp3 < interval) {
 		cerr << dec << setw(9) << date << setw(7) << hour << '\n';
 		cerr << " Missing data replaced with last given value\n";
 		itemp3 = itemp3 + interval;
-		for (jj = 1; jj <= Neq; jj++) {
-			flow[jj-1][i-1] = tempf_last[jj-1]/1000.0;
+		for (jj = 0; jj < Neq; jj++) {
+			flow[jj][i-1] = tempf_last[jj]/1000.0;
 		}
 		i++;
 		if (itemp1-itemp3 != interval)
 			goto L782;
 	}
 	itemp3 = itemp1; // Finished filling, so update itemp3 AND tempf_LAST in case neede at next time step
-	for (jj = 1; jj <= Neq; jj++) {
-		tempf_last[jj-1] = tempf[jj-1];
+	for (jj = 0; jj < Neq; jj++) {
+		tempf_last[jj] = tempf[jj];
 	}
 
-	for  (jj = 1; jj <= Neq; jj++) {
-		flow[jj-1][i-1] = tempf[jj-1]/1000.0;
+	for  (jj = 0; jj < Neq; jj++) {
+		flow[jj][i-1] = tempf[jj]/1000.0;
 	}
 	if ( i < m  ) {
 		goto L207;

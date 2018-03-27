@@ -20,22 +20,22 @@
 #include "topnet.hh"
 #include <iomanip>
 #include <dirent.h>
+#include <sstream>
 
 // This version, V8, has had extra checking of rainfall sites added plus,
 // input for lakes.
 // V9 also has checking/matching of the flow sites with reaches
 
 using namespace std;
-using namespace Eigen;
 
 int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, double **pka, int *Nd, double **cl2, double **pd2,
-    double &units, int *ll, int *Ntr, int *Nts, ArrayXXi &linkS, ArrayXXi &linkR, double **si,
-    ArrayXXd &Sp, double **Rp,  const int iret, ArrayXXi &pMap, int &Npar, ArrayXXi &lrg,
-    ArrayXXd &wrg, const int iex, int *llout, int &Neq, int &Nout, int &nBout, int *iBout, int &nRchSav, int *Qmap,
+    double &units, int *ll, int *Ntr, int *Nts, vector<vector<int> > &linkS, vector<vector<int> > &linkR, double **si,
+    vector<vector<double> > &Sp, double **Rp,  const int iret, vector<vector<int> > &pMap, int &Npar, vector<vector<int> >  &lrg,
+    vector<vector<double> > &wrg, const int iex, int *llout, int &Neq, int &Nout, int &nBout, int *iBout, int &nRchSav, int *Qmap,
     double *rel, int &relFlag, double *minSp, double *maxSp, double *minSi, double *maxSi, double *minRp, double *maxRp, bool &limitC,
-    ArrayXXi &ClinkR, ArrayXi &kllout, int *ishift0, const int maxInt, const int maxGuage, const int maxSlp,
+    vector<vector<int> > &ClinkR, vector<int> &kllout, int *ishift0, const int maxInt, const int maxGuage, const int maxSlp,
     const int maxResponse, const int maxA, const int maxC, const int maxChn, const int maxRchAreas, const int maxSites,
-    ArrayXXd &bp, double *bXlat, double *bXlon, ArrayXXd &wrg1)
+    vector<vector<double> > &bp, double *bXlat, double *bXlon, vector<vector<double> > &wrg1)
 {
     // *********************************************************************
     //  This subroutine represents an amalgamation of subroutines READPS and
@@ -63,8 +63,8 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     //                       (must be between 1 and NGAUGE)
 
     //  LINKR(4,MAXCHN) -- array containing reach network information ,
-    //    i.e. linkR(0,i-1) = arbitrary numbering (must be greater than NS).
-    //         linkR(1,i-1) = basin or upstream reach feeding into this reach.
+    //    i.e. linkR[0][i-1] = arbitrary numbering (must be greater than NS).
+    //         linkR[1][i-1] = basin or upstream reach feeding into this reach.
     //         LINKR(3,I) = second basin or upstream reach feeding into this
     //                      reach.
     //         LINKR(4,I) = number of basins or upstream reaches feeding into
@@ -108,7 +108,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     int n0rch;
     int iMatch;
     double temp;
-    double Rtemp1, Rtemp2, Ptemp1, Ptemp2, dummy;
+    double Rtemp1, Rtemp2 = 0.0, Ptemp1, Ptemp2 = 0.0, dummy;
     int rchNo[maxRchAreas];
     int Qsite1[maxRchAreas], Qsite2[maxResponse];
     int Qeast[maxRchAreas], Qnorth[maxRchAreas], Qsite[maxRchAreas];
@@ -118,8 +118,8 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
 
     //  Local variables
     //  ***************
-    int i, j, ii, jj, Line, maxG, n1rch, iCheck;
-    Array<int,Dynamic,1> lln(maxChn);
+    int i, j, ii, jj, maxG, n1rch, iCheck;
+    vector<int> lln(maxChn);
     int Ntsg[maxSlp][maxChn], iTbout[maxSlp];
 
     string verno, ver_msp;
@@ -129,7 +129,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     int sites[maxSites];
 
     int isp, isum, Ntri, k;
-    int Nrchno, krch, neq_temp, neq_chk;
+    int Nrchno = 0, krch, neq_temp, neq_chk;
     int NgBase;
     char cr, comma; // carriage return, comma separator
     bool exist;
@@ -171,7 +171,6 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     modelspcFile >> ver_msp;
     getline(modelspcFile, inLine, '\n');           // Read the remainder of the heading line
     getline(modelspcFile, inLine, '\n');           // and the next comment line.
-    Line = 1;
 
     // Read no. of raingauges , basins and reaches used
     //  RAIN_FACTOR is the multiplier to be applied to meso-scale rainfall
@@ -232,20 +231,20 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
         getline(modelspcFile, inLine, '\n');
     }
     for (i = 1; i <= Npar; i++) {
-        for (j = 1; j <= 4; j++) {
-            modelspcFile >> pMap(j-1,i-1);
+        for (j = 0; j < 4; j++) {
+            modelspcFile >> pMap[j][i-1];
         }
         getline(modelspcFile, inLine, '\n');	// Read the remainder of the line.
         //      checks to ensure valid parameter map values
-        if (pMap(0,i-1) == 1) {
+        if (pMap[0][i-1] == 1) {
             //	    if(pmap[1][i-1] .le. 0 .or. pmap[1][i-1] .gt. isp)go to 296
-        } else if (pMap(0,i-1) == 2) {
-            if (pMap(1,i-1) <= 0 || pMap(1,i-1) > Nrp) {
+        } else if (pMap[0][i-1] == 2) {
+            if (pMap[1][i-1] <= 0 || pMap[1][i-1] > Nrp) {
                 cerr << " Error in the parameter map data in the model description file\n";
                 exit(EXIT_FAILURE);
             }
-        } else if (pMap(0,i-1) == 3) {
-            if(pMap(1,i-1) <= 0 || pMap(1,i-1) > Nsi) {
+        } else if (pMap[0][i-1] == 3) {
+            if(pMap[1][i-1] <= 0 || pMap[1][i-1] > Nsi) {
                 cerr << " Error in the parameter map data in the model description file\n";
                 exit(EXIT_FAILURE);
             }
@@ -258,7 +257,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     // check that sufficient and correct values given for pmap
     isum = 0;
     for (i = 0; i < Npar; i++) {
-        isum += pMap(3,i);
+        isum += pMap[3][i];
     }
 
     if (isum != (Npar*(Npar+1)/2)) {
@@ -273,7 +272,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
 
     // USE LLN TEMPORARILY TO CHECK THAT ALL BASINS HAVE GOT A RAINGAUGE
     for (i = 0; i < Ns; i++) {
-        lln(i) = 0;
+        lln[i] = 0;
     }
     maxG = 0;
     // get raingauge numbers from rain.dat and set up mapping to column #s
@@ -342,7 +341,6 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
 //===================================================================================
 
     for (i = 1; i <= Ns; i++) {
-        Line = 2;
         // Allow >1 raingauge per sub-basin 4-May-98
         // if LINKS[1][i-1]<0, it means there is a list of -LINKS[1][i-1] pairs
         // of (raingauge #, weight) which are to be used for that sub-basin
@@ -353,13 +351,13 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
         // the '-2' indicates two pairs of (gauge#,weight), which are taken
         // to mean 'subbasin 1 rainfall = gauge#3*0.3 + gauge#4*0.5
         for (k = 1; k <= maxGauge; k++) {
-            lrg(i-1,k-1) = 0;
-            wrg(i-1,k-1) = 0.0;
-            wrg1(i-1,k-1) = 0.0;  // Interpolation weights
+            lrg[i-1][k-1] = 0;
+            wrg[i-1][k-1] = 0.0;
+            wrg1[i-1][k-1] = 0.0;  // Interpolation weights
         }
-        interpweightFile >> linkS(0,i-1) >> linkS(1,i-1);
-        for (k = 1; k <= -linkS(1,i-1); k++) {
-            interpweightFile >> lrg(i-1,k-1) >> wrg1(i-1,k-1);
+        interpweightFile >> linkS[0][i-1] >> linkS[1][i-1];
+        for (k = 1; k <= -linkS[1][i-1]; k++) {
+            interpweightFile >> lrg[i-1][k-1] >> wrg1[i-1][k-1];
         }
         interpweightFile.get(cr);	// read line end
         if (int(cr) == 13) {  // If MSDOS file end ( carriage return )
@@ -367,9 +365,9 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
         }
 
         // Read the same data in again to the same arrays from a different file
-        modelspcFile >> linkS(0,i-1) >> linkS(1,i-1);
-        for (k = 1; k <= -linkS(1,i-1); k++) {
-            modelspcFile >> lrg(i-1,k-1) >> wrg(i-1,k-1);
+        modelspcFile >> linkS[0][i-1] >> linkS[1][i-1];
+        for (k = 1; k <= -linkS[1][i-1]; k++) {
+            modelspcFile >> lrg[i-1][k-1] >> wrg[i-1][k-1];
         }
         getline(modelspcFile, inLine, '\n');    // Read the rest of the line, or at least the line end.
 
@@ -379,7 +377,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
             // on raingauge numbers, not the column numbers of data. We need to find
             // column positions in rain.dat corresponding to each raingauge number
             // to be compatible with early code.
-            for (k = 1; k <= -linkS(1,i-1); k++) {
+            for (k = 1; k <= -linkS[1][i-1]; k++) {
                 // Set IMATCH to 0 to show that not yet found a matching site
                 iMatch = 0;
                 for (j = 1; j <= Ntri; j++) {
@@ -390,11 +388,11 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
                     // to find a match once, because upon finding a match the value lrg(j,k) is changed and an
                     // error can occur if after it being changed the changed value matches to a different site.
                     if (iMatch == 0) {
-                        chk_sites(lrg(i-1,k-1), sites[j-1], j, iMatch);
+                        chk_sites(lrg[i-1][k-1], sites[j-1], j, iMatch);
                     }
                 }
                 if (iMatch == 0) {
-                    cerr << Ntri << " " << -linkS(1,i-1) << " " << lrg(i-1,k-1) << " " << sites[j-1] << " " << j << endl;
+                    cerr << Ntri << " " << -linkS[1][i-1] << " " << lrg[i-1][k-1] << " " << sites[j-1] << " " << j << endl;
                     cerr << " Error in data in the model description file:\n";
                     cerr << " The number of raingauges used for the basins is inconsistent with (more than) \n";
                     cerr << " that specified in the first data line\n";
@@ -404,30 +402,30 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
                 }
             }
             // Translate lrgs which are site #s to column position in rain.dat
-            if (linkS(1,i-1) > 0) {
-                lrg(i-1,0)  = linkS(1,i-1);
-                wrg(i-1,0)  = 1.0;
-                wrg1(i-1,0) = 1.0;
+            if (linkS[1][i-1] > 0) {
+                lrg[i-1][0]  = linkS[1][i-1];
+                wrg[i-1][0]  = 1.0;
+                wrg1[i-1][0] = 1.0;
             }
         } else {
             // RPI 5/6/2003 added this else clause for compatibility with old rain.dat files
             // Old rain.dat files assume column 1 is for the first mentioned site etc.
             // Therefore need to set up  a correct set of lrg values, & discard site #s
-            for (k = 1; k <= -linkS(1,i-1); k++) {
-                lrg(i-1,k-1) = k;
+            for (k = 1; k <= -linkS[1][i-1]; k++) {
+                lrg[i-1][k-1] = k;
             }
         }
         // translate lrgs which are site #s to column position in rain.dat RPI & RAW 25/8/00
-        if (linkS(1,i-1) > 0) {
-            lrg(i-1,0)  = linkS(1,i-1);
-            wrg(i-1,0)  = 1.0;
-            wrg1(i-1,0) = 1.0;
+        if (linkS[1][i-1] > 0) {
+            lrg[i-1][0]  = linkS[1][i-1];
+            wrg[i-1][0]  = 1.0;
+            wrg1[i-1][0] = 1.0;
         }
 
         // USE LLN TEMPORARILY TO CHECK THAT ALL BASINS HAVE A RAINGAUGE
-        lln(linkS(0,i-1)-1)++;
+        lln[linkS[0][i-1]-1]++;
         // Altered following test to allow negative raingauge#, if done properly
-        if (linkS(1,i-1) <= 0 && lrg(i-1,0) == 0) {
+        if (linkS[1][i-1] <= 0 && lrg[i-1][0] == 0) {
             cerr << " Error reading the model description file in mdData() ~line 420\n";
             exit(EXIT_FAILURE);
         }
@@ -438,8 +436,8 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     // check that all basins have a raingauge
     // we should have seen each  basin exactly once
     for (i = 0; i < Ns; i++) {
-        if ( lln(i) != 1 ) {
-            cerr << " no raingauge specified for basin, lln(" << dec << setw(3) << i << ") " << lln(i) << '\n';
+        if ( lln[i] != 1 ) {
+            cerr << " no raingauge specified for basin, lln(" << dec << setw(3) << i << ") " << lln[i] << '\n';
             exit(EXIT_FAILURE);
         }
     }
@@ -450,16 +448,15 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     getline(modelspcFile, inLine, '\n');               // comment line
     mddata::maxRno = 0;
     for (i = 1; i <= Nrch; i++) {
-        Line = 3;
         for (j = 1; j <= 3; j++) {
-            modelspcFile >> linkR(j-1,i-1);
+            modelspcFile >> linkR[j-1][i-1];
         }
         getline(modelspcFile, inLine, '\n');	// read the rest of the line
-        for (j = 1; j <= 3; j++) {
-            ClinkR(j-1,i-1) = linkR(j-1,i-1);
+        for (j = 0; j < 3; j++) {
+            ClinkR[j][i-1] = linkR[j][i-1];
         }
-        mddata::maxRno = max(mddata::maxRno, linkR(0,i-1));  // keep track of largest reach number
-        if (linkR(0,i-1) <= 0 || linkR(1,i-1) <= 0) {
+        mddata::maxRno = max(mddata::maxRno, linkR[0][i-1]);  // keep track of largest reach number
+        if (linkR[0][i-1] <= 0 || linkR[1][i-1] <= 0) {
             cerr << " Error reading the model description file in mdData() ~line 468\n";
             exit(EXIT_FAILURE);
         }
@@ -485,9 +482,9 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     }
     //  the first neq of the following list will be used as response time series
     //  Any remaining are output.
-    kllout = 0;	// array assignment (response to valgrind complaint)
-    for (i = 1; i <= max(Neq, Nout); i++) {
-        modelspcFile >> kllout(i-1);
+    fill(kllout.begin(), kllout.end(), 0);	// array assignment (response to valgrind complaint)
+    for (i = 0; i < max(Neq, Nout); i++) {
+        modelspcFile >> kllout[i];
     }
     getline(modelspcFile, inLine, '\n');	// Read the rest of the line.
 
@@ -636,7 +633,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
             //		if(neq == 0) neq_temp=ntri
             for (i = 1; i <= neq_temp; i++) {
                 for (j = 1; j <= Nrchno; j++) {
-                    if ( kllout(i-1) ==  rchNo[j-1]) {
+                    if ( kllout[i-1] ==  rchNo[j-1]) {
                         // Make sure you have the correct site as well
                         for (k = 1; k <= neq_temp; k++) {
                             if (Qsite[j-1] == Qsite2[k-1])
@@ -728,7 +725,7 @@ L3301:
         if (rchAreas) {
             for (i = 1; i <= Neq; i++) {
                 for (j = 1; j <= Nrchno; j++) {
-                    if ( kllout(i-1) == rchNo[j-1] ) {
+                    if ( kllout[i-1] == rchNo[j-1] ) {
                         Qsite1[i-1] = Qsite[j-1];
                         relTemp[i-1] = rel[j-1];
                         iShift0temp[i-1] = ishift0[j-1];
@@ -787,18 +784,18 @@ L4301:
         NgBase = max(100, mddata::maxRno);
         for (i = 1; i <= nRchSav; i++) {
             for (j = 1; j <= 2; j++) {
-                ii = linkR(j,i-1);
+                ii = linkR[j][i-1];
                 if (ii <= Ns && ii > 0) {
                     // Have found a subcatchment, so convert it to a gutter
                     // LINKR(J+1,I) = 100+II
-                    linkR(j,i-1) = NgBase + ii;
+                    linkR[j][i-1] = NgBase + ii;
                     // Add a new line for the gutter
                     Nrch++;
                     // The gutter (100+ii) is fed by subcatchment ii
                     // LINKR(1,NRCH) = 100+II
-                    linkR(0,Nrch-1) = NgBase + ii;
-                    linkR(1,Nrch-1) = ii;
-                    linkR(2,Nrch-1) = 0;
+                    linkR[0][Nrch-1] = NgBase + ii;
+                    linkR[1][Nrch-1] = ii;
+                    linkR[2][Nrch-1] = 0;
                 }
             }
         }
@@ -806,23 +803,23 @@ L4301:
         //  ******************************************************
         n0rch = 0;
         for (i = 1; i <= Nrch; i++) {
-            linkR(3,i-1) = 0;
-            if (linkR(1,i-1) > 0 && linkR(2,i-1) == 0)
-                linkR(3,i-1) = 1;
-            if (linkR(1,i-1) > 0 && linkR(2,i-1) > 0)
-                linkR(3,i-1) = 2;
-            if (linkR(3,i-1) == 0) {
+            linkR[3][i-1] = 0;
+            if (linkR[1][i-1] > 0 && linkR[2][i-1] == 0)
+                linkR[3][i-1] = 1;
+            if (linkR[1][i-1] > 0 && linkR[2][i-1] > 0)
+                linkR[3][i-1] = 2;
+            if (linkR[3][i-1] == 0) {
                 //       ELSE
                 //         IF(LINKR(3,I).EQ.0) LINKR(4,I) = 1
                 //         IF(LINKR(3,I).GT.NS) LINKR(4,I) = 2
                 //         IF(LINKR(3,I).LE.NS.AND.LINKR(3,I).NE.0) THEN
                 cerr << " Error reading the model description file, i = " << dec << setw(3) << i << '\n';
-                cerr << " error in the reach link data , reach number " << dec << setw(3) << linkR(0,i-1) << '\n';
+                cerr << " error in the reach link data , reach number " << dec << setw(3) << linkR[0][i-1] << '\n';
                 exit(EXIT_FAILURE);
             }
-            if (linkR(1,i-1) <= Ns && linkR(2,i-1) <= Ns) {
+            if (linkR[1][i-1] <= Ns && linkR[2][i-1] <= Ns) {
                 n0rch++;
-                lln(n0rch-1) = linkR(0,i-1);
+                lln[n0rch-1] = linkR[0][i-1];
                 ll[n0rch-1]  = i;
             }
         }
@@ -870,28 +867,28 @@ L70:
                 if (ll[j-1] == i)
                     goto L100;
             }
-            if(linkR(3,i-1) == 1) {
+            if(linkR[3][i-1] == 1) {
                 //  Enter here if only one upstream link.
                 for (j = 1; j <= n1rch; j++) {
-                    if (linkR(1,i-1) == lln(j-1)) {
+                    if (linkR[1][i-1] == lln[j-1]) {
                         n1rch++;
-                        lln(n1rch-1) = linkR(0,i-1);
+                        lln[n1rch-1] = linkR[0][i-1];
                         ll[n1rch-1] = i;
                         goto L100;
                     }
                 }
-            } else if (linkR(3,i-1) == 2) {
+            } else if (linkR[3][i-1] == 2) {
                 //  Enter here if two upstream links.
                 us1 = false;
                 us2 = false;
                 for (i = 1; i <= n1rch; i++) {
-                    if (linkR(1,i-1) == lln(j-1) || linkR(1,i-1) <= Ns)
+                    if (linkR[1][i-1] == lln[j-1] || linkR[1][i-1] <= Ns)
                         us1 = true;
-                    if (linkR(2,i-1) == lln(j-1) || linkR(2,i-1) <= Ns)
+                    if (linkR[2][i-1] == lln[j-1] || linkR[2][i-1] <= Ns)
                         us2 = true;
                     if (us1 && us2) {
                         n1rch++;
-                        lln(n1rch-1) = linkR(0,i-1);
+                        lln[n1rch-1] = linkR[0][i-1];
                         ll[n1rch-1] = i;
                         goto L100;
                     }
@@ -905,10 +902,10 @@ L100:
         //  Enter here after looping and check if any new position has been
         //  out in array LL . If not then the link data is corrupt.
         if (n1rch == iCheck) {
-            cerr << " Link data corrupt after link " << dec << setw(3) << lln(n1rch-1) << '\n';
+            cerr << " Link data corrupt after link " << dec << setw(3) << lln[n1rch-1] << '\n';
             cerr << " This is the order in which the river links will be processed so far :\n";
             for (i = 1; i <= n1rch; i++) {
-                cerr << dec << setw(5) << lln(i-1);
+                cerr << dec << setw(5) << lln[i-1];
             }
             exit(EXIT_FAILURE);
         }
@@ -925,10 +922,10 @@ L120:
         for (i = n0rch+1; i <= Nrch; i++) {
             ii = ll[i-1];
             for (j = 1; j <= Nrch; j++) {
-                jj = linkR(0,j-1);
-                if (linkR(1,ii-1) == jj)
+                jj = linkR[0][j-1];
+                if (linkR[1][ii-1] == jj)
                     Ntr[j-1]++;
-                if (linkR(2,ii-1) == jj)
+                if (linkR[2][ii-1] == jj)
                     Ntr[j-1]++;
             }
         }
@@ -940,7 +937,7 @@ L120:
         for (i = 1; i <= n0rch; i++) {
             ii = ll[i-1];
             if (Ntr[ii-1] == 0) {
-                cerr << "2 WARNING ! Reach number " << dec << setw(3) << linkR(0,ii-1);
+                cerr << "2 WARNING ! Reach number " << dec << setw(3) << linkR[0][ii-1];
                 cerr << " (a 0th order reach) is not used as an input in the river network.\n";
             }
         }
@@ -959,14 +956,14 @@ L120:
                 high = true;
             }
             if (Ntr[ii-1] > 1) {
-                cerr << "2 WARNING ! Reach number " << dec << setw(3) << linkR(0,ii-1);
+                cerr << "2 WARNING ! Reach number " << dec << setw(3) << linkR[0][ii-1];
                 cerr << " (a higher order reach) is used more than\n";
                 cerr << " once as an input. This will cause errors in the water balance calculations.\n";
             }
         }
         if (!high) {
             cerr << " Reach link data corrupt! There is no final outlet in theriver network.\n";
-            cerr << " The last reach processed was reach no. " << dec << setw(3) << linkR(0,ii-1);
+            cerr << " The last reach processed was reach no. " << dec << setw(3) << linkR[0][ii-1];
             exit(EXIT_FAILURE);
         }
         // 180 CONTINUE (This was active here in the fortran code, but no active line referrs to it.)
@@ -979,9 +976,9 @@ L120:
             for (j = 1; j <= n0rch; j++) {
                 jj = ll[j-1];
                 Ntsg(i,j) = 0;
-                if (linkR(1,jj-1) == i)
+                if (linkR[1][jj-1] == i)
                     Ntsg(i,j)++;
-                if (linkR(2,jj-1) == i)
+                if (linkR[2][jj-1] == i)
                     Ntsg(i,j)++;
             }
         }
@@ -998,11 +995,11 @@ L120:
         // the position within LL of reaches with measured values or for which
         // output is required.
         for (i = 1; i <= max(Neq, Nout); i++) {
-            ii = kllout(i-1);
+            ii = kllout[i-1];
             llout[i-1] = 0;
             for (j = 1; j <= Nrch; j++) {
                 jj = ll[j-1];
-                if (linkR(0,jj-1) == abs(ii)) {
+                if (linkR[0][jj-1] == abs(ii)) {
                     if (llout[i-1]  ==  0) {
                         llout[i-1] =  ii < 0 ? -j : j;
                     } else {
@@ -1049,13 +1046,13 @@ L120:
             //cout << "A comma was found at the end of the line." << endl;;
             inLine.pop_back();
         }
-        std::istringstream iss(inLine);
+        istringstream iss(inLine);
         for (j = 0; j < num_basinpars-1; j++) {
-            iss >> bp(j,i);
+            iss >> bp[j][i];
             iss >> comma;
         }
         j = num_basinpars-1;
-        iss >> bp(j,i); // no comma.
+        iss >> bp[j][i]; // no comma.
     }
     basinparsFile.close();
     i = Ns;
@@ -1084,8 +1081,8 @@ L120:
     //   1.  Linear tranformation between local coords and lat long is sufficient
     //   2.  Outlet local coordinates is representative of subbasin
     for (j = 0; j < Ns; j++) {
-        bXlat[j] = flat*bp(6,j) + clat;
-        bXlon[j] = flong*bp(5,j) + clong;
+        bXlat[j] = flat*bp[6][j] + clat;
+        bXlon[j] = flong*bp[5][j] + clong;
     }
     //   END  Lat and long modifications
 
@@ -1130,16 +1127,15 @@ L120:
         if (exist && i == 1) {                              // Only if there is a modelcon.dat file
             getline(modelconFile, inLine, '\n');			// Comment line in modelcon.dat file
         }
-        Line = 4;
         for (j = 1; j <= isp; j++) {
             if (exist && i == 1) {                          // Only if there is a modelcon.dat file
                 modelconFile >> minSp[j-1] >> maxSp[j-1];
             }
-            modelspcFile >> Sp(j-1,i-1);	//  One property per line
+            modelspcFile >> Sp[j-1][i-1];	//  One property per line
             getline(modelspcFile, inLine, '\n');            // Read the rest of the line.
         }
         for (j = 1; j <= Nsp; j++) {		// overwrite using basinpars
-            Sp(j-1,i-1) = bp(j+6,i-1);		// bp(1:7,:) has other stuff we also need
+            Sp[j-1][i-1] = bp[j+6][i-1];		// bp(1:7,:) has other stuff we also need
         }
 
         // READ A/TANB DISTBN
@@ -1271,15 +1267,15 @@ L120:
     // Check the use of negative area values to indicate  basin copies
 
     for (i = 1; i <= Ns; i++) {
-        if ( Sp(0,i-1) <= 0.0 ) {
-            ii = lround(Sp(1,i-1));	// fortran nint(SP(2,I))
+        if ( Sp[0][i-1] <= 0.0 ) {
+            ii = lround(Sp[1][i-1]);	// fortran nint(SP(2,I))
             if ( ii < 1 || ii > Ns ) {
                 cerr << " basin" << dec << setw(3) << i;
                 cerr << " area is <= 0 : must have 1 <= length <= ";
                 cerr << dec << setw(3) << Ns << '\n';
                 exit(EXIT_FAILURE);
             }
-            if ( Sp(0,ii-1) < 0.0 ) {
+            if ( Sp[0][ii-1] < 0.0 ) {
                 cerr << " basin" << dec << setw(3) << i;
                 cerr << "area is <=0:length must point to real basin\n";
                 exit(EXIT_FAILURE);
@@ -1295,7 +1291,6 @@ L120:
     getline(modelspcFile, inLine, '\n');			// Comment line
 
     for (i = 1; i <= Nrch-n0rch; i++) {
-        Line = 6;
         if (exist && i == 1) {
             getline(modelconFile, inLine, '\n');			// Comment line
             for (j = 1; j <= Nrp; j++) {
@@ -1326,7 +1321,7 @@ L120:
 //-----------------------------------------------------------------------------
 //         SUBROUTINE READ_LAKES
 //-----------------------------------------------------------------------------
-int read_lakes(Array<int,Dynamic,1> &lake_reach, int *lzero, double *lake_areas, int *lake_beach_slps, int *lk_line, int *num_rat_vals,
+int read_lakes(vector<int> &lake_reach, int *lzero, double *lake_areas, int *lake_beach_slps, int *lk_line, int *num_rat_vals,
                int **lheads, int **loflows, const int max_lakes, const int max_lheads)
 {
     // lake variables
@@ -1371,7 +1366,7 @@ int read_lakes(Array<int,Dynamic,1> &lake_reach, int *lzero, double *lake_areas,
         lakesFile.get(cr);	// read line end after last read
         getline(lakesFile, inLine, '\n');
         for (i = 0; i < lakes1::nlakes; i++) {
-            lakesFile >> lake_reach(i);
+            lakesFile >> lake_reach[i];
         }
         lakesFile.get(cr);	// read line end after last read
         getline(lakesFile, inLine, '\n');
@@ -1435,7 +1430,7 @@ int chk_sites(int &lrg, const int sites, const int j, int &iMatch)
 // ******************************************************************************
 // Removed subroutine variables lzero,lake_areas, lake_beach_slps,lk_line,num_rat_vals,
 // lheads,loflows, and max_lheads for C++ version
-int read_lakes_levels(const Array<int,Dynamic,1> &lake_reach, double *ini_levels, const int max_lakes)
+int read_lakes_levels(const vector<int> &lake_reach, double *ini_levels, const int max_lakes)
 {
     // lake variables
     bool exist;
@@ -1491,7 +1486,7 @@ int read_lakes_levels(const Array<int,Dynamic,1> &lake_reach, double *ini_levels
         // sort the initial levels into the same order as the rest of the lake data
         for (i = 1; i <= lakes1::nlakes; i++) {
             for (j = 1; j <= nlakes_ini; j++) {
-                if(lake_reach(i-1) == lake_reach_ini[j-1]) {
+                if(lake_reach[i-1] == lake_reach_ini[j-1]) {
                     temp                = ini_levels[i-1];
                     itemp               = lake_reach_ini[i-1];
                     ini_levels[i-1]     = ini_levels[j-1];

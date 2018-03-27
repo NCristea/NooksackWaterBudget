@@ -20,7 +20,6 @@
 #include "topnet.hh"
 #include "snow.hh"
 
-using namespace Eigen;
 using namespace std;
 
 //   Wrapper subroutine for calling by TOPNET
@@ -29,9 +28,9 @@ using namespace std;
 //   -  subdivision of the external timestep into a number of internal time steps to represent diurnal forcing
 //   -  Bypasses calling of snow subroutine when there is no snow on the ground or no snow falling
 
-int snowueb(const ArrayXd &snowsitev, ArrayXd &snowstatev1, const ArrayXd &snowparam,
-    const int ndepletionpoints, double **dfc, const Array<int,Dynamic,1> &snowcontrol, const ArrayXd &dtbar,
-	const ArrayXd &snowforcing, ArrayXd &snowsurfacetemp1, ArrayXd &snowaveragetemp1,
+int snowueb(const vector<double> &snowsitev, vector<double> &snowstatev, const vector<double> &snowparam,
+    const int ndepletionpoints, double **dfc, const vector<int> &snowcontrol, const vector<double> &dtbar,
+	const vector<double> &snowforcing, vector<double> &snowsurfacetemp, vector<double> &snowaveragetemp,
     const double timestep, const int nstepday, double &surfacewaterinput, double &snowevaporation,  //outputs (both in m/h)
     double &areafractionsnow, const int modelelement)
 {
@@ -75,7 +74,7 @@ int snowueb(const ArrayXd &snowsitev, ArrayXd &snowstatev1, const ArrayXd &snowp
  	//   5 start date yyyymmdd
  	//   6 start time hhmmss
 
-	//      real dtbar(12)   monthly mean diurnal temperature ranges (C)
+	//  real dtbar(12)   monthly mean diurnal temperature ranges (C)
 	//	real snowforcing(1)  1:7  Forcing variables
  	//	1 airtemp (deg C)
  	//	2 precip (m/h)
@@ -92,10 +91,10 @@ int snowueb(const ArrayXd &snowsitev, ArrayXd &snowstatev1, const ArrayXd &snowp
  	//    daily averages can be tracked
  	//  Variables and arrays to pass to snowlsub
  	const int niv = 7;
- 	ArrayXXd inpt(niv,1);
- 	ArrayXd outv(23);
- 	ArrayXd sitev(8);
- 	Array<int,Dynamic,1> iflag(5);
+ 	vector<vector<double> > inpt(niv,vector<double>(1));
+ 	vector<double> outv(23);
+ 	vector<double> sitev(8);
+ 	vector<int> iflag(5);
  	double elevsb, xlat, xlon, stdlon, elevtg, rlapse, trange, dewptg, pa, pg, edg, eda, hour1, dt;
  	double templocal, shift, t, tmid, es, cump, cume, cummr;
  	int iyear, month, iday, ihr, imm,  isec, nstepsint, jj;
@@ -108,14 +107,14 @@ int snowueb(const ArrayXd &snowsitev, ArrayXd &snowstatev1, const ArrayXd &snowp
 	caller = "snowueb";
 #endif
  	//     naming inputs that are used
-	elevsb = snowsitev(1);
-	xlat   = snowsitev(2);
-	xlon   = snowsitev(3);
-	stdlon = snowsitev(4);
-	elevtg = snowsitev(5);
-	rlapse = snowsitev(6);
-	trange = snowforcing(4);	// diurnal temperature range
-	dewptg = snowforcing(3); 	// dew point temperature at temperature gage
+	elevsb = snowsitev[1];
+	xlat   = snowsitev[2];
+	xlon   = snowsitev[3];
+	stdlon = snowsitev[4];
+	elevtg = snowsitev[5];
+	rlapse = snowsitev[6];
+	trange = snowforcing[4];	// diurnal temperature range
+	dewptg = snowforcing[3]; 	// dew point temperature at temperature gage
  	//   Atmospheric pressure
 	pa = 101.3*pow((293.0 - 0.0065*elevsb)/(293.0), 5.256);   // Equation 4.4.12 - Handbook of Hydrology
 	pa = pa * 1000.0;  //  convert to pascal
@@ -127,33 +126,33 @@ int snowueb(const ArrayXd &snowsitev, ArrayXd &snowstatev1, const ArrayXd &snowp
  	//   Assume constant mixing ratio for adjustment of dewpoint by elevation
 	edg = svp(dewptg);  // Vapour pressure at gage (kPa)
 	eda = edg *pa/pg;  //  Vapor pressure adjusted to mean elevation of subbasin (kPa)
-	iyear   = snowcontrol(4)/10000;
-	month   = snowcontrol(4)/100 - iyear*100;
-	iday    = snowcontrol(4) - iyear*10000 - month*100;
-	ihr     = snowcontrol(5)/10000;
-	imm     = snowcontrol(5)/100 - ihr*100;
-	isec    = snowcontrol(5) - ihr*10000 - imm*100;
+	iyear   = snowcontrol[4]/10000;
+	month   = snowcontrol[4]/100 - iyear*100;
+	iday    = snowcontrol[4] - iyear*10000 - month*100;
+	ihr     = snowcontrol[5]/10000;
+	imm     = snowcontrol[5]/100 - ihr*100;
+	isec    = snowcontrol[5] - ihr*10000 - imm*100;
 	hour1   = (double)(ihr) + (double)(imm)/60.0 + (double)(isec)/3600.0;
 
  	//    Site variables
-	sitev(0) = snowsitev(0);  // Forest cover fraction
-	sitev(1) = snowparam(22); // Drift factor
-	sitev(2) = pa;               // Atmospheric pressure
-	sitev(3) = snowparam(23);    // Ground heat flux
-	sitev(4) = snowparam(24);    // Albedo Extinction parameter
-	sitev(5) = snowsitev(7);     // slope
-	sitev(6) = snowsitev(8);     // azimuth
-	sitev(7) = xlat;   // latitude
+	sitev[0] = snowsitev[0];  // Forest cover fraction
+	sitev[1] = snowparam[22]; // Drift factor
+	sitev[2] = pa;               // Atmospheric pressure
+	sitev[3] = snowparam[23];    // Ground heat flux
+	sitev[4] = snowparam[24];    // Albedo Extinction parameter
+	sitev[5] = snowsitev[7];     // slope
+	sitev[6] = snowsitev[8];     // azimuth
+	sitev[7] = xlat;   // latitude
 
 	//    set control flags
-	iflag(1-1) = snowcontrol(0);   // radiation is shortwave in (5) and longwave in (6)
-	iflag(2-1) = snowcontrol(1);
-	iflag(3-1) = snowcontrol(2);
-	iflag(4-1) = 1;      // how albedo calculations are done - 1 means albedo is calculated
-	iflag(5-1) = snowcontrol(6);      //model option for surface temperature approximation
-	nstepsint  = snowcontrol(3);   //  Internal time step
+	iflag[0] = snowcontrol[0];   // radiation is shortwave in (5) and longwave in (6)
+	iflag[1] = snowcontrol[1];
+	iflag[2] = snowcontrol[2];
+	iflag[3] = 1;      // how albedo calculations are done - 1 means albedo is calculated
+	iflag[4] = snowcontrol[6];      //model option for surface temperature approximation
+	nstepsint  = snowcontrol[3];   //  Internal time step
 	dt = timestep/(double)nstepsint;
-	templocal = snowforcing(0) - (elevsb - elevtg)*rlapse;       //temperature adjustment by lapse rate
+	templocal = snowforcing[0] - (elevsb - elevtg)*rlapse;       //temperature adjustment by lapse rate
 
  	//      initialize water fluxes
 	surfacewaterinput = 0.0;
@@ -174,27 +173,27 @@ int snowueb(const ArrayXd &snowsitev, ArrayXd &snowstatev1, const ArrayXd &snowp
 		}
 		es = svp(t);
 		//    Mapping inputs onto input array
- 		inpt(0,0) = t;                      // temperature to subwatershed
-	    inpt(1,0) = snowforcing(1);         // precipitation
-		inpt(2,0) = snowforcing(2);         // wind speed
-		if(inpt(2,0) < 0.0) {
-			inpt(2,0) = 2.0;                //FAO Standard for no wind speed measurement
+ 		inpt[0][0] = t;                      // temperature to subwatershed
+	    inpt[1][0] = snowforcing[1];         // precipitation
+		inpt[2][0] = snowforcing[2];         // wind speed
+		if(inpt[2][0] < 0.0) {
+			inpt[2][0] = 2.0;                //FAO Standard for no wind speed measurement
 		}
-		inpt(3,0) = min(eda/es, 1.0);       //convert to the relative humidity
-		inpt(4,0) = snowforcing(5);         // short wave radiation
-		inpt(5,0) = snowforcing(6);         // net radiation
-		inpt(6,0) = trange;
+		inpt[3][0] = min(eda/es, 1.0);       //convert to the relative humidity
+		inpt[4][0] = snowforcing[5];         // short wave radiation
+		inpt[5][0] = snowforcing[6];         // net radiation
+		inpt[6][0] = trange;
 		// only call snow routine when there is snow - either on ground or falling.
-		if(snowstatev1(2-1) > 0.0 || (t <= snowparam(0) && inpt(2-1,0) > 0.0))  {
-            outv(22-1) = 0;
-			snowLSub(iyear, month, iday, hour1, dt, 1, inpt, sitev, snowstatev1, snowparam,
-                iflag, dtbar, nstepday,	cump, cume, cummr, outv, snowsurfacetemp1, snowaveragetemp1, ndepletionpoints,
+		if(snowstatev[1] > 0.0 || (t <= snowparam[0] && inpt[1][0] > 0.0))  {
+            outv[21] = 0;
+			snowLSub(iyear, month, iday, hour1, dt, 1, inpt, sitev, snowstatev, snowparam,
+                iflag, dtbar, nstepday,	cump, cume, cummr, outv, snowsurfacetemp, snowaveragetemp, ndepletionpoints,
                 dfc, modelelement,jj);  // 4/2/05  DGT added model element
-			surfacewaterinput += outv(22-1)/timestep;           // to get answers in m/hr
-			snowevaporation   += outv(23-1)/timestep;
-			areafractionsnow  += outv(16-1)/(double)nstepsint;  // averaging the snow covered area over the interval
+			surfacewaterinput += outv[21]/timestep;           // to get answers in m/hr
+			snowevaporation   += outv[22]/timestep;
+			areafractionsnow  += outv[15]/(double)nstepsint;  // averaging the snow covered area over the interval
 		} else {
-			surfacewaterinput += inpt(2-1,0)*dt/timestep;
+			surfacewaterinput += inpt[1][0]*dt/timestep;
 			updatetime(iyear, month, iday, hour1, dt);
 		}
 	}

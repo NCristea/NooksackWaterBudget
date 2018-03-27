@@ -22,22 +22,21 @@
 using namespace constant_definitions;
 using namespace input_structures;
 using namespace other_structures;
-using namespace Eigen;
 using namespace std;
 
 int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int NumNode,
 	const int NumLink, const int NumUser, const int NumReservoir, const int NumSource,
 	int *DrainageOrder, const int NumDrainage, const int NumReturnFlow, int &iFeasible, double &Capacity)
 {
-	ArrayXd RFAmt;
+	vector<double> RFAmt;
 	double RF = 0.0;
-	Array<int,Dynamic,1> RFUnits, RFType, RFLocn;
+	vector<int> RFUnits, RFType, RFLocn;
 	int ii, jj, j_sink, mm, n, j_r, j_drainage, j_return, NumReturnFlows, nfound, *ifound;
 	bool found;
 	//int k, SrcLocnID, RFNodeID;
 
-	ArrayXd DrainageOutFlow(NumDrainage);	// This is a local array.
-	ArrayXd ReservoirNetStorage(NumReservoir);
+	vector<double> DrainageOutFlow(NumDrainage);	// This is a local array.
+	vector<double> ReservoirNetStorage(NumReservoir);
 
 #if TRACE
 	static int ncalls = 0;
@@ -52,11 +51,11 @@ int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int
 	//k = User[i-1].NodeNumber;
 	//jj is link from source to user
 	jj = User[i-1].LinkSourceToUser[j-1];
-	Link(jj-1).Flow += Qtry; //supply flow from source to user
+	Link[jj-1].Flow += Qtry; //supply flow from source to user
 
 	//j_sink= link from user node to sink node
 	j_sink = User[i-1].LinkSourceToSink;
-	Link(j_sink-1).Flow += Qtry; //consumption from user to sink
+	Link[j_sink-1].Flow += Qtry; //consumption from user to sink
 
 	if (User[i-1].ReturnFlowID > 0) {
 		// find1()
@@ -86,28 +85,28 @@ int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int
 		RFType.resize(NumReturnFlows);
 		RFLocn.resize(NumReturnFlows);
 		for (mm = 1; mm <= NumReturnFlows; mm++) {
-			RFAmt(mm-1)   = ReturnFlow[j_r-1].ReturnFlowsAmt[mm-1];
-			RFUnits(mm-1) = ReturnFlow[j_r-1].ReturnFlowsUnits;
-			RFType(mm-1)  = ReturnFlow[j_r-1].ReturnFlowsType[mm-1];
-			if (RFType(mm-1) == 0)
-				RFType(mm-1) = StreamNodeCode;
-			RFLocn(mm-1) = ReturnFlow[j_r-1].ReturnFlowsLocn[mm-1];
-			if (RFLocn(mm-1) == 0)
-				RFLocn(mm-1) = User[i-1].POU_ID;
-			if (RFType(mm-1) == 1 && RFLocn(mm-1) == -1) {
+			RFAmt[mm-1]   = ReturnFlow[j_r-1].ReturnFlowsAmt[mm-1];
+			RFUnits[mm-1] = ReturnFlow[j_r-1].ReturnFlowsUnits;
+			RFType[mm-1]  = ReturnFlow[j_r-1].ReturnFlowsType[mm-1];
+			if (RFType[mm-1] == 0)
+				RFType[mm-1] = StreamNodeCode;
+			RFLocn[mm-1] = ReturnFlow[j_r-1].ReturnFlowsLocn[mm-1];
+			if (RFLocn[mm-1] == 0)
+				RFLocn[mm-1] = User[i-1].POU_ID;
+			if (RFType[mm-1] == 1 && RFLocn[mm-1] == -1) {
 				// find1()
 				nfound = 0; //none found
 				ifound = new int[NumDrainage];
 				ifound[nfound] = 0;
 				for (n = 0; n < NumDrainage; n++) {
-					if (Drainage(n).DrainageID == User[i-1].POU_ID) {
+					if (Drainage[n].DrainageID == User[i-1].POU_ID) {
 						nfound++;
 						ifound[nfound-1] = n+1;
 					}
 				}
 				j_drainage = ifound[0];	//problem if nfound<>1
 				delete [] ifound;
-				RFLocn(mm-1) = Drainage(j_drainage-1).DSDrainage;
+				RFLocn[mm-1] = Drainage[j_drainage-1].DSDrainage;
 			}
 		}
 	} else if (User[i-1].ReturnFlowID < 0) {
@@ -118,50 +117,50 @@ int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int
 		RFUnits.resize(NumReturnFlows);
 		RFType.resize(NumReturnFlows);
 		RFLocn.resize(NumReturnFlows);
-		RFAmt(0)   = 1;
-		RFUnits(0) = 1;
-		RFType(0)  = StreamNodeCode;
-		RFLocn(0)  = User[i-1].POU_ID;
+		RFAmt[0]   = 1;
+		RFUnits[0] = 1;
+		RFType[0]  = StreamNodeCode;
+		RFLocn[0]  = User[i-1].POU_ID;
 	}
 
-	for (mm = 1; mm <= NumReturnFlows; mm++) { //length(User(i)%ReturnFlowFrac) return flow(s) from user to return flow nodes
-		if (RFUnits(mm-1) == FractionUnits) {
-			RF = Qtry*RFAmt(mm-1);
-		} else if (RFUnits(mm-1) == VolumeUnits) {
-			RF = RFAmt(mm-1);
-		} else if (RFUnits(mm-1) == FracMinDemandUnits) {
+	for (mm = 0; mm < NumReturnFlows; mm++) { //length(User(i)%ReturnFlowFrac) return flow(s) from user to return flow nodes
+		if (RFUnits[mm] == FractionUnits) {
+			RF = Qtry*RFAmt[mm];
+		} else if (RFUnits[mm] == VolumeUnits) {
+			RF = RFAmt[mm];
+		} else if (RFUnits[mm] == FracMinDemandUnits) {
 			std::cout << "FracMinDemand not yet implemented\n";
-			RF = Qtry*RFAmt(mm-1);
+			RF = Qtry*RFAmt[mm];
 		}
 
 		//j_return= link from user node to returnflow node
-		j_return = User[i-1].LinkUserToReturnflow[mm-1];
+		j_return = User[i-1].LinkUserToReturnflow[mm];
 		//    do ii=1,nfound
-		Link(j_return-1).Flow += RF;
+		Link[j_return-1].Flow += RF;
 		//    end do
-		Link(j_sink-1).Flow -= RF;
+		Link[j_sink-1].Flow -= RF;
 	}
 
 	BalanceFlowsAtReservoirs(NumNode, NumLink, NumUser, NumReservoir, ReservoirNetStorage);
 	BalanceFlowsAtStreamNodes(NumNode, NumLink,	DrainageOrder, NumDrainage, DrainageOutFlow);
 	iFeasible = 1;
 	Capacity = 0.0;
-	for (ii = 1; ii <= NumDrainage; ii++) {
-		if (DrainageOutFlow(ii-1) < 0) {
+	for (ii = 0; ii < NumDrainage; ii++) {
+		if (DrainageOutFlow[ii] < 0) {
 			iFeasible = 0;
 		} else {
-			if (Capacity > DrainageOutFlow(ii-1)) {
-				Capacity = DrainageOutFlow(ii-1);
+			if (Capacity > DrainageOutFlow[ii]) {
+				Capacity = DrainageOutFlow[ii];
 			}
 		}
 	}
-	for (ii = 1; ii <= NumReservoir; ii++) {
+	for (ii = 0; ii < NumReservoir; ii++) {
 
-		if (ReservoirNetStorage(ii-1) < 0) {
+		if (ReservoirNetStorage[ii] < 0) {
 			iFeasible = 0;
 		} else {
-			if (Capacity > ReservoirNetStorage(ii-1)) {
-				Capacity = ReservoirNetStorage(ii-1);
+			if (Capacity > ReservoirNetStorage[ii]) {
+				Capacity = ReservoirNetStorage[ii];
 			}
 		}
 	}

@@ -23,7 +23,6 @@
 using namespace constant_definitions;
 using namespace input_structures;
 using namespace other_structures;
-using namespace Eigen;
 using namespace std;
 
 int isort(const UserSourceTableType *table, const int n, int *s);
@@ -230,25 +229,25 @@ int AssignPriorityOrder(const int NumUser, const int NumSource, const int NumRig
 
 int isort(const UserSourceTableType *table, const int n, int *s)
 {
-	Array<int,Dynamic,1> i(n);
+	vector<int> i(n);
 	int j, k, m, itemp;
 
 	for (m = 0; m < n; m++) {
-		i(m) = table[m].PriorityDate;
+		i[m] = table[m].PriorityDate;
 	}
 	for (j = 1; j <= n; j++) {
 		s[j-1] = j;
 	}
 
-	for (j = 1; j <= n-1; j++) {
-		for (k = j+1; k <= n; k++) {
-			if (i(j-1) >= i(k-1)) {
-				itemp = i(k-1);
-				i(k-1) = i(j-1);
-				i(j-1) = itemp;
-				itemp  = s[k-1];
-				s[k-1] = s[j-1];
-				s[j-1] = itemp;
+	for (j = 0; j < n-1; j++) {
+		for (k = j; k < n; k++) {
+			if (i[j] >= i[k]) {
+				itemp = i[k];
+				i[k] = i[j];
+				i[j] = itemp;
+				itemp  = s[k];
+				s[k] = s[j];
+				s[j] = itemp;
 			}
 		}
 	}

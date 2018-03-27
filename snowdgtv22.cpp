@@ -20,7 +20,6 @@
 #include "topnet.hh"
 #include "snow.hh"
 
-using namespace Eigen;
 using namespace std;
 
 //  File  snowdgtv22.f
@@ -49,14 +48,14 @@ using namespace std;
 //  by the U.S. Government , and therefore is in the public domain and not
 //  subject to copyright.
 
-int snowueb2(const double dt, const int nt, const ArrayXXd &input, const ArrayXd &sitev, ArrayXd &statev,
-	ArrayXd &tsprevday, ArrayXd &taveprevday, const int nstepday, const ArrayXd &param, Array<int,Dynamic,1> &iflag,
-	double &cump, double &cume, double &cummr, ArrayXd &outv, const ArrayXd &mtime, const int modelelement, const int jj)
+int snowueb2(const double dt, const int nt, const vector<vector<double> > &input, const vector<double> &sitev, vector<double> &statev,
+	vector<double> &tsprevday, vector<double> &taveprevday, const int nstepday, const vector<double> &param, vector<int> &iflag,
+	double &cump, double &cume, double &cummr, vector<double> &outv, const vector<double> &mtime, const int modelelement, const int jj)
 {
 
 	double mr, ub, ub_old, fc, w, refDepth, totalRefDepth, df, aep;
-	double cd, rrhoi, rrho, rid, ta, p, rh, qsi, qnetob, coszen, ws, qli, pRain, ps;
-	double a, qh, qe, e, qm, q = 0.0, fm, tave, tsurf, qnet, smelt, rkn;
+	double cd, rrhoi, rrho, rid, ta, p, rh, qsi, qnetob, coszen, ws, qli, pRain = 0.0, ps = 0.0;
+	double a = 0.0, qh, qe, e, qm, q = 0.0, fm, tave, tsurf, qnet, smelt, rkn;
 	int i, ii, pflag, iradfl;
 
 	// Definitions
@@ -144,19 +143,19 @@ int snowueb2(const double dt, const int nt, const ArrayXXd &input, const ArrayXd
 	const double rhow  = 1000.0;		//  Density of Water (1000 kg/m^3)
 
 	//  Parameters
-	const double tr    = param(1-1);	//  Temperature above which all is rain (3 C)
-	const double ts    = param(2-1);	//  Temperature below which all is snow (-1 C)
-	const double cg    = param(4-1);	//  Ground heat capacity (nominally 2.09 KJ/kg/C)
-	const double z     = param(5-1);	//  Nominal meas. height for air temp. and humidity (2m)
-	const double zo    = param(6-1);	//  Surface aerodynamic roughness (m)
-	const double rho   = param(7-1);	//  Snow Density (Nominally 450 kg/m^3)
-	const double rhog  = param(8-1);	//  Soil Density (nominally 1700 kg/m^3)
-	const double lc    = param(9-1);	//  Liquid holding capacity of snow (0.05)
-	const double de    = param(11-1);	//  Thermally active depth of soil (0.1 m)
-	const double abg   = param(12-1);	//  Bare ground albedo  (0.25)
-	const double avo   = param(13-1);	//  Visual new snow albedo (0.95)
-	const double anir0 = param(14-1);	//  NIR new snow albedo (0.65)
-	const double dNewS = param(21-1);	//  The threshold depth of for new snow (0.001 m)
+	const double tr    = param[0];	//  Temperature above which all is rain (3 C)
+	const double ts    = param[1];	//  Temperature below which all is snow (-1 C)
+	const double cg    = param[3];	//  Ground heat capacity (nominally 2.09 KJ/kg/C)
+	const double z     = param[4];	//  Nominal meas. height for air temp. and humidity (2m)
+	const double zo    = param[5];	//  Surface aerodynamic roughness (m)
+	const double rho   = param[6];	//  Snow Density (Nominally 450 kg/m^3)
+	const double rhog  = param[7];	//  Soil Density (nominally 1700 kg/m^3)
+	const double lc    = param[8];	//  Liquid holding capacity of snow (0.05)
+	const double de    = param[10];	//  Thermally active depth of soil (0.1 m)
+	const double abg   = param[11];	//  Bare ground albedo  (0.25)
+	const double avo   = param[12];	//  Visual new snow albedo (0.95)
+	const double anir0 = param[13];	//  NIR new snow albedo (0.65)
+	const double dNewS = param[20];	//  The threshold depth of for new snow (0.001 m)
 	//const double gsurf = param(22-1);   //  The fraction of surface melt that runs off (e.g. from a glacier)
 	// Bert Rubash: gsurf is passed to predicorr but not used there.
 
@@ -176,30 +175,30 @@ int snowueb2(const double dt, const int nt, const ArrayXXd &input, const ArrayXd
 	//	endif
 	//      cerr << (input(j,1),j=1,7)
 	//   State variables - These serve as initial conditions
-	ub = statev(0);    // Snow Energy Content  (KJ/m^2)
-	w  = statev(1);    // Snow Water Equivalent (m) relative to T = 0 C solid phase
+	ub = statev[0];    // Snow Energy Content  (KJ/m^2)
+	w  = statev[1];    // Snow Water Equivalent (m) relative to T = 0 C solid phase
 	if (ub <= 0.0) {
 		refDepth = 0.0;
 		totalRefDepth = 0.0;
 	} else {
-		refDepth = statev(4-1);
-		totalRefDepth = statev(5-1);
+		refDepth = statev[3];
+		totalRefDepth = statev[4];
 	}
 
 	//	Save old Value 07/23/01
 	ub_old = ub;
 
 	//   Site variables
-	fc = sitev(1-1);     //  Forest cover fraction (0-1)
-	df = sitev(2-1);     //  Drift factor
-	aep = sitev(5-1);   //  Albedo extinction parameter to smooth
+	fc = sitev[0];     //  Forest cover fraction (0-1)
+	df = sitev[1];     //  Drift factor
+	aep = sitev[4];   //  Albedo extinction parameter to smooth
 	//      transition of albedo when snow is shallow. Depends on Veg. height (m)
 
 	//   control flags
-	iradfl = iflag(0);
-	pflag  = iflag(1);
+	iradfl = iflag[0];
+	pflag  = iflag[1];
 	//iflag(4) albedo caculation
-	iTsMethod = iflag(5-1);	// the method to approximate the surface temperature
+	iTsMethod = iflag[4];	// the method to approximate the surface temperature
 							// 1 normal old snow melt model
 							// 2 revised direct gradient method (New method for ke) and qe
 							// 3 force restore approach
@@ -222,29 +221,29 @@ int snowueb2(const double dt, const int nt, const ArrayXXd &input, const ArrayXd
 	//   Loop for each time step
 	for (i = 1; i <= nt; i++) {   // DGT Time looping disabled as temperature averaging not handled here - must be handled outside
 		//   Input variables
-        ta = input(1-1,i-1);    // Air temperature input (Degrees C)
-        p  = input(2-1,i-1);     // Precipitation rate input (m/hr)
-        ws = input(3-1,i-1);    // Wind Speed (m/s)
-        rh = input(4-1,i-1);    // Relative humidity (fraction 0-1)
+        ta = input[0][i-1];    // Air temperature input (Degrees C)
+        p  = input[1][i-1];     // Precipitation rate input (m/hr)
+        ws = input[2][i-1];    // Wind Speed (m/s)
+        rh = input[3][i-1];    // Relative humidity (fraction 0-1)
         // DGT 5/27/12 initialize variables to avoid run time check problems
         qsi = 0.0;
         qli = 0.0;
         qnetob = 0.0;
         if (iradfl == 0) {  	// input is incoming short and longwave
-			qsi = input(5-1,i-1);  	// Incoming shortwave radiation (KJ/m^2/hr)
-			qli = input(6-1,i-1);  	// Incoming longwave radiation (KJ/m^2/hr)
+			qsi = input[4][i-1];  	// Incoming shortwave radiation (KJ/m^2/hr)
+			qli = input[5][i-1];  	// Incoming longwave radiation (KJ/m^2/hr)
         } else {
-          qnetob = input(5-1,i-1); // Net allwave radiation (KJ/m^2/hr)
+          qnetob = input[4][i-1]; // Net allwave radiation (KJ/m^2/hr)
         }
-        coszen = input(7-1,i-1);   // Cos(angle between direct sunlight and surface
+        coszen = input[6][i-1];   // Cos(angle between direct sunlight and surface
 		//                             normal).
 		//         Representative value over time step used in albedo calculation.
 		//         We neglect the difference between direct and diffuse albedo.
 		// Daily average temperatures handled internally so that multiple time steps will work
 		ts_save::Ts_Ave   = daily_ave(tsprevday, nstepday, -100.0) + tk; 	// (C)  Surface temperature average over last 24 hours
 		ts_save::Tave_ave = daily_ave(taveprevday, nstepday, -100.0) + tk; 	// (C)  Depth averaged temperature average over last 24 hours
-		ts_save::Ts_old   = tsprevday(nstepday-1) + tk; 					// (C) Surface temperature from previous time step
-		ts_save::Tave_old = taveprevday(nstepday-1) + tk; 					// (C) Average temperature from previous time step
+		ts_save::Ts_old   = tsprevday[nstepday-1] + tk; 					// (C) Surface temperature from previous time step
+		ts_save::Tave_old = taveprevday[nstepday-1] + tk; 					// (C) Average temperature from previous time step
 		//   If any of these variables are out of range due to any problem set them back to freezing
 		if (ts_save::Ts_old < 0.0) {
 			cerr << "Invalid previous time step surface temperature " << ts_save::Ts_old << " set to 273 K\n";
@@ -284,13 +283,13 @@ int snowueb2(const double dt, const int nt, const ArrayXXd &input, const ArrayXd
 		//	       statev(3) =0.0
 		//	  endif
 
-		if (iflag(4-1) == 1) {
+		if (iflag[3] == 1) {
 			//  Calculate albedo
-			a = albedo(statev(3-1), coszen, w/rrho, aep, abg, avo, anir0);
+			a = albedo(statev[2], coszen, w/rrho, aep, abg, avo, anir0);
 			// Use of this albedo throughout time step neglects the
 			//  changes due to new snow within a time step.o
 		} else {
-			a = statev(3-1);
+			a = statev[2];
 		}
 
 		//   Calculate neutral mass transfer coefficient
@@ -327,15 +326,15 @@ int snowueb2(const double dt, const int nt, const ArrayXXd &input, const ArrayXd
 			w = 0.0;
 		}
 		//  To guard against unreasonable UB when there is no snow do not allow bulk temperature to go above 10 C
-		if (tave  >  10.0) {
+		if (tave > 10.0) {
 			ub = rhog*de*cg*10.0;
 		}
 		// surface melt change
 		//   Update snow surface age based on snowfall in time step
 		//       if (iflag(4).eq.1) call agesn(statev(3),dt,ps,tsurf,tk)
 		//   Update snow surface age based on snowfall in time step
-		if (iflag(4-1) == 1)
-			agesn(statev(3-1), dt, ps, tsurf, tk, dNewS);
+		if (iflag[3] == 1)
+			agesn(statev[2], dt, ps, tsurf, tk, dNewS);
 		//    accumulate for mass balance
 		cump  = cump + (ps + pRain)*dt;
 		cume  = cume + e*dt;
@@ -379,14 +378,14 @@ int snowueb2(const double dt, const int nt, const ArrayXXd &input, const ArrayXd
 
 		// update tsbackup and tavebackup
 		for (ii = 0; ii < nstepday-1; ii++) {
-			tsprevday(ii)   = tsprevday(ii+1);
-			taveprevday(ii) = taveprevday(ii+1);
+			tsprevday[ii]   = tsprevday[ii+1];
+			taveprevday[ii] = taveprevday[ii+1];
 		}
-		tsprevday(nstepday-1)   = tsurf;
-		taveprevday(nstepday-1) = tave;
+		tsprevday[nstepday-1]   = tsurf;
+		taveprevday[nstepday-1] = tave;
 
 		if (pflag == 1) {
-            snowcontrol3_File << ub    << " " << w     << " " << statev(3-1) << " ";
+            snowcontrol3_File << ub    << " " << w     << " " << statev[2] << " ";
             snowcontrol3_File << pRain << " " << ps    << " " << a           << " ";
             snowcontrol3_File << qh    << " " << qe    << " " << e           << " ";
             snowcontrol3_File << mr    << " " << qm    << " " << q           << " ";
@@ -397,24 +396,24 @@ int snowueb2(const double dt, const int nt, const ArrayXXd &input, const ArrayXd
 		}
 	}
 
-	statev(0) = ub;
-	statev(1) = w;
-	statev(3) = refDepth;
-	statev(4) = totalRefDepth;
-	outv(0)   = pRain;
-	outv(1)   = ps;
-	outv(2)   = a;
-	outv(3)   = qh;
-	outv(4)   = qe;
-	outv(5)   = e;
-	outv(6)   = mr;
-	outv(7)   = qm;
-	outv(8)   = q;
-	outv(9)  = fm;
-	outv(10)  = tave;
-	outv(11)  = tsurf;
-	outv(12)  = qnet;
-	outv(13)  = smelt;
+	statev[0] = ub;
+	statev[1] = w;
+	statev[3] = refDepth;
+	statev[4] = totalRefDepth;
+	outv[0]   = pRain;
+	outv[1]   = ps;
+	outv[2]   = a;
+	outv[3]   = qh;
+	outv[4]   = qe;
+	outv[5]   = e;
+	outv[6]   = mr;
+	outv[7]   = qm;
+	outv[8]   = q;
+	outv[9]  = fm;
+	outv[10]  = tave;
+	outv[11]  = tsurf;
+	outv[12]  = qnet;
+	outv[13]  = smelt;
 
 #if TRACE
 	caller = save_caller;
@@ -436,8 +435,8 @@ int predicorr(const double dt, double &ub, double &w, const double a,
 	const double ta, const double pRain, const double ps, const double ws, const double rh,
 	const double qsi, const double  qli, const double iradfl, const double rkn,
 	const double qnetob, const double rid,
-	const ArrayXd &param, const ArrayXd &sitev, const double iTsMethod,
-	const ArrayXd &mtime,  // pass a modeling time
+	const vector<double> &param, const vector<double> &sitev, const double iTsMethod,
+	const vector<double> &mtime,  // pass a modeling time
 	//     following variables are output
 	double &qh, double &qe, double &e,  double &mr, double &qm, double &q, double &fm,
 	double &tsurf, double &tave, double &qnet, double &refDepth, double &totalRefDepth ,
@@ -620,7 +619,7 @@ L1: if ((fabs(w2-w1) > wtol || fabs(ub2-ub1) > utol) && niter < imax) {
 int qfm(const double ub, const double w, const double a, const double ta, const double pRain,
 	const double ps, const double ws, const double rh, const double qsi, const double qli,
 	const double rkn, const double iradfl, const double qnetob,
-	const double rid, const ArrayXd &param, const ArrayXd &sitev, const int iTsMethod, const ArrayXd &mtime,
+	const double rid, const vector<double> &param, const vector<double> &sitev, const int iTsMethod, const vector<double> &mtime,
 	double &fm, double &q, double &qm, double &mr, double &qe,
 	double &e, double &tsurf, double &tave, double &qh, double &qnet,
 	const double dt, double &refDepth, const double totalRefDepth, double &smelt)
@@ -643,31 +642,31 @@ int qfm(const double ub, const double w, const double a, const double ta, const 
 	const double w1day = 0.261799;		//  Daily frequency (2pi/24 hr 0.261799 radians/hr)
 
 	//  Parameters
-	const double es    = param(2);	//  emmissivity of snow (nominally 0.99)
-	const double cg    = param(3);	//  Ground heat capacity (nominally 2.09 KJ/kg/C)
-	const double z     = param(4);	//  Nominal meas. height for air temp. and humidity (2m)
-	const double rho   = param(6);	//  Snow Density (Nominally 450 kg/m^3)
-	const double rhog  = param(7);	//  Soil Density (nominally 1700 kg/m^3)
-	const double lc    = param(8);	//  Liquid holding capacity of snow (0.05)
-	const double ks    = param(9);	//  Snow Saturated hydraulic conductivity (20 !160 m/hr)
-	const double de    = param(10);	//  Thermally active depth of soil (0.1 m)
-    LanS               = param(14);	//  the thermal conductivity of fresh (dry) snow (0.0576 kJ/m/k/hr)
-	const double rd1   = param(17);	//  Amplitude correction coefficient of heat conduction (1)
-	const double fstab = param(18);	//  Stability correction control parameter 0 = no corrections, 1 = full corrections
-	const double gsurf = param(21);	//  The fraction of surface melt that runs off (e.g. from a glacier)
+	const double es    = param[2];	//  emmissivity of snow (nominally 0.99)
+	const double cg    = param[3];	//  Ground heat capacity (nominally 2.09 KJ/kg/C)
+	const double z     = param[4];	//  Nominal meas. height for air temp. and humidity (2m)
+	const double rho   = param[6];	//  Snow Density (Nominally 450 kg/m^3)
+	const double rhog  = param[7];	//  Soil Density (nominally 1700 kg/m^3)
+	const double lc    = param[8];	//  Liquid holding capacity of snow (0.05)
+	const double ks    = param[9];	//  Snow Saturated hydraulic conductivity (20 !160 m/hr)
+	const double de    = param[10];	//  Thermally active depth of soil (0.1 m)
+    LanS               = param[14];	//  the thermal conductivity of fresh (dry) snow (0.0576 kJ/m/k/hr)
+	const double rd1   = param[17];	//  Amplitude correction coefficient of heat conduction (1)
+	const double fstab = param[18];	//  Stability correction control parameter 0 = no corrections, 1 = full corrections
+	const double gsurf = param[21];	//  The fraction of surface melt that runs off (e.g. from a glacier)
 
 	if (isnan(q)) {
         cerr << "q in qfm() is not a number" << endl;
 		exit(0);
 	}
 	//   Site variables
-	fc = sitev(1-1);     //  Forest cover fraction (0-1)
+	fc = sitev[0];     //  Forest cover fraction (0-1)
 	if (fc > 0) {
 	   fc = fc;
 	}
 	//      df=sitev(2)    !  Drift factor
-	pr = sitev(3-1);     //  Atmospheric Pressure (Pa)
-	qg = sitev(4-1);     //  Ground heat flux (KJ/m^2/hr)  This is more logically an
+	pr = sitev[2];     //  Atmospheric Pressure (Pa)
+	qg = sitev[3];     //  Ground heat flux (KJ/m^2/hr)  This is more logically an
 	//      input variable, but is put here because it is never known at each
 	//      time step.  Usually it will be assigned a value 0.
 
@@ -703,10 +702,10 @@ int qfm(const double ub, const double w, const double a, const double ta, const 
 	if (ub  > 0 && ps <= 0.0 && pRain <= 0.0 && totalRefDepth <= rd1*ds && w > 0.0) {
 		qc1 = QcEst(tk, rkn, ws, tak, g, qp, densa, cp, hneu,
 			pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-			mtime, param, iTsMethod, w, dt);
+			param, iTsMethod, w, dt);
 		qc2 = QcEst(tk-0.01, rkn, ws, tak, g, qp, densa, cp, hneu,
 			pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-			mtime, param, iTsMethod, w, dt);
+			param, iTsMethod, w, dt);
 
 
 		Grad(qc1, qc2, 0.0, -0.01,  var_a, var_b);
@@ -793,7 +792,7 @@ double srftmp(const double qsi, const double a, const double qli, const double q
 		const double ra, const double cp,const double rho, const double rkn, const double hneu,
 		const double es, const double sbc, const double cs, const double rs, const double w,
 		const double qnetob, const double iradfl, const double ws, const double z, const double g,
-		const double fc, const double fstab, const ArrayXd &mtime, const ArrayXd &param,
+		const double fc, const double fstab, const vector<double> &mtime, const vector<double> &param,
         const int iTsMethod, const double dt, const double ub, const double refDepth, double &smelt)
 {
 	//   This version written on 4/23/97 by Charlie Luce solves directly the
@@ -838,10 +837,10 @@ L1: if (er > tol && niter < nitermax) {
 		tslast = ts;
         f1 = surfeb(ts, rkn, ws, tak, g, qp, densa, cp, hneu,
 			pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-			mtime, param, iTsMethod, w, dt, ub, refDepth);
+			param, iTsMethod, w, dt, ub, refDepth);
 		f2 = surfeb(fff*ts, rkn, ws, tak, g, qp, densa, cp, hneu,
 			pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-			mtime, param, iTsMethod, w, dt, ub, refDepth);
+			param, iTsMethod, w, dt, ub, refDepth);
 		ts = ts - ((1.0 - fff)*ts*f1)/(f1 - f2);
 		if (ts < tak - 50)
 			goto L11; //  If it looks like it is getting unstable go straight to bisection
@@ -858,34 +857,34 @@ L11: tlb = tak - 20.0;        // First guess at a reasonable range
 	tub = tak + 10.0;
 	flb = surfeb(tlb, rkn, ws, tak, g, qp, densa, cp, hneu,
 		pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-		mtime, param, iTsMethod, w, dt, ub, refDepth);
+		param, iTsMethod, w, dt, ub, refDepth);
 	fub = surfeb(tub, rkn, ws, tak, g, qp, densa, cp, hneu,
 		pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-		mtime, param, iTsMethod, w, dt, ub, refDepth);
+		param, iTsMethod, w, dt, ub, refDepth);
 	ibtowrite = 0;
 	if (flb*fub  >  0.) {   // these are of the same sign so the range needs to be enlarged
 		tlb = tak - 150.0;    // an almost ridiculously large range - solution should be in this if it exists
 		tub = tak + 100.0;
 		flb = surfeb(tlb, rkn, ws, tak, g, qp, densa, cp, hneu,
 			pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-			mtime, param, iTsMethod, w, dt, ub, refDepth);
+			param, iTsMethod, w, dt, ub, refDepth);
 		fub = surfeb(tub, rkn, ws, tak, g, qp, densa, cp, hneu,
 			pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-			mtime, param, iTsMethod, w, dt, ub, refDepth);
+			param, iTsMethod, w, dt, ub, refDepth);
 		ibtowrite = 1;
 		if (flb*fub  >  0.0) {   // these are of the same sign so no bisection solution
 			cerr << "Bisection surface temperature solution failed with large range\n";
-			cerr << "Date: " << " " << mtime(1-1) << " " << mtime(2-1) << " " << mtime(3-1) << '\n';
-			cerr << "Time: " << " " << mtime(4-1) << '\n';
-			cerr << "Model element: " << " " << mtime(5-1) << '\n';
+			cerr << "Date: " << " " << mtime[0] << " " << mtime[1] << " " << mtime[2] << '\n';
+			cerr << "Time: " << " " << mtime[3] << '\n';
+			cerr << "Model element: " << " " << mtime[4] << '\n';
 			cerr << "A surface temperature of 273 K assumed\n";
 	        ts = tk;
 			goto L10;
 	    } else {
 			cerr << "Bisection surface temperature solution with large range\n";
-			cerr << "Date: " << " " << mtime(1-1) << " " << mtime(2-1) << " " << mtime(3-1) << '\n';
-			cerr << "Time: " << " " << mtime(4-1) << '\n';
-			cerr << "Model element: " << mtime(5-1) << '\n';
+			cerr << "Date: " << " " << mtime[0] << " " << mtime[1] << " " << mtime[2] << '\n';
+			cerr << "Time: " << " " << mtime[3] << '\n';
+			cerr << "Model element: " << mtime[4] << '\n';
 			cerr << "This is not a critical problem unless it happens frequently\n";
 			cerr << "and solution below appears incorrect\n";
 	    }
@@ -903,7 +902,7 @@ L11: tlb = tak - 20.0;        // First guess at a reasonable range
 		ts = 0.5*(tub + tlb);
 		f1 = surfeb(ts, rkn, ws, tak, g, qp, densa, cp, hneu,
 			pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-			mtime, param, iTsMethod, w, dt, ub, refDepth);
+			param, iTsMethod, w, dt, ub, refDepth);
 		if (f1 > 0.0) {  // This relies on the assumption (fact) that this is a monotonically decreasing function
 			tlb = ts;
 		} else {
@@ -922,7 +921,7 @@ L10: ts = ts - tk;
 		result = 0.0;
 	    smelt = surfeb(result+tk, rkn, ws, tak, g, qp, densa, cp, hneu,
 			pr, ea, tk, dens, cs, rs, tavek, qsn, qli, fc, sbc, qnetob, iradfl,
-			mtime, param, iTsMethod, w, dt, ub, refDepth);
+			param, iTsMethod, w, dt, ub, refDepth);
 			// surface melt smelt is the energy not accommodated by conduction into the snow
 			//  so it results in surface melt which then infiltrates and adds energy to the snowpack
 			//  through refreezing
@@ -944,7 +943,7 @@ double surfeb(const double ts, const double rkn, const double ws, const double t
 	const double qp, const double densa, const double cp, const double hneu, const double pr, const double ea,
 	const double tk, const double dens, const double cs, const double rs, const double tavek, const double qsn,
 	const double qli, const double fc, const double sbc, const double qnetob, const int iradfl,
-	const ArrayXd &mtime, const ArrayXd &param, const int iTsMethod, const double w, const double dt,
+	const vector<double> &param, const int iTsMethod, const double w, const double dt,
 	const double ub, const double refDepth)
 {
 	//      function to evaluate the surface energy balance for use in solving for
@@ -957,18 +956,18 @@ double surfeb(const double ts, const double rkn, const double ws, const double t
 	const double w1day = 0.261799;		//  Daily frequency (2pi/24 hr 0.261799 radians/hr)
 
 	//  Parameters
-	const double es    = param(3-1);	//  emmissivity of snow (nominally 0.99)
-	const double cg    = param(4-1);	//  Ground heat capacity (nominally 2.09 KJ/kg/C)
-	const double z     = param(5-1);	//  Nominal meas. height for air temp. and humidity (2m)
-	const double rho   = param(7-1);	//  Snow Density (Nominally 450 kg/m^3)
-	const double rhog  = param(8-1);	//  Soil Density (nominally 1700 kg/m^3)
-	double de          = param(11-1);	//  Thermally active depth of soil (0.1 m)
-	LanS               = param(15-1);   // the thermal conductivity of fresh (dry) snow (0.0576 kJ/m/k/hr)
-	LanG               = param(16-1);   // the thermal conductivity of soil (9.68 kJ/m/k/hr)
+	const double es    = param[2];	//  emmissivity of snow (nominally 0.99)
+	const double cg    = param[3];	//  Ground heat capacity (nominally 2.09 KJ/kg/C)
+	const double z     = param[4];	//  Nominal meas. height for air temp. and humidity (2m)
+	const double rho   = param[6];	//  Snow Density (Nominally 450 kg/m^3)
+	const double rhog  = param[7];	//  Soil Density (nominally 1700 kg/m^3)
+	double de          = param[10];	//  Thermally active depth of soil (0.1 m)
+	LanS               = param[14];   // the thermal conductivity of fresh (dry) snow (0.0576 kJ/m/k/hr)
+	LanG               = param[15];   // the thermal conductivity of soil (9.68 kJ/m/k/hr)
 
-	const double wlf   = param(17-1);	//  Low frequency fluctuation in deep snow/soil layer (1/4 w1 = 0.0654 radian/hr)
-	const double rd1   = param(18-1);	//  Amplitude correction coefficient of heat conduction (1)
-	const double fstab = param(19-1);	//  Stability correction control parameter 0 = no corrections, 1 = full corrections
+	const double wlf   = param[16];	//  Low frequency fluctuation in deep snow/soil layer (1/4 w1 = 0.0654 radian/hr)
+	const double rd1   = param[17];	//  Amplitude correction coefficient of heat conduction (1)
+	const double fstab = param[18];	//  Stability correction control parameter 0 = no corrections, 1 = full corrections
 
 	zs = w*rhow/rho;
 
@@ -1079,15 +1078,15 @@ double QcEst(const double ts,  const double rkn, const double ws, const double t
 	 const double pr, const double ea, const double tk, const double dens,
 	 const double cs, const double rs, const double tavek, const double qsn,
 	 const double qli, const double fc, const double sbc,
-	 const double qnetob, const int iradfl, const ArrayXd &mtime,
-	 const ArrayXd &param, const int iTsMethod, const double w, const double dt)
+	 const double qnetob, const int iradfl,
+	 const vector<double> &param, const int iTsMethod, const double w, const double dt)
 {
 	//       function to estimate surface heat conduction for use in solving for
 	//       surface temperature
 	double result, rkin;
-	const double es    = param(3-1);	//  emmissivity of snow (nominally 0.99)
-	const double z     = param(5-1);	//  Nominal meas. height for air temp. and humidity (2m)
- 	const double fstab = param(19-1);	//  Stability correction control parameter 0 = no corrections, 1 = full corrections
+	const double es    = param[2];	//  emmissivity of snow (nominally 0.99)
+	const double z     = param[4];	//  Nominal meas. height for air temp. and humidity (2m)
+ 	const double fstab = param[18];	//  Stability correction control parameter 0 = no corrections, 1 = full corrections
 
 	rkin = rkinst(rkn, ws, tak, ts, z, g, fstab);
 	result = qp + rkin*densa*cp*(tak - ts) + (hneu*densa*0.622*rkin)/pr*(ea - svp(ts - tk));
@@ -1620,14 +1619,14 @@ int Grad(const double qc1, const double qc2, const double t1, const double t2, d
 // ********************* Caculate the daily average  *********************
 //  Calculate the daily average value
 //  n number of records, a minimum value -100 or some
-double daily_ave(const ArrayXd &backup, const int n, const double a)
+double daily_ave(const vector<double> &backup, const int n, const double a)
 {
 	int i;
 	double sum = 0.0, result;
 	double count = 0.0;
 	for (i = 0; i < n; i++) {
-		if (backup(i) > a) {
-			sum += backup(i);
+		if (backup[i] > a) {
+			sum += backup[i];
 			count += 1.0;
 		}
 	}

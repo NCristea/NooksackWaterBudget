@@ -23,7 +23,6 @@
 #include "snow.hh"
 
 using namespace std;
-using namespace Eigen;
 
 ofstream oFile[15];
 ofstream snowcontrol3_File;	// unit 10
@@ -33,18 +32,18 @@ ofstream snowcontrol3_File;	// unit 10
 // ******************************************************
 // *  subroutine  calcts
 // ******************************************************
-int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,           ArrayXXi &linkR,        const int *ll,
-            const int Nsub,         const int *Nka,        const double *tl,   double **atb,
-            double **pka,           const int *nd,         double **cl,           double **pd,        const double units,
-            const int ipsub,        const int ipatb,       const bool reinit,     const bool modwrt,  const int stim,
-            ArrayXXd &bRain, const long int interval, const int m,        const int mi,
-            const int mps,          const int mpe,         bool &ok,              const double *xlat, const double *xlong,
-            const double stdlon,    const double *elevtg,  double **bdtBar,       const int sDate,    int &sHour,
-            const ArrayXd &temper,   const double *dewp,    const double *tRange,  const int Neq,      const int Nout,
-            const int nBout,        const int *iBout,      const double *wind2m,  double **bTmin,     double **bTmax,
-            double **bTdew,         const double *bXlat,   const double *bXlon,   int *ntdh,    const int ndump,
-            const int maxInt,       const int maxSlp,      const int maxA,        const int maxC,     const int maxChn,
-            const int idebugoutput, const int idebugbasin, const int idebugcase)
+int calcts( double **Si,            const vector<vector<double> > &Sp,      double **Rp,          const int *ll,
+            const int Nsub,         const int *Nka,          const double *tl,     double **atb,
+            double **pka,           const int *nd,           double **cl,          double **pd,        const double units,
+            const int ipsub,        const int ipatb,         const bool reinit,    const bool modwrt,  const int stim,
+            vector<vector<double> > &bRain,        const long int interval, const int m,          const int mi,
+            const int mps,          const int mpe,           bool &ok,             const double *xlat, const double *xlong,
+            const double stdlon,    const double *elevtg,    double **bdtBar,      const int sDate,    int &sHour,
+            const vector<double> &temper, const vector<double> &dewp, const vector<double> &tRange, const int Neq, const int Nout,
+            const int nBout,        const int *iBout,        const double *wind2m, double **bTmin,     double **bTmax,
+            double **bTdew,         const double *bXlat,     const double *bXlon,  int *ntdh,          const int ndump,
+            const int maxInt,       const int maxSlp,        const int maxA,       const int maxC,     const int maxChn,
+            const int idebugoutput, const int idebugbasin,   const int idebugcase)
 {
     istringstream line;
 
@@ -67,8 +66,8 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
     // use these regions for irrigation and drainage
 
     //flood comment out next line
-    static Array<int,Dynamic,1> irr_l(Nip1);
-    static ArrayXd rirr(Nip1);
+    static vector<int> irr_l(Nip1);
+    static vector<int> rirr(Nip1);
     static int istep, j, n;
 
     //   locals
@@ -137,13 +136,13 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
     static string inFile, outFile, pFile, svFile, bcFile;
     static string aFile, dfcFile, outFileDet;
     static string inLine;
-    static ArrayXd snowsitev(Nsv);
+    static vector<double> snowsitev(Nsv);
     //double **snowstatev;
 
-    static ArrayXd snowforcing(Niv);
-    static ArrayXd snowparam(Npar);
-    static Array<int,Dynamic,1> snowcontrol(7);
-    static ArrayXd dtbar(12);
+    static vector<double> snowforcing(Niv);
+    static vector<double> snowparam(Npar);
+    static vector<int> snowcontrol(7);
+    static vector<double> dtbar(12);
     static double *cump;
     static double *cume;
     static double *cummr;
@@ -164,30 +163,19 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
 #endif
 
     // Allocate and initialize all the now dynamic arrays
-    ArrayXd         baseflow(maxSlp);
-    ArrayXd      totalrunoff(maxSlp);
-    ArrayXd    potentialevap(maxSlp);
-    ArrayXd          tempave(maxSlp);
-    ArrayXd           surfro(maxSlp);
-    ArrayXd         canstore(maxSlp);
-    ArrayXd        soilstore(maxSlp);
-    ArrayXd            tiled(maxSlp);
-    ArrayXd           ditchd(maxSlp);
-    ArrayXd      ArtDrainage(maxSlp);
-    ArrayXd volume_irrig_sup(maxSlp);
-    ArrayXd vol_irrig_demand(maxSlp);
-    baseflow         = 0.0;
-    totalrunoff      = 0.0;
-    potentialevap    = 0.0;
-    tempave          = 0.0;
-    surfro           = 0.0;
-    canstore         = 0.0;
-    soilstore        = 0.0;
-    tiled            = 0.0;
-    ditchd           = 0.0;
-    ArtDrainage      = 0.0;
-    volume_irrig_sup = 0.0;
-    vol_irrig_demand = 0.0;
+    vector<double>         baseflow(maxSlp,0.0);
+    vector<double>      totalrunoff(maxSlp,0.0);
+    vector<double>    potentialevap(maxSlp,0.0);
+    vector<double>          tempave(maxSlp,0.0);
+    vector<double>           surfro(maxSlp,0.0);
+    vector<double>         canstore(maxSlp,0.0);
+    vector<double>        soilstore(maxSlp,0.0);
+    vector<double>            tiled(maxSlp,0.0);
+    vector<double>           ditchd(maxSlp,0.0);
+    vector<double>      ArtDrainage(maxSlp,0.0);
+    vector<double> volume_irrig_sup(maxSlp,0.0);
+    vector<double> vol_irrig_demand(maxSlp,0.0);
+
     groundwater_to_take  = new double[maxSlp];
     evap_for_watermgmt   = new double[maxSlp];
     precip_for_watermgmt = new double[maxSlp];
@@ -200,8 +188,8 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
     for (i = 0; i < maxInt; i++) {
         quc[i] = 0.0;
     }
-    ArrayXXd bdtBarR(12,maxSlp);
-    ArrayXXd zbar(maxSlp,nreg);
+    vector<vector<double> > bdtBarR(maxSlp,vector<double>(12));  // maxSlp rows, 12 columns
+    vector<vector<double> > zbar(maxSlp,vector<double>(nreg));   // maxSlp rows, nreg columns
     snowst   = new double[maxSlp];
     q0       = new double[maxSlp];
     qb       = new double[maxSlp];
@@ -262,8 +250,8 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
             qinst[js][kk] = new double[MAX_NTDH];
         }
     }
-    ArrayXd dr1(MAX_NTDH);
-    ArrayXd qinst1(MAX_NTDH);
+    vector<double> dr1(MAX_NTDH);
+    vector<double> qinst1(MAX_NTDH);
 
     double***zbar_in = new double**[m+1];
     for (int i = 0; i <= m; ++i) {
@@ -280,7 +268,7 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
     for (j = 0; j <= MAX_NTDH; j++) {
         tdh[j] = new double[maxSlp];
     }
-    ArrayXXd snowstatev(Nxv, maxSlp);
+    vector<vector<double> > snowstatev(maxSlp,vector<double>(Nxv));   // maxSlp rows, Nxv columns
 
     // *******************************************************************************
     // THIS SECTION IS RELEVANT TO THE WHOLE MODEL
@@ -323,7 +311,7 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
         exit(EXIT_FAILURE);
     }
     for (i = 0; i < Npar; i++) {
-        snowparamFile >> snowparam(i);
+        snowparamFile >> snowparam[i];
         getline(snowparamFile, inLine, '\n');			// Read the remainder of the line
     }
     snowparamFile.close();
@@ -357,33 +345,37 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
     }
     dcFile.close();
 
-    for (i = 0; i < Nxv; i++) {
-        for (j = 0; j < maxSlp; j++) {
-            snowstatev(i,j) = 0.0;
+    for (j = 0; j < maxSlp; j++) {
+        for (i = 0; i < Nxv; i++) {
+            snowstatev[j][i] = 0.0;
         }
     }
     //	month,day,year,hour,
     timestep = 24;
 
-    snowcontrol(0) = irad;
-    snowcontrol(1) = ipflag;
-    snowcontrol(2) = 10;
-    snowcontrol(3) = nintstep;
+    snowcontrol[0] = irad;
+    snowcontrol[1] = ipflag;
+    snowcontrol[2] = 10;
+    snowcontrol[3] = nintstep;
 
-    snowcontrol(6) = isurftmpoption;
+    snowcontrol[6] = isurftmpoption;
 
     nstepday = 24/timestep*nintstep;
-    ArrayXXd snowsurfacetemp(nstepday, maxSlp);
-    ArrayXXd snowaveragetemp(nstepday, maxSlp);
-    snowsurfacetemp = -9999.0;
-    snowaveragetemp = -9999.0;
-
-    for (i = 0; i < maxSlp; i++) {
-        snowsurfacetemp(nstepday-1,i) = 0.0;
-        snowaveragetemp(nstepday-1,i) = 0.0;
+    vector<vector<double> > snowsurfacetemp(maxSlp,vector<double>(nstepday));   // maxSlp columns
+    vector<vector<double> > snowaveragetemp(maxSlp,vector<double>(nstepday));   // maxSlp columns
+    for (j = 0; j < maxSlp; ++j) {
+        for (i = 0; i < nstepday; ++i) {
+            snowsurfacetemp[j][i] = -9999.0;
+            snowaveragetemp[j][i] = -9999.0;
+        }
     }
 
-    if (snowcontrol(1) >= 1) {
+    for (j = 0; j < maxSlp; j++) {
+        snowsurfacetemp[j][nstepday-1] = 0.0;
+        snowaveragetemp[j][nstepday-1] = 0.0;
+    }
+
+    if (snowcontrol[1] >= 1) {
         snowcontrol3_File.open(outFile.c_str());
         if (!snowcontrol3_File.is_open()) {
             cerr << "Failed to open " << outFile << '\n';
@@ -393,8 +385,7 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
 
     //   initialize variables for mass balance
     for (i = 0; i < maxSlp; i++) {
-        //w1[i] = snowstatev[1][i];
-        w1[i] = snowstatev(1,i);
+        w1[i] = snowstatev[i][1];
         cump[i]    = 0.0;
         cume[i]    = 0.0;
         cummr[i]   = 0.0;
@@ -491,16 +482,6 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
         }
     }
     zbarInFile.close();
-    /*for (istep = 0; istep <= m; istep++) {
-        for (jsub = 1; jsub <= Nsub; jsub++) {
-            cout << dec << setw(4) << istep << dec << setw(3) << jsub << " ";
-            for (n = 0; n < nreg; n++) {
-                cout << fixed << setw(15) << setprecision(9) << zbar_in[istep][jsub-1][n];
-            }
-            cout << '\n';
-        }
-    }
-    exit(0); */
     double t1 = (double)clock()/(double)CLOCKS_PER_SEC;
     cout << t1 - t0 << " seconds to read depth to water file \n";
 #endif
@@ -530,9 +511,9 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
         // and reach numbers and we have to remove it.
 
         for (jsub = 1; jsub <= Nsub; jsub++) {
-            js = jsub;
-            prec = bRain(js-1,max(istep, 1)-1);
-            jr = ll[js-1];
+            js = jsub-1;    // Fortran to C indexing
+            prec = bRain[js][max(istep, 1)-1];
+            jr = ll[js];
 
             // snow
             if (istep > 0) {
@@ -548,21 +529,21 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
                 //	else
                 //	snowcontrol(1)=0
                 //	endif
-                albedo = Sp(11,js-1);
-                rlapse = Sp(12,js-1);
-                elevsb = Sp(13,js-1);
-                temper_temp = temper(istep-1);
+                albedo = Sp[11][js];
+                rlapse = Sp[12][js];
+                elevsb = Sp[13][js];
+                temper_temp = temper[istep-1];
                 dewp_temp = dewp[istep-1];
                 trange_temp = tRange[istep-1];
                 if (ievap_method != 0)
-                    dewp_temp = bTdew[js-1][istep-1]; // for use with penman-Monteith
+                    dewp_temp = bTdew[js][istep-1]; // for use with penman-Monteith
                 if (ievap_method != 0)
-                    trange_temp = min(30.0, max(0.0, bTmax[js-1][istep-1] - bTmin[js-1][istep-1])); // check for bad data
+                    trange_temp = min(30.0, max(0.0, bTmax[js][istep-1] - bTmin[js][istep-1])); // check for bad data
                 if (ievap_method != 0)
-                    temper_temp = (bTmax[js-1][istep-1] + bTmin[js-1][istep-1])/2;
+                    temper_temp = (bTmax[js][istep-1] + bTmin[js][istep-1])/2;
                 for (i = 0; i < 12; i++) {
                     for (j = 0; j < maxSlp; j++) {
-                        bdtBarR(i,j) = bdtBar[i][j];
+                        bdtBarR[j][i] = bdtBar[i][j];
                     }
                 }
                 sHour = 0;
@@ -574,58 +555,49 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
                 //  measurements recorded at the end of the time step (240000 for daily) but ET and snow computations
                 //  integrate from the start time over the time step.
                 elev = elevsb; // we are driving this using a basin average temperature, so it must be at basin average elev
-                ArrayXd bdtBarR1 = bdtBarR.col(js-1);
-                //cout << bdtBarR1.size() << endl;exit(0); // column is size 12
-                etall(bXlat[js-1], bXlon[js-1], stdlon, elev, bdtBarR1, PETsngl, temper_temp, dewp_temp,
+                etall(bXlat[js], bXlon[js], stdlon, elev, bdtBarR[js], PETsngl, temper_temp, dewp_temp,
                       trange_temp, elevsb, albedo, rlapse, sDate, sHour, interval, m, istep, iyear, month, iday, ihr,
-                      imm, isec, hour1, bTmin[js-1][istep-1], bTmax[js-1][istep-1], wind2m[istep-1], ievap_method);
+                      imm, isec, hour1, bTmin[js][istep-1], bTmax[js][istep-1], wind2m[istep-1], ievap_method);
                 pet = PETsngl;
-                ta= (bTmin[js-1][istep-1] + bTmax[js-1][istep-1])/2.0;
-                p = bRain(js-1,istep-1)*3600.0/interval/1000.0; //mm/int *3600s/h / (s/int) / (1000mm/m) = m/hr for snowueb
+                ta= (bTmin[js][istep-1] + bTmax[js][istep-1])/2.0;
+                p = bRain[js][istep-1]*3600.0/interval/1000.0; //mm/int *3600s/h / (s/int) / (1000mm/m) = m/hr for snowueb
                 ws = wind2m[istep-1];
                 //		RH=1 !unknown for Nooksack, hope we don't need it!
                 qsiobs = 0; // unknown for Nooksack, hope we don't need it!
                 qnetob = 0; // unknown for Nooksack, hope we don't need it!
                 isnow_method = 2;
                 if (isnow_method == 2) {
-                    snowcontrol(4) = iyear*10000 + month*100 + iday;
+                    snowcontrol[4] = iyear*10000 + month*100 + iday;
                     ihh = hour1;
                     imm = (hour1-ihh)*60;
                     iss = hour1*3600-ihh*3600-imm*60;
-                    snowcontrol(5) = ihh*10000 + imm*100*iss;
-                    snowforcing(0) = ta;
-                    snowforcing(1) = p;
-                    snowforcing(2) = ws;
-                    snowforcing(3) = dewp_temp;
+                    snowcontrol[5] = ihh*10000 + imm*100*iss;
+                    snowforcing[0] = ta;
+                    snowforcing[1] = p;
+                    snowforcing[2] = ws;
+                    snowforcing[3] = dewp_temp;
                     //	snowforcing(4) = 237.3/(1/(log(RH)/17.27+Ta/(Ta+237.3))-1)  ! from http://williams.best.vwh.net/ftp/avsig/avform.txt
-                    snowforcing(4) = bTmax[js-1][istep-1] - bTmin[js-1][istep-1];
-                    snowforcing(5) = qsiobs;
-                    snowforcing(6) = qnetob;
-                    snowsitev(0) = 0;   //  Sp(39,js) !0. !forest cover   DGT 4/1/05
-                    snowsitev(1) = Sp(13,js-1); //elevsb
-                    snowsitev(2) = bXlat[js-1]; //lat
-                    snowsitev(3) = bXlon[js-1]; //lon
-                    snowsitev(4) = stdlon;  //stdlong
-                    snowsitev(5) = Sp(13,js-1); //elevtg is assumed  =  elevsb
-                    snowsitev(6) = Sp(12,js-1); //rlapse
-                    snowsitev(7) = 0.0; //slope
-                    snowsitev(8) = 0.0; //azimuth
-                    ArrayXd snowstatev1 = snowstatev.col(js-1);	// a reference to a slice
-                    ArrayXd snowsurfacetemp1 = snowsurfacetemp.col(js-1);
-                    ArrayXd snowaveragetemp1 = snowaveragetemp.col(js-1);
-                    snowueb(snowsitev, snowstatev1, snowparam, ndepletionpoints, dfc, snowcontrol, bdtBarR1,
-                            snowforcing, snowsurfacetemp1, snowaveragetemp1, timestep, nstepday,
+                    snowforcing[4] = bTmax[js][istep-1] - bTmin[js][istep-1];
+                    snowforcing[5] = qsiobs;
+                    snowforcing[6] = qnetob;
+                    snowsitev[0] = 0;   //  Sp(39,js) !0. !forest cover   DGT 4/1/05
+                    snowsitev[1] = Sp[13][js]; //elevsb
+                    snowsitev[2] = bXlat[js]; //lat
+                    snowsitev[3] = bXlon[js]; //lon
+                    snowsitev[4] = stdlon;  //stdlong
+                    snowsitev[5] = Sp[13][js]; //elevtg is assumed  =  elevsb
+                    snowsitev[6] = Sp[12][js]; //rlapse
+                    snowsitev[7] = 0.0; //slope
+                    snowsitev[8] = 0.0; //azimuth
+                    snowueb(snowsitev, snowstatev[js], snowparam, ndepletionpoints, dfc, snowcontrol, bdtBarR[js],
+                            snowforcing, snowsurfacetemp[js], snowaveragetemp[js], timestep, nstepday,
                             surfacewaterinput, snowevaporation,  // outputs (both in m/h)
-                            areafractionsnow, js);   // added js so that within snow one knows which element one is in for debugging
-
-                    snowstatev.col(js-1) = snowstatev1;	// a reference to a slice
-                    snowsurfacetemp.col(js-1) = snowsurfacetemp1;
-                    snowaveragetemp.col(js-1) = snowaveragetemp1;
-                    cump[js-1]  = cump[js-1]  + p*timestep;
-                    cume[js-1]  = cume[js-1]  + snowevaporation*timestep;
-                    cummr[js-1] = cummr[js-1] + surfacewaterinput*timestep;
-                    errmbal[js-1] = w1[js-1] + cump[js-1] - cummr[js-1] - cume[js-1] - snowstatev(1,js-1);
-                    if (snowcontrol(1) >= 2) {
+                            areafractionsnow, js+1);   // added js so that within snow one knows which element one is in for debugging
+                    cump[js]  = cump[js]  + p*timestep;
+                    cume[js]  = cume[js]  + snowevaporation*timestep;
+                    cummr[js] = cummr[js] + surfacewaterinput*timestep;
+                    errmbal[js] = w1[js] + cump[js] - cummr[js] - cume[js] - snowstatev[js][1];
+                    if (snowcontrol[1] >= 2) {
                         snowcontrol3_File << dec << setw(2) << js;
                         snowcontrol3_File << dec << setw(5) << istep;
                         snowcontrol3_File << dec << setw(5) << iyear;
@@ -635,20 +607,20 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
                         snowcontrol3_File << fixed << setw(18) << setprecision(9) << surfacewaterinput;
                         snowcontrol3_File << fixed << setw(18) << setprecision(9) << snowevaporation;
                         snowcontrol3_File << fixed << setw(18) << setprecision(9) << areafractionsnow;
-                        snowcontrol3_File << fixed << setw(18) << setprecision(9) << snowstatev(1,js-1);
-                        snowcontrol3_File << fixed << setw(18) << setprecision(9) << cump[js-1];
-                        snowcontrol3_File << fixed << setw(18) << setprecision(9) << cume[js-1];
-                        snowcontrol3_File << fixed << setw(18) << setprecision(9) << cummr[js-1] << '\n';	//swe
+                        snowcontrol3_File << fixed << setw(18) << setprecision(9) << snowstatev[js][1];
+                        snowcontrol3_File << fixed << setw(18) << setprecision(9) << cump[js];
+                        snowcontrol3_File << fixed << setw(18) << setprecision(9) << cume[js];
+                        snowcontrol3_File << fixed << setw(18) << setprecision(9) << cummr[js] << '\n';	//swe
                     }
                 }
                 else {
                     if (ddf >= 0) {
-                        snow(snowoutFile, temper, elevtg[0], elevsb, rlapse, prec, ddf, snowst[js-1], interval, Nsub, m, js, istep, maxSlp, maxInt);
+                        snow(snowoutFile, temper, elevtg[0], elevsb, rlapse, prec, ddf, snowst[js], interval, Nsub, m, js+1, istep, maxSlp, maxInt);
                     }
                 }
                 if ( modwrt && istep == m ) {
                     if (idebugoutput >= 1) {  // DGT 8/17/05 debugout
-                        lunpFile << "\n\n Output for sub-catchment " << dec << setw(3) << js << '\n';
+                        lunpFile << "\n\n Output for sub-catchment " << dec << setw(3) << js+1 << '\n';
                         lunpFile << " ---------------------------\n";
                     }
                 }
@@ -669,15 +641,15 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
             kk = 0;
             depth_irrig_dem          = 0.0;
             //	xIRR(:)=0
-            baseflow(js-1)           = 0.0;
-            totalrunoff(js-1)        = 0.0;
-            evap_for_watermgmt[js-1] = 0.0;
-            potentialevap(js-1)      = 0.0;   // DGT 10/21/12 initialize for averaging over categories
-            surfro(js-1)             = 0.0;
-            canstore(js-1)           = 0.0;
-            soilstore(js-1)          = 0.0;
-            tiled(js-1)              = 0.0;
-            ditchd(js-1)             = 0.0;
+            baseflow[js]           = 0.0;
+            totalrunoff[js]        = 0.0;
+            evap_for_watermgmt[js] = 0.0;
+            potentialevap[js]      = 0.0;   // DGT 10/21/12 initialize for averaging over categories
+            surfro[js]             = 0.0;
+            canstore[js]           = 0.0;
+            soilstore[js]          = 0.0;
+            tiled[js]              = 0.0;
+            ditchd[js]             = 0.0;
 
             zbm_d            = 0;
             acsem_d          = 0;
@@ -697,15 +669,15 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
 
 #ifdef ZBAR_OUT
             zbarFile << dec << setw(4) << istep;
-            zbarFile << dec << setw(3) << js;
+            zbarFile << dec << setw(3) << js+1;
             // all nreg regions have the same value at this point in the program
 #endif
 //#ifndef ZBAR_IN
             // the previous timestep's call to watermgmt calculated groundwater_to_take
             if (istep > 1) { //can't do any pumping on first timestep because we haven't called watermgmt yet: assume zero pumping when istep=1
-                dth1 = Sp(3,js-1);  // dgt 11/4/07 added this line to get dth1 from corresponding basin parameter
+                dth1 = Sp[3][js];  // dgt 11/4/07 added this line to get dth1 from corresponding basin parameter
                 for (n = 0; n < nreg; n++) {
-                    zbar(js-1,n) += groundwater_to_take[js-1]/(Sp(0,js-1)/1.0e6)/dth1;     //RAW 18-Jul-2005 bug fix: Sp(1,JS)/1e6 was Sp(1,JS)*1e6
+                    zbar[js][n] += groundwater_to_take[js]/(Sp[0][js]/1.0e6)/dth1;     //RAW 18-Jul-2005 bug fix: Sp(1,JS)/1e6 was Sp(1,JS)*1e6
                 }
                 //  m/timestep = m3/timestep/(m^2)/porosity
                 //   DGT 11/4/07 changed the above from DTH to DTH1 because topmodel saturated zone works with that.
@@ -713,20 +685,20 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
 //#endif
             for (i_irrig = 1; i_irrig <= (n_irrig+1); i_irrig++) {
                 if (i_irrig == 1) {
-                    wt1 = wt0*(1.0 - Sp(19,js-1)); //unirrigated fraction
+                    wt1 = wt0*(1.0 - Sp[19][js]); //unirrigated fraction
                     rate_irrig = 0;
                 }
                 else {
-                    wt1 = wt0*Sp(19,js-1); // irrigated fraction
+                    wt1 = wt0*Sp[19][js]; // irrigated fraction
                     if (istep == 0 || wt1 <= 0.0) {
                         rate_irrig = 0;
                     }
                     else {
-                        //use volume_irrig_sup[js-1] calculated in previous timestep
+                        //use volume_irrig_sup[js] calculated in previous timestep
                         //                       mm^3        /      mm^2      / (sec) = mm/s
                         //   DGT 8/18/05.  Commented out the /float(interval).  The units going to topmod need to be mm/ts, the same as precipitation
                         //   DGT 8/18/05.                 mm^3                 /      mm^2 = mm/ts
-                        rate_irrig = volume_irrig_sup(js-1)*1.0e9/(wt1*Sp(0,js-1));
+                        rate_irrig = volume_irrig_sup[js]*1.0e9/(wt1*Sp[0][js]);
                         //   /(float(interval))
                     }
                 }
@@ -736,37 +708,36 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
                     // detail output.  There are 3 drainage cases.  The first the associated with i_irrig will be numbered 1,2,3
                     // The next three will be numbered 4, 5, 6 and so on.
                     if (i_drainage == 1) { //Naturally drained
-                        wt2 = 1.0 - Sp(15,js-1) - Sp(16,js-1); //16=tilefraction, 17=ditchfraction
+                        wt2 = 1.0 - Sp[15][js] - Sp[16][js]; //16=tilefraction, 17=ditchfraction
                         art_drainage = 0;
                     }
                     else if (i_drainage == 2) {     //Tile drained
-                        wt2 = Sp(15,js-1); //16=tilefraction
-                        art_drainage = Sp(17,js-1); //watch for units
+                        wt2 = Sp[15][js]; //16=tilefraction
+                        art_drainage = Sp[17][js]; //watch for units
                     }
                     else if (i_drainage == 3) {      //Ditch drained
-                        wt2 = Sp(16,js-1); //17=ditchfraction
-                        art_drainage = Sp(18,js-1);
+                        wt2 = Sp[16][js]; //17=ditchfraction
+                        art_drainage = Sp[18][js];
                     }
                     wt12 = wt1*wt2; //wt12 is fraction of basin covered by this drainage-irrigation combo
                     kk++;
                     if (wt12 > 0) {
                         for ( i = 0; i < MAX_NTDH; ++i ) {
-                            dr1(i) = dr[js-1][kk-1][i];
-                            qinst1(i) = qinst[js-1][kk-1][i];
+                            dr1[i] = dr[js][kk-1][i];
+                            qinst1[i] = qinst[js][kk-1][i];
                         }
-
-                        topmod(Si, Sp, js, Nka, tl[js-1], atb, pka, nd, cl, pd, units, irr_l, modwrt,
+                        topmod(Si, Sp, js+1, Nka, tl[js], atb, pka, nd, cl, pd, units, irr_l, modwrt,
                                ipsub, ipatb, stim, prec, pet, interval, art_drainage, rate_irrig, month,
-                               m, mps, mpe, qinst_out_0,  dr_out_0, ndump, ntdh, istep, maxC, zbm[js-1][kk-1],
-                               maxA, maxSlp, maxInt, sumr[js-1][kk-1], sumq[js-1][kk-1], sumae[js-1][kk-1], s0[js-1][kk-1], q0[js-1],
-                               sr[js-1][kk-1], cv[js-1][kk-1], aciem[js-1][kk-1], acsem[js-1][kk-1], sumpe[js-1][kk-1], sumie[js-1][kk-1],
-                               sumqb[js-1][kk-1], sumce[js-1][kk-1], sumsle[js-1][kk-1], sumr1[js-1][kk-1], qb[js-1], qinst1,
-                               dr1, sumqv[js-1][kk-1], sumse[js-1][kk-1], zbar(js-1,kk-1), zbar_in[istep][js-1][kk-1], tdh, zr[js-1], ak0fzrdt[js-1],
-                               logoqm[js-1], qvmin[js-1], dth[js-1], sumad, evap_mm, qlat_mm, ipflag, rirr, js);
+                               m, mps, mpe, qinst_out_0,  dr_out_0, ndump, ntdh, istep, maxC, zbm[js][kk-1],
+                               maxA, maxSlp, maxInt, sumr[js][kk-1], sumq[js][kk-1], sumae[js][kk-1], s0[js][kk-1], q0[js],
+                               sr[js][kk-1], cv[js][kk-1], aciem[js][kk-1], acsem[js][kk-1], sumpe[js][kk-1], sumie[js][kk-1],
+                               sumqb[js][kk-1], sumce[js][kk-1], sumsle[js][kk-1], sumr1[js][kk-1], qb[js], qinst1,
+                               dr1, sumqv[js][kk-1], sumse[js][kk-1], zbar[js][kk-1], zbar_in[istep][js][kk-1], tdh, zr[js], ak0fzrdt[js],
+                               logoqm[js], qvmin[js], dth[js], sumad, evap_mm, qlat_mm, ipflag, rirr, js+1);
 
                         for ( i = 0; i < MAX_NTDH; ++i ) {
-                            dr[js-1][kk-1][i] = dr1[i];
-                            qinst[js-1][kk-1][i] = qinst1[i];
+                            dr[js][kk-1][i] = dr1[i];
+                            qinst[js][kk-1][i] = qinst1[i];
                         }
                         //  DGT 11/2/07 added qlat and ipflag.  ipflag for debugging.  qlat to return lateral outflows without
                         //     overland flow delays to facilitate mass balance checks
@@ -775,7 +746,7 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
                         //  Added sumad to retrieve artificial drainage calcs
 
                         if (i_irrig > 1) {
-                            irrigation(sr[js-1][kk-1], Sp, js, interval, maxSlp, dep); //watch for units!!!
+                            irrigation(sr[js][kk-1], Sp, js+1, interval, maxSlp, dep); //watch for units!!!
                             depth_irrig_dem = depth_irrig_dem + wt2*dep; //dep is in m/timestep
                             // DGT 8/20/05 changed the weight in the above  from wt12 to wt2 because depth only should be weighted
                             // among the different drainage classes within irrigated area
@@ -783,55 +754,55 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
                         else {
                             dep = 0.0;
                         }
-                        zbm_d                    += wt12*zbm[js-1][kk-1];
-                        acsem_d                  += wt12*acsem[js-1][kk-1];
-                        zbar_d                   += wt12*zbar(js-1,kk-1);
-                        sr_d                     += wt12*sr[js-1][kk-1];
-                        cv_d                     += wt12*cv[js-1][kk-1];
-                        sumr_d                   += wt12*sumr[js-1][kk-1];
-                        sumq_d                   += wt12*sumq[js-1][kk-1];
-                        sumae_d                  += wt12*sumae[js-1][kk-1];
-                        sumpe_d                  += wt12*sumpe[js-1][kk-1];
-                        s0_d                     += wt12*s0[js-1][kk-1];
-                        qinst_out_d              += wt12*qinst_out_0;
-                        dr_out_d                 += wt12*dr_out_0;    // 6/10/05  DGT keeping track of total runoff
-                        art_drainage_out         += wt12*sumad;  // 6/28/05   DGT Artificial drainage
-                        evap_for_watermgmt[js-1] += wt12*evap_mm;   // DGT 8/17/05 keeping track of evap
-                        potentialevap(js-1)      += wt12*rirr(12);  // DGT 10/21/12  keeping track of pet
-                        surfro(js-1)             += wt12*rirr(6)/1000.0*(Sp(0,js-1)/1.0e6)/interval;
-                        canstore(js-1)           += wt12*rirr(9);
-                        soilstore(js-1)          += wt12*rirr(11);
+                        zbm_d                  += wt12*zbm[js][kk-1];
+                        acsem_d                += wt12*acsem[js][kk-1];
+                        zbar_d                 += wt12*zbar[js][kk-1];
+                        sr_d                   += wt12*sr[js][kk-1];
+                        cv_d                   += wt12*cv[js][kk-1];
+                        sumr_d                 += wt12*sumr[js][kk-1];
+                        sumq_d                 += wt12*sumq[js][kk-1];
+                        sumae_d                += wt12*sumae[js][kk-1];
+                        sumpe_d                += wt12*sumpe[js][kk-1];
+                        s0_d                   += wt12*s0[js][kk-1];
+                        qinst_out_d            += wt12*qinst_out_0;
+                        dr_out_d               += wt12*dr_out_0;    // 6/10/05  DGT keeping track of total runoff
+                        art_drainage_out       += wt12*sumad;  // 6/28/05   DGT Artificial drainage
+                        evap_for_watermgmt[js] += wt12*evap_mm;   // DGT 8/17/05 keeping track of evap
+                        potentialevap[js]      += wt12*rirr[12];  // DGT 10/21/12  keeping track of pet
+                        surfro[js]             += wt12*rirr[6]/1000.0*(Sp[0][js]/1.0e6)/interval;
+                        canstore[js]           += wt12*rirr[9];
+                        soilstore[js]          += wt12*rirr[11];
                         if (i_drainage  == 2) {
-                            tiled(js-1) += wt12*sumad*1.0e-9; // sumad is mm^3/s - now in m^3/s
+                            tiled[js] += wt12*sumad*1.0e-9; // sumad is mm^3/s - now in m^3/s
                         }
                         if (i_drainage == 3) {
-                            ditchd(js-1) += wt12*sumad*1.0e-9;
+                            ditchd[js] += wt12*sumad*1.0e-9;
                         }
 
                         //  Detail topsbd writes
                         if (idebugoutput >= 1) {
-                            if (modwrt && iBout[js-1] == 1) {
+                            if (modwrt && iBout[js] == 1) {
                                 if (istep >= mi && istep > 0) {
-                                    if (js == idebugbasin || idebugbasin == 0) {
+                                    if (js+1 == idebugbasin || idebugbasin == 0) {
                                         if (kp == idebugcase || idebugcase == 0) {
-                                            lunmodFile << dec << setw(5) << js << dec << setw(8) << istep;
+                                            lunmodFile << dec << setw(5) << js+1 << dec << setw(8) << istep;
                                             lunmodFile << " " << dec << setw(3) << kp;
                                             lunmodFile << fixed << setw(11) << setprecision(7) << wt12;
                                             lunmodFile << " " << fixed << setw(11) << setprecision(6) << prec;
                                             lunmodFile << " " << fixed << setw(11) << setprecision(6) << qlat_mm;
                                             for (jj = 2; jj <= 14; jj++) {
-                                                lunmodFile << " " << fixed << setw(11) << setprecision(6) << rirr(jj-1);
+                                                lunmodFile << " " << fixed << setw(11) << setprecision(6) << rirr[jj-1];
                                             }
                                             lunmodFile << " " << fixed << setw(11) << setprecision(6) << rate_irrig;
-                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << groundwater_to_take[js-1]/(Sp(0,js-1)/1.0e6)*1000.0;
+                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << groundwater_to_take[js]/(Sp[0][js]/1.0e6)*1000.0;
                                             lunmodFile << " " << fixed << setw(11) << setprecision(6) << dep*1000.0;
-                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << bRain(js-1,istep-1);
-                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << snowstatev(1,js-1)*1000.0;
+                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << bRain[js][istep-1];
+                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << snowstatev[js][1]*1000.0;
                                             lunmodFile << " " << fixed << setw(11) << setprecision(6) << snowevaporation*timestep*1000.0;
-                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << (bTmax[js-1][istep-1] + bTmin[js-1][istep-1])/2.0;
-                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << bTdew[js-1][istep-1];
-                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << bTmax[js-1][istep-1] - bTmin[js-1][istep-1];
-                                            lunmodFile << " " << fixed << setw(14) << setprecision(8) << rirr(14) << '\n';
+                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << (bTmax[js][istep-1] + bTmin[js][istep-1])/2.0;
+                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << bTdew[js][istep-1];
+                                            lunmodFile << " " << fixed << setw(11) << setprecision(6) << bTmax[js][istep-1] - bTmin[js][istep-1];
+                                            lunmodFile << " " << fixed << setw(14) << setprecision(8) << rirr[14] << '\n';
                                         }
                                     }
                                 }
@@ -840,7 +811,7 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
                     }
 #ifdef ZBAR_IN
                     else {      // Added for reading zbar from MODFLOW
-                        zbar(js-1,kk-1) = zbar_in[istep][js-1][kk-1];
+                        zbar[js][kk-1] = zbar_in[istep][js][kk-1];
                     }
 #endif
                 } // i_drainage
@@ -851,24 +822,25 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
             //   irrigation component.  It was made to fix the issue of groundwater levels declining indefinitely
             //   due to there being no recharge from artificially drained areas
             for (n = 0; n < nreg; n++) {
-                zbar(js-1,n) = zbar_d;
+                zbar[js][n] = zbar_d;
 #ifdef ZBAR_OUT
-                zbarFile << scientific << setw(16) << setprecision(9) << zbar(js-1,n); // all nreg regions now have been set to a single value
+                zbarFile << scientific << setw(16) << setprecision(9) << zbar[js][n]; // all nreg regions now have been set to a single value
 #endif
+                //zbar[js][n] = zbar_d;
             }
 #ifdef ZBAR_OUT
             zbarFile << '\n';
 #endif
             if (istep > 0)
-                tempave(js-1) = (bTmax[js-1][istep-1] + bTmin[js-1][istep-1])/2.0; // DGT 10/21/12 record ave temperature for output
+                tempave[js] = (bTmax[js][istep-1] + bTmin[js][istep-1])/2.0; // DGT 10/21/12 record ave temperature for output
 
             //accumulate the fluxes from each part of the sub-basin as m3/timestep
-            baseflow(js-1) = qinst_out_d*interval*1.0e-9; // m^3/ts = mm^3/s *s/ts *m3/mm3
+            baseflow[js] = qinst_out_d*interval*1.0e-9; // m^3/ts = mm^3/s *s/ts *m3/mm3
 
             //   Use Total Runoff from the floating point DR variable rather than the integer IRR topmodel output
             //    to avoid some divide by zero's later on in water management
-            totalrunoff(js-1) = dr_out_d*interval*1.0e-9; // m^3/ts = mm^3/s *s/ts *m3/mm3
-            ArtDrainage(js-1) = art_drainage_out*interval*1.0e-9 ;  // DGT 6/28/05  Keep in same units as totalrunoff
+            totalrunoff[js] = dr_out_d*interval*1.0e-9; // m^3/ts = mm^3/s *s/ts *m3/mm3
+            ArtDrainage[js] = art_drainage_out*interval*1.0e-9 ;  // DGT 6/28/05  Keep in same units as totalrunoff
 
             if (modwrt && istep == m) {
                 if (idebugoutput >= 1) {  // DGT 8/17/05 debugout
@@ -878,11 +850,11 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
                     }
                     if (modwrt) {
                         lunpFile << "LAMBDA=";
-                        lunpFile << fixed << setw(21) << setprecision(15) << tl[js-1] << '\n';
+                        lunpFile << fixed << setw(21) << setprecision(15) << tl[js] << '\n';
                     }
                 }
                 //  Storage at the end
-                dth1 = Sp(3,js-1);
+                dth1 = Sp[3][js];
                 s1_d = - zbar_d*dth1 + sr_d + cv_d;
                 bal_d = sumr_d - sumq_d - sumae_d + (s0_d - s1_d);
                 if (idebugoutput >= 1) { // dgt 8/17/05 debugout
@@ -903,18 +875,18 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
                 }
             } // finish
 
-            vol_irrig_demand(js-1) = depth_irrig_dem;  // *(Sp(1,JS)/1e6) !m3/timestep = m/timestep * m^2
+            vol_irrig_demand[js] = depth_irrig_dem;  // *(Sp(1,JS)/1e6) !m3/timestep = m/timestep * m^2
 
             if ( modwrt && istep == m ) {
                 if (idebugoutput >= 1) {  // DGT 8/17/05 debugout
                     lunpFile << " The parameters are\n";
                     for (i = 1; i <= Nsp; i++) {
-                        lunpFile << " " << scientific << setw(15) << setprecision(6) << Sp(i-1,js-1) << '\n';
+                        lunpFile << " " << scientific << setw(15) << setprecision(6) << Sp[i-1][js] << '\n';
                     }
                     //lunpFile << '\n';
                     lunpFile << " Initial conditions\n";
                     for (i = 1; i <= Nsi; i++) {
-                        lunpFile << " " << scientific << setw(15) << setprecision(6) << Si[i-1][js-1] << '\n';
+                        lunpFile << " " << scientific << setw(15) << setprecision(6) << Si[i-1][js] << '\n';
                     }
                     lunpFile << '\n';
                 }
@@ -928,34 +900,38 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
 
         if (istep > 0) {
             for (i = 0; i < Nsub; i++) {
-                precip_for_watermgmt[i] = bRain(i,istep-1); //mm/timestep
+                precip_for_watermgmt[i] = bRain[i][istep-1]; //mm/timestep
             }
         }
         // DGT 10/21/12  Additional writes for Christina
         scalefactor = 1.0;
-        Write_OutputLine_Eigen(oFile[0], "results/Potential_evapotranspiration_mm.txt", istep, potentialevap, Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[0], "results/Potential_evapotranspiration_mm.txt", istep, potentialevap, Nsub, scalefactor);
 
         scalefactor = 1.0;
-        Write_OutputLine_Eigen(oFile[1], "results/TemperatureAve_C.txt", istep, tempave, Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[1], "results/TemperatureAve_C.txt", istep, tempave, Nsub, scalefactor);
 
         scalefactor = 1.0;
-        Write_OutputLine_Eigen(oFile[2], "results/Surface_runoff_cms.txt", istep, surfro, Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[2], "results/Surface_runoff_cms.txt", istep, surfro, Nsub, scalefactor);
 
         scalefactor = 1.0;
-        Write_OutputLine_Eigen(oFile[3], "results/Canopy_storage_mm.txt", istep, canstore, Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[3], "results/Canopy_storage_mm.txt", istep, canstore, Nsub, scalefactor);
 
         scalefactor = 1.0;
-        Write_OutputLine_Eigen(oFile[4], "results/Soil_storage_mm.txt", istep, soilstore, Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[4], "results/Soil_storage_mm.txt", istep, soilstore, Nsub, scalefactor);
 
         scalefactor = 1000.0;
-        ArrayXd zbar1 = zbar.col(0);
-        Write_OutputLine_Eigen(oFile[5], "results/Depth_to_Water_mm.txt", istep, zbar1, Nsub, scalefactor);
+        double *temporary = new double[Nsub];
+        for (j = 0; j < Nsub; j++) {
+            temporary[j] = zbar[j][0];  // row 0; all elements of the row are the same at this point.
+        }
+        Write_OutputLine(oFile[5], "results/Depth_to_Water_mm.txt", istep, temporary, Nsub, scalefactor);
+        delete [] temporary;
 
         scalefactor = 1.0;
-        Write_OutputLine_Eigen(oFile[6], "results/Tile_drainage_cms.txt", istep, tiled, Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[6], "results/Tile_drainage_cms.txt", istep, tiled, Nsub, scalefactor);
 
         scalefactor = 1.0;
-        Write_OutputLine_Eigen(oFile[7], "results/Ditch_drainage_cms.txt", istep, ditchd, Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[7], "results/Ditch_drainage_cms.txt", istep, ditchd, Nsub, scalefactor);
 
         // Added ArtDrainage to arguments for output
         watermgmt(sDate, sHour, istep, m, totalrunoff, baseflow, ArtDrainage, vol_irrig_demand, maxSlp,
@@ -971,35 +947,43 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
     watermgmt(sDate,sHour, -1, m, totalrunoff, baseflow, ArtDrainage, vol_irrig_demand, maxSlp, //inputs, ignored this time
               evap_for_watermgmt, precip_for_watermgmt, volume_irrig_sup, groundwater_to_take);
     if (idebugoutput >= 1) {
-        lunpFile << "Total snow mass balance error = " << errmbal << '\n';	// 'topinfo_v7.txt'
+        lunpFile << "Total snow mass balance error = "  << '\n';	// 'topinfo_v7.txt'
+        for (js = 0; js < Nsub; ++js) {
+            lunpFile << dec << setw(3) << js;
+            lunpFile << scientific << setw(15) << setprecision(6) << errmbal[js] << '\n';
+        }
     }
 
     //  Close files on additional writes for Christina
     istep = -1;
     scalefactor = 1.0;
-    Write_OutputLine_Eigen(oFile[0],"results/Potential_evapotranspiration_mm.txt", istep, potentialevap, Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[0],"results/Potential_evapotranspiration_mm.txt", istep, potentialevap, Nsub, scalefactor);
 
     scalefactor = 1.0;
-    Write_OutputLine_Eigen(oFile[1],"results/TemperatureAve_C.txt", istep, tempave, Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[1],"results/TemperatureAve_C.txt", istep, tempave, Nsub, scalefactor);
 
     scalefactor = 1.0;
-    Write_OutputLine_Eigen(oFile[2],"results/Surface_runoff_cms.txt", istep, surfro, Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[2],"results/Surface_runoff_cms.txt", istep, surfro, Nsub, scalefactor);
 
     scalefactor = 1.0;
-    Write_OutputLine_Eigen(oFile[3],"results/Canopy_storage_mm.txt", istep, canstore, Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[3],"results/Canopy_storage_mm.txt", istep, canstore, Nsub, scalefactor);
 
     scalefactor = 1.0;
-    Write_OutputLine_Eigen(oFile[4],"results/Soil_storage_mm.txt", istep, soilstore, Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[4],"results/Soil_storage_mm.txt", istep, soilstore, Nsub, scalefactor);
 
     scalefactor = 1000.0;
-    ArrayXd zbar1 = zbar.col(0);
-    Write_OutputLine_Eigen(oFile[5],"results/Depth_to_Water_mm.txt", istep, zbar1, Nsub, scalefactor);
+    double *temporary = new double[Nsub];
+    for (j = 0; j < Nsub; j++) {
+        temporary[j] = zbar[j][0];  // row 0; all elements of the row are the same at this point.
+    }
+    Write_OutputLine(oFile[5], "results/Depth_to_Water_mm.txt", istep, temporary, Nsub, scalefactor);
+    delete [] temporary;
 
     scalefactor = 1.0;
-    Write_OutputLine_Eigen(oFile[6], "results/Tile_drainage_cms.txt", istep, tiled, Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[6], "results/Tile_drainage_cms.txt", istep, tiled, Nsub, scalefactor);
 
     scalefactor = 1.0;
-    Write_OutputLine_Eigen(oFile[7], "results/Ditch_drainage_cms.txt", istep, ditchd, Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[7], "results/Ditch_drainage_cms.txt", istep, ditchd, Nsub, scalefactor);
 
     if (idebugoutput >= 1)
         lunmodFile.close();   // debugout: close model writes in case routing fails
@@ -1042,7 +1026,7 @@ int calcts( double **Si,            const ArrayXXd &Sp,           double **Rp,  
 // *****************************************************************
 //     SUBROUTINE SNOW
 // *****************************************************************
-int snow(ofstream &snowOutFile, const ArrayXd &temper, const double elevTg, const double elevsb, const double rlapse, double &bRain,
+int snow(ofstream &snowOutFile, const vector<double> &temper, const double elevTg, const double elevsb, const double rlapse, double &bRain,
          const double ddf, double &snowst, const long int dt, const int Nsub, const int m, const int js, const int it,
          const int maxSlp, const int maxInt)
 {
@@ -1066,7 +1050,7 @@ int snow(ofstream &snowOutFile, const ArrayXd &temper, const double elevTg, cons
     }
 
     lastsnowst = snowst;
-    t = temper(it-1) - (elevsb - elevTg)*rlapse;
+    t = temper[it-1] - (elevsb - elevTg)*rlapse;
     temp = bRain;
     if (t < 0) {
         newsnow = bRain; //bRain in mm/interval, newsnow in mm

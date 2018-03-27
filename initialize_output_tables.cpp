@@ -38,9 +38,19 @@ int Initialise_Output_Tables(const int NumDrainage, const int NumNode, const int
     }
 	caller = "Initialise_Output_Tables";
 #endif
-	FlowInLinks_cms.resize(NumTimesteps,NumLink);
-	ReservoirStorage_m3.resize(NumTimesteps,NumReservoir);
-	DateTime_yyyymmdd_hhmmss.resize(NumTimesteps, 2);
+    FlowInLinks_cms.resize(NumTimesteps,vector<double>(NumLink));
+    ReservoirStorage_m3.resize(NumTimesteps,vector<double>(NumReservoir));
+    for (j = 0; j < NumTimesteps; ++j) {
+        FlowInLinks_cms[j].resize(NumLink);
+        ReservoirStorage_m3[j].resize(NumReservoir);
+    }
+
+	DateTime_yyyymmdd_hhmmss.resize(NumTimesteps);
+	for (n = 0; n < NumTimesteps; ++n) {
+        DateTime_yyyymmdd_hhmmss[n].resize(2,0);
+        //DateTime_yyyymmdd_hhmmss.resize(NumTimesteps, 2);
+    }
+
 	FlowAtStreamNodes_cms = new double[NumStreamNode];
 
 	for (i = 1; i <= NumDrainage; i++) {
@@ -63,7 +73,7 @@ int Initialise_Output_Tables(const int NumDrainage, const int NumNode, const int
 		ifound = new int[NumLink];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumLink; n++) {
-			if (Link(n).USNode == j && Link(n).LinkCode == UnallocatedLinkCode) {
+			if (Link[n].USNode == j && Link[n].LinkCode == UnallocatedLinkCode) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
@@ -76,8 +86,8 @@ int Initialise_Output_Tables(const int NumDrainage, const int NumNode, const int
 	}
 
 	for (i = 1; i <= NumDrainage; i++) {
-		StaticOutput.DrainageID[i-1].TopnetID   = Drainage(i-1).DrainageID;
-		StaticOutput.DrainageID[i-1].DrainageID = Drainage(i-1).RealDrainageID;
+		StaticOutput.DrainageID[i-1].TopnetID   = Drainage[i-1].DrainageID;
+		StaticOutput.DrainageID[i-1].DrainageID = Drainage[i-1].RealDrainageID;
 	}
 
 	k = 0;

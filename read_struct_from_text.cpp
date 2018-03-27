@@ -69,7 +69,10 @@ int read_struct_from_text(const string fileName, int &expected_numcols, const in
 				getline(inFile, title, '\n');
 			}
 		}
-		real_array.resize(nrows, expected_numcols);
+		real_array.resize(nrows, vector<double>(expected_numcols));
+		for (int j = 0; j < nrows; ++j) {
+            real_array[j].resize(expected_numcols);
+        }
 
 		getline(inFile, headers, '\n');
 		for (k = 0; k < nrows; k++) {
@@ -77,21 +80,21 @@ int read_struct_from_text(const string fileName, int &expected_numcols, const in
 				if ( csvFlag ) {
 					getline(inFile, inLine, ',');
 					value.str(inLine);
-					real_array(k,i) = strtod(value.str().c_str(), NULL);
+					real_array[k][i] = strtod(value.str().c_str(), NULL);
 					value.clear();
 					value.str("");
 				} else {
-					inFile >> real_array(k,i);
+					inFile >> real_array[k][i];
 				}
 			}
 			if ( csvFlag ) {
 				getline(inFile, inLine, '\n');  // look for line end instead of comma
 				value.str(inLine);
-				real_array(k,expected_numcols-1) = strtod(value.str().c_str(), NULL);
+				real_array[k][expected_numcols-1] = strtod(value.str().c_str(), NULL);
 				value.clear();
 				value.str("");
 			} else {
-				inFile >> real_array(k,expected_numcols-1);
+				inFile >> real_array[k][expected_numcols-1];
 				getline(inFile, inLine, '\n');  // read line end or inline comment
 			}
 		}
@@ -117,11 +120,14 @@ int read_bdryflow(const string fileName, int &expected_numcols, const int ncomme
 	getline(inFile, title, '\n'); //"This file provides ..."
 	getline(inFile, title, '\n'); //"Flow values are  ..."
 	getline(inFile, title, '\n'); //"*12205000*HNW-2052*12208000*"
-	integer_array.resize(100,1);
+	integer_array.resize(100,vector<int>(1));
+	for (int j = 0; j < 100; ++j) {
+        integer_array[j].resize(1);
+    }
 
 	inFile >> title >> expected_numcols;
 	for (i = 0; i < expected_numcols; i++) {
-		inFile >> integer_array(i,0);	// "Ver2 3  8  18  21 Date Hour"
+		inFile >> integer_array[i][0];	// "Ver2 3  8  18  21 Date Hour"
 	}
 	expected_numcols += 2;
 

@@ -20,21 +20,23 @@
 #ifndef SNOW_HH
 #define SNOW_HH
 
+#include <vector>
+
 extern std::ofstream snowcontrol3_File;	// unit 10
 double svpi(const double t);
 double svpw(const double t);
 int qlif(double &qliff, const double ta, const double rh, const double tk, const double sbc, const double cf);
 double ablat(const double DimBaw, const int ndfc, double **dfc);
 int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
-	const int nStep, Eigen::ArrayXXd &inpt, Eigen::ArrayXd &sitev, Eigen::ArrayXd &statev,
-	const Eigen::ArrayXd &param, Eigen::ArrayXi &iflag, const Eigen::ArrayXd &dtbar, const int nstepday,
-    double &cump, double &cume, double &cummr, Eigen::ArrayXd &outv,
-    Eigen::ArrayXd &tsbackup, Eigen::ArrayXd &tavebackup,
+	const int nStep, std::vector<std::vector<double> > &inpt, std::vector<double> &sitev, std::vector<double> &statev,
+	const std::vector<double> &param, std::vector<int> &iflag, const std::vector<double> &dtbar, const int nstepday,
+    double &cump, double &cume, double &cummr, std::vector<double> &outv,
+    std::vector<double> &tsbackup, std::vector<double> &tavebackup,
     const int ndepletionpoints, double **dfc, const int modelelement, const int jj);
-int snowueb2(const double dt, const int nt, const Eigen::ArrayXXd &input, const Eigen::ArrayXd &sitev, Eigen::ArrayXd &statev,
-	Eigen::ArrayXd &tsprevday, Eigen::ArrayXd &taveprevday, const int nstepday, const Eigen::ArrayXd &param, Eigen::Array<int,Eigen::Dynamic,1> &iflag,
-	double &cump, double &cume, double &cummr, Eigen::ArrayXd &outv, const Eigen::ArrayXd &mtime, const int modelelement, const int jj);
-double daily_ave(const Eigen::ArrayXd &backup, const int n, const double a);
+int snowueb2(const double dt, const int nt, const std::vector<std::vector<double> > &input, const std::vector<double> &sitev, std::vector<double> &statev,
+	std::vector<double> &tsprevday, std::vector<double> &taveprevday, const int nstepday, const std::vector<double> &param, std::vector<int> &iflag,
+	double &cump, double &cume, double &cummr, std::vector<double> &outv, const std::vector<double> &mtime, const int modelelement, const int jj);
+double daily_ave(const std::vector<double> &backup, const int n, const double a);
 double partsnow(const double p, const double ta, const double tr, const double ts);
 double tavg(const double ub, const double w, const double rhow, const double cs,
 	const double to, const double rhog, const double de, const double cg, const double hf);
@@ -46,15 +48,15 @@ int predicorr(const double dt, double &ub, double &w, const double a,
 	const double ta, const double pRain, const double ps, const double ws, const double rh,
 	const double qsi, const double  qli, const double iradfl, const double rkn,
 	const double qnetob, const double rid,
-	const Eigen::ArrayXd &param, const Eigen::ArrayXd &sitev, const double iTsMethod,
-	const Eigen::ArrayXd &mtime,
+	const std::vector<double> &param, const std::vector<double> &sitev, const double iTsMethod,
+	const std::vector<double> &mtime,
 	double &qh, double &qe, double &e,  double &mr, double &qm, double &q, double &fm,
 	double &tsurf, double &tave, double &qnet, double &refDepth, double &totalRefDepth ,
 	double &smelt);
 int qfm(const double ub, const double w, const double a, const double ta, const double pRain,
 	const double ps, const double ws, const double rh, const double qsi, const double qli,
 	const double rkn, const double iradfl, const double qnetob,
-	const double rid, const Eigen::ArrayXd &param, const Eigen::ArrayXd &sitev, const int iTsMethod, const Eigen::ArrayXd &mtime,
+	const double rid, const std::vector<double> &param, const std::vector<double> &sitev, const int iTsMethod, const std::vector<double> &mtime,
 	double &fm, double &q, double &qm, double &mr, double &qe,
 	double &e, double &tsurf, double &tave, double &qh, double &qnet,
 	const double dt, double &refDepth, const double totalRefDepth, double &smelt);
@@ -72,8 +74,8 @@ double QcEst(const double ts,  const double rkn, const double ws, const double t
 	 const double pr, const double ea, const double tk, const double dens,
 	 const double cs, const double rs, const double tavek, const double qsn,
 	 const double qli, const double fc, const double sbc,
-	 const double qnetob, const int iradfl, const Eigen::ArrayXd &mtime,
-	 const Eigen::ArrayXd &param, const int iTsMethod, const double w, const double dt);
+	 const double qnetob, const int iradfl,
+	 const std::vector<double> &param, const int iTsMethod, const double w, const double dt);
 int Grad(const double qc1, const double qc2, const double t1, const double t2, double &a, double &b);
 double refDep(const double flans, const double a, const double b, const double hf,
 	const double rhom, const double dt, const double x1 );
@@ -90,13 +92,13 @@ double srftmp(const double qsi, const double a, const double qli, const double q
 		const double ra, const double cp,const double rho, const double rkn, const double hneu,
 		const double es, const double sbc, const double cs, const double rs, const double w,
 		const double qnetob, const double iradfl, const double ws, const double z, const double g,
-		const double fc, const double fstab, const Eigen::ArrayXd &mtime, const Eigen::ArrayXd &param,
+		const double fc, const double fstab, const std::vector<double> &mtime, const std::vector<double> &param,
         const int iTsMethod, const double dt, const double ub, const double refDepth, double &smelt);
 double surfeb(const double ts, const double rkn, const double ws, const double tak, const double g,
 	const double qp, const double densa, const double cp, const double hneu, const double pr, const double ea,
 	const double tk, const double dens, const double cs, const double rs, const double tavek, const double qsn,
 	const double qli, const double fc, const double sbc, const double qnetob, const int iradfl,
-	const Eigen::ArrayXd &mtime, const Eigen::ArrayXd &param, const int iTsMethod, const double w, const double dt,
+	const std::vector<double> &param, const int iTsMethod, const double w, const double dt,
 	const double ub, const double refDepth);
 
 #endif

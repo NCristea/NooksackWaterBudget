@@ -22,7 +22,6 @@
 using namespace constant_definitions;
 using namespace input_structures;
 using namespace other_structures;
-using namespace Eigen;
 using namespace std;
 
 int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep, const int NumNode,
@@ -30,7 +29,7 @@ int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep,
 
 int ImposeMeasuredFlows(const int Timestep, const int NumNode, const int NumLink, const int NumRunoff,
 	const int NumBaseflow, const int NumDrainage, const int NumMeasuredFlowInfo, const int NumMeasuredFlowData,
-	int *DrainageOrder, ArrayXd &DrainageOutFlow)
+	int *DrainageOrder, vector<double> &DrainageOutFlow)
 {
 	double NodeOutFlow, FlowRatio;
 	int i, n, k, j, j_out, nfound, *ifound;
@@ -73,7 +72,7 @@ int ImposeMeasuredFlows(const int Timestep, const int NumNode, const int NumLink
 		ifound = new int[NumLink];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumLink; n++) {
-			if (Link(n).USNode == k) {
+			if (Link[n].USNode == k) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
@@ -81,7 +80,7 @@ int ImposeMeasuredFlows(const int Timestep, const int NumNode, const int NumLink
 		NodeOutFlow = 0.0;
 		for (j = 1; j <= nfound; j++) {
 			j_out = ifound[j-1];
-			NodeOutFlow += Link(j_out-1).Flow;
+			NodeOutFlow += Link[j_out-1].Flow;
 		}
 		delete [] ifound;
 		//  added the check for NodeOutFlow Greater than 0 to avoid infinity and Nan in the results
@@ -112,7 +111,7 @@ int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep,
 {
 	int i[10], kk[10];
 	int j, j_node, m, n, ni, nk, ii, number_processed, list_length, nfound, *ifound;
-	Array<int,Dynamic,1> nodelist(NumNode);
+	vector<int> nodelist(NumNode);
 
 #if TRACE
 	static int ncalls = 0;
@@ -122,12 +121,12 @@ int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep,
     }
 	caller = "ScaleUpstreamRunoff";
 #endif
-	nodelist(0) = k;
+	nodelist[0] = k;
 	list_length = 1;
 	number_processed = 0;
 	while (number_processed < list_length) {
-		j_node = nodelist(number_processed);
-		j = Drainage(Node[j_node-1].DrainageID-1).DrainageID;
+		j_node = nodelist[number_processed];
+		j = Drainage[Node[j_node-1].DrainageID-1].DrainageID;
 		Runoff[Timestep-1].Rate[j-1] = Runoff[Timestep-1].Rate[j-1]*FlowRatio;
 		Baseflow[Timestep-1].Rate[j-1] = Baseflow[Timestep-1].Rate[j-1]*FlowRatio;
 		number_processed++;
@@ -136,7 +135,7 @@ int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep,
 		ifound = new int[NumDrainage];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumDrainage; n++) {
-			if (Drainage(n).DSDrainage == Node[j_node-1].DrainageID) {
+			if (Drainage[n].DSDrainage == Node[j_node-1].DrainageID) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
@@ -154,7 +153,7 @@ int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep,
 				ifound = new int[NumNode];
 				ifound[nfound] = 0;
 				for (n = 0; n < NumNode; n++) {
-					if (Node[n].Type == StreamNodeCode && Node[n].DrainageID == Drainage(i[ii-1]-1).DrainageID) {
+					if (Node[n].Type == StreamNodeCode && Node[n].DrainageID == Drainage[i[ii-1]-1].DrainageID) {
 						nfound++;
 						ifound[nfound-1] = n+1;
 					}
@@ -164,7 +163,7 @@ int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep,
 				nk += nfound;
 			}
 			for (j = 1; j <= nk; j++) {
-				nodelist(list_length+j-1) = kk[j-1];
+				nodelist[list_length+j-1] = kk[j-1];
 			}
 			list_length += nk;
 		} else {

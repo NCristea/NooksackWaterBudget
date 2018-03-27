@@ -22,10 +22,9 @@
 using namespace constant_definitions;
 using namespace input_structures;
 using namespace other_structures;
-using namespace Eigen;
 using namespace std;
 
-int CalculateDemand(const int ThisMonth, const int doy, const ArrayXd &vol_irrig_demand, const int NumUser, const int NumMonthlyDemand)
+int CalculateDemand(const int ThisMonth, const int doy, const vector<double> &vol_irrig_demand, const int NumUser, const int NumMonthlyDemand)
 {
 	int i, n, idt, nfound, *ifound;
 	double DDF = 0.0;
@@ -48,7 +47,7 @@ int CalculateDemand(const int ThisMonth, const int doy, const ArrayXd &vol_irrig
 			//			User(i)%DemandVble=vol_irrig_demand(User(i)%POU_ID) // DGT 8/20/05 Reinterpret vol_irrig_demand
 			//           as depth of irrig demand.  Therefore use it as the rate variable.
 			//           The demand variable is the irrigated area in square meters from user.txt
-			User[i-1].DemandRate = vol_irrig_demand(User[i-1].POU_ID-1); // 1.0
+			User[i-1].DemandRate = vol_irrig_demand[User[i-1].POU_ID-1]; // 1.0
 			DDF = 1.0;
 		} else {
 			//		if (User(i)%UsersType.ne.-1) then

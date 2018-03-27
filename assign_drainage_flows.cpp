@@ -22,11 +22,10 @@
 using namespace constant_definitions;
 using namespace input_structures;
 using namespace other_structures;
-using namespace Eigen;
 using namespace std;
 
 int AssignDrainageFlows(const int Timestep, const int NumDrainage, const int NumNode, const int NumLink,
-	int *DrainageOrder, const int NumRunoff, const int NumBaseflow, ArrayXd &DrainageOutFlow)
+	int *DrainageOrder, const int NumRunoff, const int NumBaseflow, vector<double> &DrainageOutFlow)
 {
 	int i, n, k, isn, nfound, *ifound;
 
@@ -61,7 +60,7 @@ int AssignDrainageFlows(const int Timestep, const int NumDrainage, const int Num
 		ifound = new int[NumLink];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumLink; n++) {
-			if (Link(n).LinkCode == SurfaceRunoffLinkCode && Link(n).DSNode == isn) {
+			if (Link[n].LinkCode == SurfaceRunoffLinkCode && Link[n].DSNode == isn) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
@@ -69,13 +68,13 @@ int AssignDrainageFlows(const int Timestep, const int NumDrainage, const int Num
 		k = ifound[0]; //problem if nfound<>1
 		delete [] ifound;
 
-		Link(k-1).Flow = Runoff[Timestep-1].Rate[Drainage(i-1).DrainageID-1] - Baseflow[Timestep-1].Rate[Drainage(i-1).DrainageID-1];
+		Link[k-1].Flow = Runoff[Timestep-1].Rate[Drainage[i-1].DrainageID-1] - Baseflow[Timestep-1].Rate[Drainage[i-1].DrainageID-1];
 		// find2()
 		nfound = 0; //none found
 		ifound = new int[NumLink];
 		ifound[nfound] = 0;
 		for (n = 0; n < NumLink; n++) {
-			if (Link(n).LinkCode == SubsurfaceRunoffLinkCode && Link(n).DSNode == isn) {
+			if (Link[n].LinkCode == SubsurfaceRunoffLinkCode && Link[n].DSNode == isn) {
 				nfound++;
 				ifound[nfound-1] = n+1;
 			}
@@ -83,7 +82,7 @@ int AssignDrainageFlows(const int Timestep, const int NumDrainage, const int Num
 		k = ifound[0]; //problem if nfound<>1
 		delete [] ifound;
 
-		Link(k-1).Flow = Baseflow[Timestep-1].Rate[Drainage(i-1).DrainageID-1];
+		Link[k-1].Flow = Baseflow[Timestep-1].Rate[Drainage[i-1].DrainageID-1];
 	}
 
 	BalanceFlowsAtStreamNodes(NumNode, NumLink, DrainageOrder, NumDrainage, DrainageOutFlow);

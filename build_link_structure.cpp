@@ -23,7 +23,6 @@ using namespace std;
 using namespace constant_definitions;
 using namespace input_structures;
 using namespace other_structures;
-using namespace Eigen;
 
 int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSource,
 	const int NumReturnFlow, const int NumReservoir, const int NumMeasuredFlowInfo, const int NumNode, int &NumLink)
@@ -96,14 +95,14 @@ int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSo
 		//one link for each streamnode-downstreamnode connection (including sink)
 		Title = "UNALLC";
 		iType = UnallocatedLinkCode;
-		if (Drainage(i-1).DSDrainage >= 1) {
+		if (Drainage[i-1].DSDrainage >= 1) {
 			//IntExtCode = InternalCode;
 			// find2()
 			nfound = 0; //none found
 			ifound = new int[NumNode];
 			ifound[nfound] = 0;
 			for (n = 0; n < NumNode; n++) {
-				if (Node[n].Type == StreamNodeCode && Node[n].DrainageID == Drainage(i-1).DSDrainage) {
+				if (Node[n].Type == StreamNodeCode && Node[n].DrainageID == Drainage[i-1].DSDrainage) {
 					nfound++;
 					ifound[nfound-1] = n+1;
 				}
@@ -256,7 +255,7 @@ int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSo
 				// to be specified.  This was an attempt to overcome the problem with the select case below, but does not work.
 				// For now users are required to specify return flow location in returnflow.txt (and get it right)
 				if (RFLocn == 0 && User[i-1].UsersType == InstreamFlowUseCode) {
-					RFLocn = Drainage(User[i-1].POU_ID-1).DSDrainage;   // This is the downstream drainge
+					RFLocn = Drainage[User[i-1].POU_ID-1].DSDrainage;   // This is the downstream drainge
 				}
 				if (RFLocn == 0)
 					RFLocn = User[i-1].POU_ID;
@@ -381,13 +380,13 @@ int CreateLink(int &NumLink, const string Title, const int LinkCode, const int I
 #endif
 	NumLink++;
 	k = NumLink;
-	Link(k-1).Title        = Title;
-	Link(k-1).LinkCode     = LinkCode;
-	Link(k-1).IntExtCode   = IntExtCode;
-	Link(k-1).USNode       = USNode;
-	Link(k-1).DSNode       = DSNode;
-	Link(k-1).Flow         = Flow;
-	Link(k-1).ReturnFlowID = ReturnFlowID; //only used by ReturnFlow links
+	Link[k-1].Title        = Title;
+	Link[k-1].LinkCode     = LinkCode;
+	Link[k-1].IntExtCode   = IntExtCode;
+	Link[k-1].USNode       = USNode;
+	Link[k-1].DSNode       = DSNode;
+	Link[k-1].Flow         = Flow;
+	Link[k-1].ReturnFlowID = ReturnFlowID; //only used by ReturnFlow links
 #if TRACE
 	caller = save_caller;
 	if (ncalls < MAX_TRACE) {

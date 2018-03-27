@@ -21,7 +21,6 @@
 #include <iomanip>
 
 using namespace std;
-using namespace Eigen;
 
 //  Subroutine to write output at each time step
 //  David Tarboton  6/29/05
@@ -76,7 +75,7 @@ using namespace other_structures;
 
 //   Subroutine added to output local node drainage contributions
 int Write_OutputLocalContributions(ofstream &o1File, ofstream &o2File, const int NumStreamNode, const int NumDrainage,
-		const ArrayXd &BaseflowTopnet, const ArrayXd &RunoffTopnet, const int timestep, const double scalefactor)
+		const vector<double> &BaseflowTopnet, const vector<double> &RunoffTopnet, const int timestep, const double scalefactor)
 {
 	double LocalSurfaceRunoff, LocalBaseflow, fracrunoff;
 	int j, iddrain;
@@ -102,9 +101,9 @@ int Write_OutputLocalContributions(ofstream &o1File, ofstream &o2File, const int
 		for (j = 1; j <= NumStreamNode; j++) {
 			iddrain = StreamNode[j-1].DrainageID;
 
-			fracrunoff = StreamNode[j-1].LocalArea/Drainage(iddrain-1).CatchArea*1.0e6;  // Drainage(iddrain)%CATCHAREA is in mm^2
-			LocalSurfaceRunoff = (RunoffTopnet(iddrain-1) - BaseflowTopnet(iddrain-1))*fracrunoff*scalefactor;
-			LocalBaseflow = BaseflowTopnet(iddrain-1)*fracrunoff*scalefactor;
+			fracrunoff = StreamNode[j-1].LocalArea/Drainage[iddrain-1].CatchArea*1.0e6;  // Drainage(iddrain)%CATCHAREA is in mm^2
+			LocalSurfaceRunoff = (RunoffTopnet[iddrain-1] - BaseflowTopnet[iddrain-1])*fracrunoff*scalefactor;
+			LocalBaseflow = BaseflowTopnet[iddrain-1]*fracrunoff*scalefactor;
 			o1File << dec << setw(8) << timestep << dec << setw(8) << StreamNode[j-1].NodeID;
 			o1File << scientific << setw(15) << setprecision(7) << LocalSurfaceRunoff << '\n';
 			o2File << dec << setw(8) << timestep << dec << setw(8) << StreamNode[j-1].NodeID;
@@ -117,9 +116,9 @@ int Write_OutputLocalContributions(ofstream &o1File, ofstream &o2File, const int
 	return 0;
 }
 
-//========================= Eigen =========================
+//========================= vector =========================
 
-int Write_OutputLine_Eigen(ofstream &oFile, const string fileName, const int timestep, const ArrayXd &Rvariable, const int NumDrainage, const double scalefactor)
+int Write_OutputLine_vector(ofstream &oFile, const string fileName, const int timestep, const vector<double> &Rvariable, const int NumDrainage, const double scalefactor)
 {
 	string LocationTypeString, str;
 	int i, j;
@@ -145,10 +144,10 @@ int Write_OutputLine_Eigen(ofstream &oFile, const string fileName, const int tim
 		}
 		oFile << dec << setw(12) << timestep;
 		for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
-            if (fabs(Rvariable(j)*scalefactor) < 0.1) {
-                oFile << scientific << setw(15) << setprecision(7) << Rvariable(j)*scalefactor;
+            if (fabs(Rvariable[j]*scalefactor) < 0.1) {
+                oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
             } else {
-                oFile << fixed << setw(15) << setprecision(5) << Rvariable(j)*scalefactor;
+                oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
             }
 		}
 		oFile << '\n';

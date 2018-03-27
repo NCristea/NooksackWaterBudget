@@ -20,7 +20,7 @@
 #include "topnet.hh"
 #include <vector>
 
-using namespace Eigen;
+using namespace std;
 
 //int *ifound;
 std::vector<int> ifound;            // record of all individual finds
@@ -29,12 +29,12 @@ std::vector<int> done;              // tally of finished assignments
 int nfound, nfound_last;
 int global_found = 0;
 
-void Find(Array<DrainageType,Dynamic,1> &iarray1, const int ival1, const int num)
+void Find(vector<DrainageType> &iarray1, const int ival1, const int num)
 {
     int i;
     nfound = 0;
     for (i = 1; i <= num; i++) {
-        if (iarray1(i-1).DSDrainage == ival1) {
+        if (iarray1[i-1].DSDrainage == ival1) {
             nfound++;
             global_found++;
             ifound.push_back(i);

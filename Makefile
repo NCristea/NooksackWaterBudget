@@ -12,14 +12,14 @@ LD = g++
 WINDRES = windres
 
 INC =  -I/usr/include/eigen3
-CFLAGS =  -Wall -fexceptions -ftemplate-backtrace-limit=0
+CFLAGS =  -march=corei7 -O3 -Wall -std=c++11 -fexceptions -ftemplate-backtrace-limit=0
 RESINC = 
 LIBDIR = 
 LIB = 
 LDFLAGS = 
 
 INC_RELEASE =  $(INC)
-CFLAGS_RELEASE =  $(CFLAGS) -O2
+CFLAGS_RELEASE =  $(CFLAGS)
 RESINC_RELEASE =  $(RESINC)
 RCFLAGS_RELEASE =  $(RCFLAGS)
 LIBDIR_RELEASE =  $(LIBDIR)
