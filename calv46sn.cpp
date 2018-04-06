@@ -67,7 +67,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,      doub
 
     //flood comment out next line
     static vector<int> irr_l(Nip1);
-    static vector<int> rirr(Nip1);
+    static array<double,Nip1> rirr;
     static int istep, j, n;
 
     //   locals

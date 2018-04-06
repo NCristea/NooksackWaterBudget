@@ -57,7 +57,7 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 	double &sumsle, double &sumr1, double &qb, vector<double> &qinst, vector<double> &dr, double &sumqv,
 	double &sumse, double &zbar, const double zbar_new, double **tdh, double &zr, double &ak0fzrdt, double &logoqm,
 	double &qvmin, double &dth, double &sumad, double &evap_mm, double &qlat_mm,
-	const int ipflag, vector<int> &rirr, const int js)
+	const int ipflag, array<double,Nip1> &rirr, const int js)
 {
 	//         reversed the  order of DR and QINST back to what they were 25/9/98
 	//   DGT had problems with qinst flows not preserving mass balance so resorted

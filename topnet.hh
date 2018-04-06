@@ -410,7 +410,7 @@ int topmod(double **si, const std::vector<std::vector<double> > &Sp, const int i
 	double &sumsle, double &sumr1, double &qb, std::vector<double> &qinst, std::vector<double> &dr, double &sumqv,
 	double &sumse, double &zbar, const double zbar_new, double **tdh, double &zr, double &ak0fzrdt, double &logoqm,
 	double &qvmin, double &dth, double &sumad, double &evap_mm, double &qlat_mm,
-	const int ipflag, std::vector<int> &rirr, const int js);
+	const int ipflag, std::array<double,Nip1> &rirr, const int js);
 int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timestep, const int NSteps,
 	std::vector<double> &RunoffTopnet, std::vector<double> &BaseflowTopnet, const std::vector<double> &ArtDrainageTopnet,
 	const std::vector<double> &vol_irrig_demand, const int maxSlp, const double *evaporation, const double *precipitation,
