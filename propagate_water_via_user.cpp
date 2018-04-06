@@ -144,26 +144,25 @@ int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int
 	BalanceFlowsAtReservoirs(NumNode, NumLink, NumUser, NumReservoir, ReservoirNetStorage);
 	BalanceFlowsAtStreamNodes(NumNode, NumLink,	DrainageOrder, NumDrainage, DrainageOutFlow);
 	iFeasible = 1;
-	Capacity = 0.0;
+    double minDrainage = 1.0e10, minReservoir = 1.0e10;
 	for (ii = 0; ii < NumDrainage; ii++) {
 		if (DrainageOutFlow[ii] < 0) {
 			iFeasible = 0;
-		} else {
-			if (Capacity > DrainageOutFlow[ii]) {
-				Capacity = DrainageOutFlow[ii];
-			}
+		}
+        if (minDrainage > DrainageOutFlow[ii]) {
+            minDrainage = DrainageOutFlow[ii];
 		}
 	}
 	for (ii = 0; ii < NumReservoir; ii++) {
 
 		if (ReservoirNetStorage[ii] < 0) {
 			iFeasible = 0;
-		} else {
-			if (Capacity > ReservoirNetStorage[ii]) {
-				Capacity = ReservoirNetStorage[ii];
-			}
+		}
+        if (minReservoir > ReservoirNetStorage[ii]) {
+            minReservoir = ReservoirNetStorage[ii];
 		}
 	}
+	Capacity = min(minDrainage, minReservoir);
 #if TRACE
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
