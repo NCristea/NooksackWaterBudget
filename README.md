@@ -7,7 +7,7 @@ On April 21st a problem with coordinate conversion that affected
 processes such as evapotranspiration was fixed that resulted in
 adding a dependency for the Proj4 geospatial library (-lproj).
 The problem was due to a linear conversion using parameters from an
-input file, but the parameters for theinput file available in
+input file, but the parameters for the input file available in
 the input data set were for the wrong UTM zone. The effect was
 that Whatom County positons were converted to positions East of
 the Cascades, and those positions were then used in subsequent
