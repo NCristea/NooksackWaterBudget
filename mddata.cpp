@@ -21,6 +21,7 @@
 #include <iomanip>
 #include <dirent.h>
 #include <sstream>
+#include <proj_api.h>
 
 // This version, V8, has had extra checking of rainfall sites added plus,
 // input for lakes.
@@ -1058,7 +1059,7 @@ L120:
     i = Ns;
 
     //  Insertion to get latitude and longitude for each basin
-
+    /*
     //   Read latlongfromxy.dat
     ifstream latlongfromxyFile("latlongfromxy.txt");	// Fortran unit 88 (again)
     if (!latlongfromxyFile.is_open()) {
@@ -1083,6 +1084,21 @@ L120:
     for (j = 0; j < Ns; j++) {
         bXlat[j] = flat*bp[6][j] + clat;
         bXlon[j] = flong*bp[5][j] + clong;
+    }
+    */
+    projPJ source = pj_init_plus("+proj=utm +zone=10 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ");
+    projPJ target = pj_init_plus("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+
+    if(source==NULL || target==NULL)
+        return false;
+
+    for (int j = 0; j < 46; ++j) {
+        double x = bp[5][j];
+        double y = bp[6][j];
+        pj_transform(source, target, 1, 1, &x, &y, NULL );
+
+        bXlon[j] = x*RAD_TO_DEG;
+        bXlat[j] = y*RAD_TO_DEG;
     }
     //   END  Lat and long modifications
 
