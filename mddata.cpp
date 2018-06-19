@@ -1092,7 +1092,7 @@ L120:
     if(source==NULL || target==NULL)
         return false;
 
-    for (int j = 0; j < 46; ++j) {
+    for (int j = 0; j < Ns; ++j) {
         double x = bp[5][j];
         double y = bp[6][j];
         pj_transform(source, target, 1, 1, &x, &y, NULL );
