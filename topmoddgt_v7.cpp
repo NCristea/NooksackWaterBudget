@@ -514,7 +514,7 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 			sumie  += rof;
 			// rpi reintroduced the next  1 lines for infil. excess mechanism 13/1/94
 			if (riei > 0.0)
-				acie += acie  + (1.0 - fi)*pka[i-1][isub-1];
+				acie += (1.0 - fi)*pka[i-1][isub-1];
 		} else {
 			cerr << "infiltration excess less than 0 error\n";
 		}
