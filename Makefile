@@ -11,8 +11,8 @@ AR = ar
 LD = g++
 WINDRES = windres
 
-INC =  -I/usr/include/eigen3
-CFLAGS =  -march=corei7 -O3 -Wall -std=c++11 -fexceptions -ftemplate-backtrace-limit=0
+INC = 
+CFLAGS = -O3 -Wall -std=c++11 -fexceptions -ftemplate-backtrace-limit=0
 RESINC =
 LIBDIR =
 LIB =  -lproj
