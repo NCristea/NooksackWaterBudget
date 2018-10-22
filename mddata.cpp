@@ -36,7 +36,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     double *rel, int &relFlag, double *minSp, double *maxSp, double *minSi, double *maxSi, double *minRp, double *maxRp, bool &limitC,
     vector<vector<int> > &ClinkR, vector<int> &kllout, int *ishift0, const int maxInt, const int maxGuage, const int maxSlp,
     const int maxResponse, const int maxA, const int maxC, const int maxChn, const int maxRchAreas, const int maxSites,
-    vector<vector<double> > &bp, double *bXlat, double *bXlon, vector<vector<double> > &wrg1)
+    double **bp, double *bXlat, double *bXlon, vector<vector<double> > &wrg1)
 {
     // *********************************************************************
     //  This subroutine represents an amalgamation of subroutines READPS and
@@ -115,7 +115,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     int Qeast[maxRchAreas], Qnorth[maxRchAreas], Qsite[maxRchAreas];
     double relTemp[maxRchAreas];
     int iShift0temp[maxRchAreas];
-    double flat,clat,flong,clong;
+    //double flat,clat,flong,clong;
 
     //  Local variables
     //  ***************
@@ -140,6 +140,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
 
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> mdData(" << ncalls << ")" << std::endl;
@@ -156,12 +157,12 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
     // ************************************************
     ifstream modelspcFile("modelspc.dat");	// unit lunrd
     if (!modelspcFile.is_open()) {
-        cerr << "Failed to open modelspc.dat\n";
+        cerr << "Failed to open modelspc.dat. Exiting.\n";
         exit(EXIT_FAILURE);
     }
     ifstream interpweightFile("interpweight.dat");	// Interpolation weights
     if (!interpweightFile.is_open()) {
-        cerr << "Failed to open interpweight.dat\n";
+        cerr << "Failed to open interpweight.dat. Exiting.\n";
         exit(EXIT_FAILURE);
     }
     getline(interpweightFile, inLine, '\n');           // Comment line
@@ -184,7 +185,8 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
         if (rain::rain_factor < 0.5 || rain::rain_factor > 4.0) {
             cerr << " ***** Your rainfall multiplier, 4th number on ";
             cerr << "the 3rd line of MODELSPC.DAT, is unreasonable. ";
-            cerr << "Its value is" << fixed << setw(10) << setprecision(2) << rain::rain_factor << endl;
+            cerr << "Its value is" << fixed << setw(10) << setprecision(2) << rain::rain_factor << '\n';
+            cerr << ". Exiting.\n";
             exit(EXIT_FAILURE);
         }
     } else {
@@ -523,7 +525,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
                 cerr << "Failed to open rchareas.txt\n";
                 exit(EXIT_FAILURE);
             }
-        } else {	// rewind
+        } else {    // rewind
             rchareasFile.clear();
             rchareasFile.seekg(0);
         }
@@ -1035,7 +1037,7 @@ L120:
         exit(EXIT_FAILURE);
     }
 
-    getline(basinparsFile, inLine, '\n');                // Comment line
+    getline(basinparsFile, inLine, '\n');                // Header line
 
     for (i = 0; i < Ns; i++) {
         getline(basinparsFile, inLine, '\n');
@@ -1059,33 +1061,35 @@ L120:
     i = Ns;
 
     //  Insertion to get latitude and longitude for each basin
-    /*
+    //ofstream conversionCheckFile("conversion_check.dat");
+    //The coordinates for Bertrand Creek in Whatcom County are converted to somewhere in northeast Washington,
+    //so this section was replaced.
     //   Read latlongfromxy.dat
-    ifstream latlongfromxyFile("latlongfromxy.txt");	// Fortran unit 88 (again)
-    if (!latlongfromxyFile.is_open()) {
-        cerr << "Failed to open latlongfromxy.txt\n";
-        exit(EXIT_FAILURE);
-    }
-    getline(latlongfromxyFile, inLine, '\n');			// Comment line
-    getline(latlongfromxyFile, inLine, '\n');			// Comment line
-    latlongfromxyFile >> flat;
-    getline(latlongfromxyFile, inLine, '\n');			// Read the rest of the line.
-    latlongfromxyFile >> clat;
-    getline(latlongfromxyFile, inLine, '\n');			// Read the rest of the line.
-    latlongfromxyFile >> flong;
-    getline(latlongfromxyFile, inLine, '\n');			// Read the rest of the line.
-    latlongfromxyFile >> clong;
-    latlongfromxyFile.close();
+    //ifstream latlongfromxyFile("latlongfromxy.txt");	// Fortran unit 88 (again)
+    //if (!latlongfromxyFile.is_open()) {
+    //    cerr << "Failed to open latlongfromxy.txt\n";
+    //    exit(EXIT_FAILURE);
+    //}
+    //getline(latlongfromxyFile, inLine, '\n');			// Comment line
+    //getline(latlongfromxyFile, inLine, '\n');			// Comment line
+    //latlongfromxyFile >> flat;
+    //getline(latlongfromxyFile, inLine, '\n');			// Read the rest of the line.
+    //latlongfromxyFile >> clat;
+    //getline(latlongfromxyFile, inLine, '\n');			// Read the rest of the line.
+    //latlongfromxyFile >> flong;
+    //getline(latlongfromxyFile, inLine, '\n');			// Read the rest of the line.
+    //latlongfromxyFile >> clong;
+    //latlongfromxyFile.close();
 
     //   calculate basin lat long.
     //   Assumptions
     //   1.  Linear tranformation between local coords and lat long is sufficient
     //   2.  Outlet local coordinates is representative of subbasin
-    for (j = 0; j < Ns; j++) {
-        bXlat[j] = flat*bp[6][j] + clat;
-        bXlon[j] = flong*bp[5][j] + clong;
-    }
-    */
+    //for (j = 0; j < Ns; j++) {
+    //    bXlat[j] = flat*bp[6][j] + clat;
+    //    bXlon[j] = flong*bp[5][j] + clong;
+    //}
+
     projPJ source = pj_init_plus("+proj=utm +zone=10 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ");
     projPJ target = pj_init_plus("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
 
@@ -1323,9 +1327,11 @@ L120:
     }
     //  *************************
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving mdData(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving mdData(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -1350,6 +1356,7 @@ int read_lakes(vector<int> &lake_reach, int *lzero, double *lake_areas, int *lak
 
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> read_lakes(" << ncalls << ")" << std::endl;
@@ -1403,9 +1410,11 @@ int read_lakes(vector<int> &lake_reach, int *lzero, double *lake_areas, int *lak
         cerr << " No 'lakes.dat' file found\n";
     }
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving read_lakes(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving read_lakes(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -1459,6 +1468,7 @@ int read_lakes_levels(const vector<int> &lake_reach, double *ini_levels, const i
 
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> read_lakes_levels(" << ncalls << ")" << std::endl;
@@ -1517,9 +1527,11 @@ int read_lakes_levels(const vector<int> &lake_reach, double *ini_levels, const i
         cerr << " No 'lakes_levels.dat' file found\n";
     }
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving read_lakes_levels(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving read_lakes_levels(" << ncalls << ")" << " ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

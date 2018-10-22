@@ -69,9 +69,9 @@ int read_struct_from_text(const string fileName, int &expected_numcols, const in
 				getline(inFile, title, '\n');
 			}
 		}
-		real_array.resize(nrows, vector<double>(expected_numcols));
+		real_array.resize(nrows, vector<double>(expected_numcols,0.0));
 		for (int j = 0; j < nrows; ++j) {
-            real_array[j].resize(expected_numcols);
+            real_array[j].resize(expected_numcols,0.0);
         }
 
 		getline(inFile, headers, '\n');

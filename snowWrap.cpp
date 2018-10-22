@@ -28,9 +28,9 @@ using namespace std;
 //   -  subdivision of the external timestep into a number of internal time steps to represent diurnal forcing
 //   -  Bypasses calling of snow subroutine when there is no snow on the ground or no snow falling
 
-int snowueb(const vector<double> &snowsitev, vector<double> &snowstatev, const vector<double> &snowparam,
-    const int ndepletionpoints, double **dfc, const vector<int> &snowcontrol, const vector<double> &dtbar,
-	const vector<double> &snowforcing, vector<double> &snowsurfacetemp, vector<double> &snowaveragetemp,
+int snowueb(const int istep,const int jsub,const array<double,Nsv> &snowsitev, vector<double> &snowstatev, const vector<double> &snowparam,
+    const int ndepletionpoints, double **dfc, const array<int,7> &snowcontrol, const array<double,12> &dtbar,
+	const array<double,Niv> &snowforcing, vector<double> &snowsurfacetemp, vector<double> &snowaveragetemp,
     const double timestep, const int nstepday, double &surfacewaterinput, double &snowevaporation,  //outputs (both in m/h)
     double &areafractionsnow, const int modelelement)
 {
@@ -90,22 +90,24 @@ int snowueb(const vector<double> &snowsitev, vector<double> &snowstatev, const v
  	//   nstepday - the number of time steps in a day.   The dimension of daily arrays has to be at least this so that
  	//    daily averages can be tracked
  	//  Variables and arrays to pass to snowlsub
- 	const int niv = 7;
- 	vector<vector<double> > inpt(niv,vector<double>(1));
- 	vector<double> outv(23);
- 	vector<double> sitev(8);
- 	vector<int> iflag(5);
+
+ 	vector<vector<double> > inpt(Niv,vector<double>(1));
+ 	array<double,23> outv;
+ 	array<double,8> sitev;
+ 	array<int,5> iflag;
  	double elevsb, xlat, xlon, stdlon, elevtg, rlapse, trange, dewptg, pa, pg, edg, eda, hour1, dt;
  	double templocal, shift, t, tmid, es, cump, cume, cummr;
  	int iyear, month, iday, ihr, imm,  isec, nstepsint, jj;
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> snowueb(" << ncalls << ")" << std::endl;
     }
 	caller = "snowueb";
 #endif
+
  	//     naming inputs that are used
 	elevsb = snowsitev[1];
 	xlat   = snowsitev[2];
@@ -151,7 +153,7 @@ int snowueb(const vector<double> &snowsitev, vector<double> &snowstatev, const v
 	iflag[3] = 1;      // how albedo calculations are done - 1 means albedo is calculated
 	iflag[4] = snowcontrol[6];      //model option for surface temperature approximation
 	nstepsint  = snowcontrol[3];   //  Internal time step
-	dt = timestep/(double)nstepsint;
+	dt = timestep/static_cast<double>(nstepsint);
 	templocal = snowforcing[0] - (elevsb - elevtg)*rlapse;       //temperature adjustment by lapse rate
 
  	//      initialize water fluxes
@@ -183,10 +185,11 @@ int snowueb(const vector<double> &snowsitev, vector<double> &snowstatev, const v
 		inpt[4][0] = snowforcing[5];         // short wave radiation
 		inpt[5][0] = snowforcing[6];         // net radiation
 		inpt[6][0] = trange;
+
 		// only call snow routine when there is snow - either on ground or falling.
 		if(snowstatev[1] > 0.0 || (t <= snowparam[0] && inpt[1][0] > 0.0))  {
-            outv[21] = 0;
-			snowLSub(iyear, month, iday, hour1, dt, 1, inpt, sitev, snowstatev, snowparam,
+            outv[21] = 0.0;
+			snowLSub(istep,jsub,iyear, month, iday, hour1, dt, 1, inpt, sitev, snowstatev, snowparam,
                 iflag, dtbar, nstepday,	cump, cume, cummr, outv, snowsurfacetemp, snowaveragetemp, ndepletionpoints,
                 dfc, modelelement,jj);  // 4/2/05  DGT added model element
 			surfacewaterinput += outv[21]/timestep;           // to get answers in m/hr
@@ -196,11 +199,15 @@ int snowueb(const vector<double> &snowsitev, vector<double> &snowstatev, const v
 			surfacewaterinput += inpt[1][0]*dt/timestep;
 			updatetime(iyear, month, iday, hour1, dt);
 		}
+
 	}
+
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving snowueb(" << ncalls << ")" << "\n" << endl;
+        traceFile << setw(30) << caller << " <- Leaving snowueb(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

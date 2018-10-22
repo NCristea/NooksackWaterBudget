@@ -22,8 +22,8 @@
 
 using namespace std;
 
-//int *ifound;
-std::vector<int> ifound;            // record of all individual finds
+int *ifound;
+std::vector<int> iFound;            // record of all individual finds
 std::vector<int> find_counts;       // record of find counts
 std::vector<int> done;              // tally of finished assignments
 int nfound, nfound_last;
@@ -37,10 +37,24 @@ void Find(vector<DrainageType> &iarray1, const int ival1, const int num)
         if (iarray1[i-1].DSDrainage == ival1) {
             nfound++;
             global_found++;
-            ifound.push_back(i);
+            iFound.push_back(i);
         }
     }
     find_counts.push_back(nfound);
+}
+
+void find1_downstream(vector<DrainageType> Drainage, const int k, const int NumDrainage)
+{
+    nfound = 0; //none found
+    delete [] ifound;
+    ifound = new int[NumDrainage];
+    ifound[nfound] = 0;
+    for (int n = 0; n < NumDrainage; n++) {
+        if (Drainage[n].DSDrainage == k) {
+            ifound[nfound] = n+1;
+            nfound += 1;
+        }
+    }   // end find1()
 }
 
 /*	subroutine find1(iarray1,ival1,num)

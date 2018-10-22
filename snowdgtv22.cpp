@@ -48,14 +48,14 @@ using namespace std;
 //  by the U.S. Government , and therefore is in the public domain and not
 //  subject to copyright.
 
-int snowueb2(const double dt, const int nt, const vector<vector<double> > &input, const vector<double> &sitev, vector<double> &statev,
-	vector<double> &tsprevday, vector<double> &taveprevday, const int nstepday, const vector<double> &param, vector<int> &iflag,
-	double &cump, double &cume, double &cummr, vector<double> &outv, const vector<double> &mtime, const int modelelement, const int jj)
+int snowueb2(const int istep, const int jsub, const double dt, const int nt, const vector<vector<double> > &input, const array<double,8> &sitev, vector<double> &statev,
+	vector<double> &tsprevday, vector<double> &taveprevday, const int nstepday, const vector<double> &param, array<int,5> &iflag,
+	double &cump, double &cume, double &cummr, array<double,23> &outv, const vector<double> &mtime, const int modelelement, const int jj)
 {
 
-	double mr, ub, ub_old, fc, w, refDepth, totalRefDepth, df, aep;
+	double mr=0.0, ub, ub_old, fc, w, refDepth, totalRefDepth, df, aep;
 	double cd, rrhoi, rrho, rid, ta, p, rh, qsi, qnetob, coszen, ws, qli, pRain = 0.0, ps = 0.0;
-	double a = 0.0, qh, qe, e, qm, q = 0.0, fm, tave, tsurf, qnet, smelt, rkn;
+	double a=0.0, qh=0.0, qe=0.0, e=0.0, qm=0.0, q=0.0, fm=0.0, tave=0.0, tsurf=0.0, qnet, smelt, rkn;
 	int i, ii, pflag, iradfl;
 
 	// Definitions
@@ -161,6 +161,7 @@ int snowueb2(const double dt, const int nt, const vector<vector<double> > &input
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> snowueb2(" << ncalls << ")" << std::endl;
@@ -307,10 +308,71 @@ int snowueb2(const double dt, const int nt, const vector<vector<double> > &input
 		//     + mtime(3)==1 && mtime(4) >12 && mtime(5)==169) {
 		//	   mtime(1)=mtime(1)
 		//	}
+		/*
+if (istep > 154 && istep <= 161 && jsub == 4) {
+cout << "\n              " << setw(18) << "ub";
+cout << setw(18) << "w";
+cout << setw(18) << "rh";
+cout << setw(18) << "qsi";
+cout << setw(18) << "qli";
+cout << setw(18) << "rkn";
+cout << setw(18) << "rid";
+cout << setw(18) << "QH";
+cout << setw(18) << "QE";
+cout << setw(18) << "E";
+cout << setw(18) << "MR";
+cout << setw(18) << "QM";
+cout << setw(18) << "Q";
+cout << setw(18) << "FM";
+cout << setw(18) << "TSURF";
+cout << setw(18) << "tave";
+cout << setw(18) << "qnet";
+cout << setw(18) << "smelt" << endl;
+cout << "predicorr in  ";
+cout << fixed << setw(18) << setprecision(9) << ub;
+cout << fixed << setw(18) << setprecision(9) << w;
+cout << fixed << setw(18) << setprecision(9) << rh;
+cout << fixed << setw(18) << setprecision(9) << qsi;
+cout << fixed << setw(18) << setprecision(9) << qli;
+cout << fixed << setw(18) << setprecision(9) << rkn;
+cout << fixed << setw(18) << setprecision(9) << rid;
+cout << fixed << setw(18) << setprecision(9) << qh;
+cout << fixed << setw(18) << setprecision(9) << qe;
+cout << fixed << setw(18) << setprecision(9) << e;
+cout << fixed << setw(18) << setprecision(9) << mr;
+cout << fixed << setw(18) << setprecision(9) << qm;
+cout << fixed << setw(18) << setprecision(9) << q;
+cout << fixed << setw(18) << setprecision(9) << fm;
+cout << fixed << setw(18) << setprecision(9) << tsurf;
+cout << fixed << setw(18) << setprecision(9) << tave;
+cout << fixed << setw(18) << setprecision(9) << qnet;
+cout << fixed << setw(18) << setprecision(9) << smelt << endl;
+} */
 		//   Call predictor corrector subroutine to do all the work
-		predicorr(dt, ub, w, a, ta, pRain, ps, ws, rh, qsi, qli, iradfl, rkn,  qnetob, rid, param, sitev,
+		predicorr(istep, jsub, dt, ub, w, a, ta, pRain, ps, ws, rh, qsi, qli, iradfl, rkn,  qnetob, rid, param, sitev,
 			iTsMethod, mtime, qh, qe, e, mr, qm, q, fm, tsurf, tave, qnet, refDepth, totalRefDepth, smelt);
-
+			/*
+if (istep > 154 && istep <= 161 && jsub == 4) {
+cout << "predicorr out ";
+cout << fixed << setw(18) << setprecision(9) << ub;
+cout << fixed << setw(18) << setprecision(9) << w;
+cout << fixed << setw(18) << setprecision(9) << rh;
+cout << fixed << setw(18) << setprecision(9) << qsi;
+cout << fixed << setw(18) << setprecision(9) << qli;
+cout << fixed << setw(18) << setprecision(9) << rkn;
+cout << fixed << setw(18) << setprecision(9) << rid;
+cout << fixed << setw(18) << setprecision(9) << qh;
+cout << fixed << setw(18) << setprecision(9) << qe;
+cout << fixed << setw(18) << setprecision(9) << e;
+cout << fixed << setw(18) << setprecision(9) << mr;
+cout << fixed << setw(18) << setprecision(9) << qm;
+cout << fixed << setw(18) << setprecision(9) << q;
+cout << fixed << setw(18) << setprecision(9) << fm;
+cout << fixed << setw(18) << setprecision(9) << tsurf;
+cout << fixed << setw(18) << setprecision(9) << tave;
+cout << fixed << setw(18) << setprecision(9) << qnet;
+cout << fixed << setw(18) << setprecision(9) << smelt << endl;
+} */
 		//  DGT 4/2/05   Despite all checks in predicor It can (and does) occur that
 		//   we still have ub so large that it results in tave greater than 0, which implies that all the
 		//   snow is liquid.  In these cases - just force the snow to disappear and add the energy involved to Qm.
@@ -336,9 +398,9 @@ int snowueb2(const double dt, const int nt, const vector<vector<double> > &input
 		if (iflag[3] == 1)
 			agesn(statev[2], dt, ps, tsurf, tk, dNewS);
 		//    accumulate for mass balance
-		cump  = cump + (ps + pRain)*dt;
-		cume  = cume + e*dt;
-		cummr = cummr + mr*dt;
+		cump  += (ps + pRain)*dt;
+		cume  += e*dt;
+		cummr += mr*dt;
 		tave  = tavg(ub, w, rhow, cs, to, rhog, de, cg, hf);   //  this call
 		//   necessary to keep track of average internal temperature used in some surface energy algorithms.
 		//	if (tave < -1000) {
@@ -416,9 +478,11 @@ int snowueb2(const double dt, const int nt, const vector<vector<double> > &input
 	outv[13]  = smelt;
 
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving snowueb2(" << ncalls << ")" << "\n" << endl;
+        traceFile << setw(30) << caller << " <- Leaving snowueb2(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -431,11 +495,11 @@ int snowueb2(const double dt, const int nt, const vector<vector<double> > &input
 //     Predictor-corrector scheme to update the state variables,
 //     U and W for each time step
 
-int predicorr(const double dt, double &ub, double &w, const double a,
+int predicorr(const int istep, const int jsub, const double dt, double &ub, double &w, const double a,
 	const double ta, const double pRain, const double ps, const double ws, const double rh,
 	const double qsi, const double  qli, const double iradfl, const double rkn,
 	const double qnetob, const double rid,
-	const vector<double> &param, const vector<double> &sitev, const double iTsMethod,
+	const vector<double> &param, const array<double,8> &sitev, const double iTsMethod,
 	const vector<double> &mtime,  // pass a modeling time
 	//     following variables are output
 	double &qh, double &qe, double &e,  double &mr, double &qm, double &q, double &fm,
@@ -468,6 +532,7 @@ int predicorr(const double dt, double &ub, double &w, const double a,
 		prehelp(w1, w, dt, fm, 0.0, 1.0, ps, pRain, e, rhow, hf, q, qm, mr, qe, hneu);
 	}
 	ub1 = ub + dt*q;
+
 	q1 = q;
 	fm1 = fm;
 	//   save values so that they can be averaged for output
@@ -493,17 +558,21 @@ int predicorr(const double dt, double &ub, double &w, const double a,
 		w2 = 0.0;
 		prehelp(w2, w, dt, fm, fm1, 2., ps, pRain, e, rhow, hf, q, qm, mr, qe, hneu);
 	}
+
 	ub2 = ub + dt/2.0*(q1 + q);
+
 	//   iterate to convergence to enhance stability
 	niter = -3;
 	imax = 1;
 L1: if ((fabs(w2-w1) > wtol || fabs(ub2-ub1) > utol) && niter < imax) {
 		w1 = w2;
 		ub1 = ub2;
+
 		qfm(ub1, w1, a, ta, pRain, ps, ws, rh, qsi, qli, rkn, iradfl,
 			qnetob, rid, param, sitev, iTsMethod, mtime,
 			fm, q, qm, mr, qe, e, tsurf, tave, qh, qnet, dt, refDepth,
 			totalRefDepth, smelt);
+
 		// surface melt smelt
 		//    corrector again
 		w2 = w + dt/2.0*(fm1 + fm);
@@ -511,7 +580,9 @@ L1: if ((fabs(w2-w1) > wtol || fabs(ub2-ub1) > utol) && niter < imax) {
 			w2 = 0.0;
 			prehelp(w2, w, dt, fm, fm1, 2., ps, pRain, e, rhow, hf, q, qm, mr, qe, hneu);
 		}
+
 		ub2 = ub + dt/2.0*(q1 + q);
+
 		niter++;
 		if (niter >= 1) {  // had * steps to converge now hit it.
 			//  What follows is a fix to numerical instability that results from
@@ -596,6 +667,7 @@ L1: if ((fabs(w2-w1) > wtol || fabs(ub2-ub1) > utol) && niter < imax) {
 	}
 	w = w2;
 	ub = ub2;
+
 	//  average values from two time steps for output.  This is done for mr
 	//  and e to ensure mass balance and the others for better physical
 	//  comparisons
@@ -619,7 +691,7 @@ L1: if ((fabs(w2-w1) > wtol || fabs(ub2-ub1) > utol) && niter < imax) {
 int qfm(const double ub, const double w, const double a, const double ta, const double pRain,
 	const double ps, const double ws, const double rh, const double qsi, const double qli,
 	const double rkn, const double iradfl, const double qnetob,
-	const double rid, const vector<double> &param, const vector<double> &sitev, const int iTsMethod, const vector<double> &mtime,
+	const double rid, const vector<double> &param, const array<double,8> &sitev, const int iTsMethod, const vector<double> &mtime,
 	double &fm, double &q, double &qm, double &mr, double &qe,
 	double &e, double &tsurf, double &tave, double &qh, double &qnet,
 	const double dt, double &refDepth, const double totalRefDepth, double &smelt)
@@ -691,7 +763,6 @@ int qfm(const double ub, const double w, const double a, const double ta, const 
 	//       because most instruments report relative humidity relative to water.
 	qp = qpf(pRain, ta, to, ps, rhow, hf, cw, cs);
 	tave = tavg(ub, w, rhow, cs, to, rhog, de, cg, hf);
-
 	// as described as below, the original UEB does not consider the refreezing. in this
 	// change, the model will consider the refreezing effect starting from the top to the bottom.
 	// Here is the predictor.
@@ -1486,6 +1557,7 @@ int prehelp(const double w1, const double w, const double dt, double &fm,
 	//    Because melt rate changes the advected energy also changes.  Here
 	//     advected and melt energy are separated,
 	qother = q + qm - qe;
+
 	//     then the part due to melt recalculated
 	qm = mr*rhow*hf;
 	//     then the part due to evaporation recalculated

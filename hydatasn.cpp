@@ -25,21 +25,25 @@
 using namespace std;
 
 ofstream topErrorFile;
+struct tm *timeinfo;
+time_t startAnnual;
 
 // ***********************************************************************
 
 // This version, V2, has enhanced checking for missing data in the RAMS input and rainfilling
 // V3 also has checking/matching of the flow sites with reaches.
 int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
-	vector<vector<double> >  &bRain, double **flow, int &iret, vector<double> &dewp, vector<double> &trange, double **dtBar,
+	vector<vector<double> >  &bRain, double **flow, int &iret, valarray<double> &dewp, valarray<double> &trange, double **dtBar,
 	const int Ns, vector<vector<double> >&wrg, vector<vector<int> > &lrg, const double *elevtg, double **bTmax, double **bTmin, double
 	**bTdew, double **bdtBar, const vector<vector<double> > &Sp, const int maxGauge, const int maxInt, const int maxSites,
 	const int maxResponse, const int maxTGauge, double *wind2m, vector<vector<double> > &wrg1,
 	int &idebugoutput, int &idebugbasin, int &idebugcase)   // Note that temper was passed in here but has has no use.
 {
-	int date, hour;
+	int date, year, month, day, hour, minutes, seconds;
 	int  ntri, jj, ij;
 	int  js, kg;
+
+    time_t rawtime;
 
 	long itemp1, itemp2, itemp3;
 	int kk;
@@ -70,11 +74,13 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> hyData(" << ncalls << ")" << std::endl;
     }
 	caller = "hyData";
+	double tm1; // This is needed due to spaghetti code below.
 #endif
 
     topErrorFile.open("results/toperror.txt");
@@ -145,6 +151,33 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
         iss >> idebugcase;
     }
     topinpFile.close();
+
+	year     = sDate/10000;
+	day      = sDate - year*10000;
+	month    = day/100;
+	day     -= month*100;
+    hour     = sHour/10000;
+	seconds  = sHour - 10000*hour;
+	minutes  = seconds/100;
+	seconds -= minutes*100;
+    // Assuming that sHour = 240000 means that data is for the past 24 hours
+    // then tm_hour = 0 is the model start time needed here.
+
+    // get current timeinfo and modify it
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+    timeinfo->tm_year = year - 1900;// years since 1900
+    timeinfo->tm_mon = month - 1;   // months since January	0-11
+    timeinfo->tm_mday = day;        // day of the month	1-31
+    timeinfo->tm_hour = 0;          // hours since midnight	0-23
+    timeinfo->tm_min = minutes;     // minutes after the hour	0-59
+    timeinfo->tm_sec = seconds;     // seconds after the minute	0-60
+    timeinfo->tm_zone = "PST";
+    timeinfo->tm_isdst = -1;        // we don't want daylight saving time here
+
+    // call mktime: timeinfo->tm_wday will be set
+    startAnnual = mktime ( timeinfo );
+    cout << "Model starting date/time is: " << asctime(timeinfo);
 	//------------ topinp.dat -------------------
 
 	td8micsec(sDate, sHour, itemp2);
@@ -604,13 +637,16 @@ L2031: if (m != i) {
 		cerr << " Proceeding with measured runoff = 0\n";
 	}
 #if TRACE
-	caller = save_caller;
+	tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving hyData @ 1(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving hyData @ 1(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
 	return 0;
+
 //L250:  cerr << "Error or End of file reading topinp.dat\n";
 //	iret = 4;
 //	return 0;
@@ -656,9 +692,11 @@ L206: for (ij = i+1; ij <= m; ij++) {
 	streamflow_calibrationFile.close();
 L230:
 #if TRACE
-	caller = save_caller;
+	tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving hyData @ 2(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving hyData @ 2(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

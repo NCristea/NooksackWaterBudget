@@ -57,7 +57,7 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 	double &sumsle, double &sumr1, double &qb, vector<double> &qinst, vector<double> &dr, double &sumqv,
 	double &sumse, double &zbar, const double zbar_new, double **tdh, double &zr, double &ak0fzrdt, double &logoqm,
 	double &qvmin, double &dth, double &sumad, double &evap_mm, double &qlat_mm,
-	const int ipflag, array<double,Nip1> &rirr, const int js)
+	const int ipflag, array<double,Nip1> &rirr, const int js, double &upwelling, double &recharge)
 {
 	//         reversed the  order of DR and QINST back to what they were 25/9/98
 	//   DGT had problems with qinst flows not preserving mass balance so resorted
@@ -153,6 +153,7 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> topmod(" << ncalls << ")" << std::endl;
@@ -355,6 +356,8 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 	sume = ae + min(r1, ud); // removed the subscript as unnecessary
 	//   basinwide soil zone calculations
 	soil(sr, r2, r3, rie, rd, srn, zr, dth1, dth2, szf, ak0fzrdt, c, soilc, psif, true, ad_cap, ad_now);
+	upwelling = r3;
+	recharge  = rd;
 	//   calculate saturation thresholds
 	atbsat = szf*zbar + Lambda;   //  Saturation threshold
 	//       Points with ln(a/tan b) greater than this are saturated
@@ -365,16 +368,16 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 
 	//    Start loop on a/TtanB increments at 2 because each increment represents a bin from i-1 to i
 	//    This code assumes ln(a/tan b) values are in increasing order and NOT repeated
-	acie = 0.0;      //   infiltration excess area
-	acse = 0.0;      //   saturation excess area
-	rofex = 0.0;     //   runoff saturation excess
+	acie   = 0.0;    //   infiltration excess area
+	acse   = 0.0;    //   saturation excess area
+	rofex  = 0.0;    //   runoff saturation excess
 	rofrex = 0.0;    //   runoff infiltration excess
 	// raw 12-jan-2005 impervious area
 	rof = max(r2, 0.0)*fi;
 	rofrex = rofrex+rof;
 	sumie += rof;
 	acie  += fi;
-	sumad = 0.0;   //  dgt 6/28/05 this is a variable to accumulate artificial drainage across classes
+	sumad  = 0.0;   //  dgt 6/28/05 this is a variable to accumulate artificial drainage across classes
 
 	for (i = nmin; i <= Nka[isub-1]; i++) {
 		//       Check for saturation
@@ -461,6 +464,7 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 			zi = zbar + (Lambda - amidl)/szf;
 			sri = sr + (zr - zi)*(1.0 - sr/soilc)*dth; // local enhancement of soil moisture
 			soil(sri, r2, r3itemp, riei, rdtemp, srni, zr, dth1, dth2, szf, ak0fzrdt, c, soilc, psif, false, ad_cap, ad_now_i);  // RPI 6/5/01 introduced r3ie
+
 			//     6/28/05   DGT introduced last two arguments for artificial drainage
 
 			//          The main use of the above call is to get
@@ -506,7 +510,6 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 			cerr << "saturation excess less than 0 error, rsei&psat=" << rsei << " " << psat << '\n';
 			exit(EXIT_FAILURE);
 		}
-
 			//  case of infiltration excess
 		if (riei >= 0.0) {
 			rof = riei*(1-fi)*pka[i-1][isub-1];
@@ -540,6 +543,7 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 		//	  write(3284,*)i,r3i,ets
 		//	endif
 	}
+
 	if (modwrt && mpe == -1) {
 		if (it == 1) {  //write a header for this subcatchment
 			lundatFile << isub << " " << ndata;
@@ -736,9 +740,11 @@ L4992:	if (ntdh[isub-1] > 1) {
 	}
 	//-------------------------------------------------------------
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving topmod(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving topmod(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -772,6 +778,7 @@ int soil(const double sr, const double r2, double &r3, double &rie, double &rd, 
 
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> soil(" << ncalls << ")" << std::endl;
@@ -823,9 +830,11 @@ int soil(const double sr, const double r2, double &r3, double &rie, double &rd, 
 		srn = 0.0;
 	}
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving soil(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving soil(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -859,6 +868,7 @@ int intercept(double &cv, const double rit, double &ae, const double delt, const
 
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> intercept(" << ncalls << ")" << std::endl;
@@ -919,9 +929,11 @@ int intercept(double &cv, const double rit, double &ae, const double delt, const
 	cv = sn;
 	r1 = r;
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving intercept(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving intercept(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -940,6 +952,7 @@ int irrigation(const double Sr, const vector<vector<double> > &Sp, const int js,
 	//  Irrigation does not apply water that would make the soil wetter than dgoal*dth2.
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> irrigation(" << ncalls << ")" << std::endl;
@@ -980,9 +993,11 @@ int irrigation(const double Sr, const vector<vector<double> > &Sp, const int js,
 		Dapp = 0;
 	}
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving irrigation(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving irrigation(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

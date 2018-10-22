@@ -35,7 +35,7 @@ using namespace std;
 
 // **************READ Bristow Campbell Parameter values **************
 
-int bcparm(vector<double> &dtBar, double &bca, double &bcc, const string bcFile)
+int bcparm(array<double,12> &dtBar, double &bca, double &bcc, const string bcFile)
 {
 	istringstream line;
 	string inLine;
@@ -118,7 +118,7 @@ int lyear(const int year)
 //     to get the atmospheric transmissivity using the Bristow and Campbell
 //     (1984) approach
 
-int atf(double &atff, const double trange, const int month, const vector<double> &dtbar, const double a, const double c)
+int atf(double &atff, const double trange, const int month, const array<double,12> &dtbar, const double a, const double c)
 {
 	double b;
 

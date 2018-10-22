@@ -29,13 +29,14 @@ int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep,
 
 int ImposeMeasuredFlows(const int Timestep, const int NumNode, const int NumLink, const int NumRunoff,
 	const int NumBaseflow, const int NumDrainage, const int NumMeasuredFlowInfo, const int NumMeasuredFlowData,
-	int *DrainageOrder, vector<double> &DrainageOutFlow)
+	int *DrainageOrder, valarray<double> &DrainageOutFlow)
 {
 	double NodeOutFlow, FlowRatio;
 	int i, n, k, j, j_out, nfound, *ifound;
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> ImposeMeasuredFlows(" << ncalls << ")" << std::endl;
@@ -95,9 +96,11 @@ int ImposeMeasuredFlows(const int Timestep, const int NumNode, const int NumLink
 	//now use these new runoffs to calculate flows throughout the network
 	AssignDrainageFlows(Timestep, NumDrainage, NumNode, NumLink, DrainageOrder, NumRunoff, NumBaseflow, DrainageOutFlow);
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving ImposeMeasuredFlows(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving ImposeMeasuredFlows(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -115,6 +118,7 @@ int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep,
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> ScaleUpstreamRunoff(" << ncalls << ")" << std::endl;
@@ -171,9 +175,11 @@ int ScaleUpstreamRunoff(const double FlowRatio, const int k, const int Timestep,
 		}
 	}	// while
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving ScaleUpstreamRunoff(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving ScaleUpstreamRunoff(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

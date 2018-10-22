@@ -25,12 +25,13 @@ using namespace other_structures;
 using namespace std;
 
 int AssignDrainageFlows(const int Timestep, const int NumDrainage, const int NumNode, const int NumLink,
-	int *DrainageOrder, const int NumRunoff, const int NumBaseflow, vector<double> &DrainageOutFlow)
+	int *DrainageOrder, const int NumRunoff, const int NumBaseflow, valarray<double> &DrainageOutFlow)
 {
 	int i, n, k, isn, nfound, *ifound;
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> AssignDrainageFlows(" << ncalls << ")" << std::endl;
@@ -85,11 +86,13 @@ int AssignDrainageFlows(const int Timestep, const int NumDrainage, const int Num
 		Link[k-1].Flow = Baseflow[Timestep-1].Rate[Drainage[i-1].DrainageID-1];
 	}
 
-	BalanceFlowsAtStreamNodes(NumNode, NumLink, DrainageOrder, NumDrainage, DrainageOutFlow);
+	BalanceFlowsAtStreamNodes(DrainageOrder, NumDrainage, DrainageOutFlow);
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving AssignDrainageFlows(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving AssignDrainageFlows(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

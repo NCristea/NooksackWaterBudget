@@ -35,6 +35,7 @@ int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSo
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> BuildLinkStructure(" << ncalls << ")" << std::endl;
@@ -286,6 +287,7 @@ int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSo
 				//				case default
 				DSNode = j;
 				//				end select
+
 				CreateLink(NumLink, "RETURN", ReturnFlowLinkCode, InternalCode, USNode, DSNode, 0.0, m);
 			}
 		}
@@ -319,7 +321,7 @@ int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSo
 		}
 		DSNode = ifound[0]; //problem if nfound<>1
 		delete [] ifound;
-		CreateLink(NumLink, "MEASIN", MeasuredFlowLinkCode, ExternalCode, USNode,DSNode, 0.0, 0);
+		CreateLink(NumLink, "MEASIN", MeasuredFlowLinkCode, ExternalCode, USNode, DSNode, 0.0, 0);
 	}
 
 	//one link for consumptive use, from each source to the sink node
@@ -355,9 +357,11 @@ int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSo
 		CreateLink(NumLink, "WASTE_", SinkLinkCode, ExternalCode, USNode, DSNode, 0.0, 0);
 	} //making links from sources to sink
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving BuildLinkStructure(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving BuildLinkStructure(" << ncalls << ")" << " ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -372,6 +376,7 @@ int CreateLink(int &NumLink, const string Title, const int LinkCode, const int I
 	int k;
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> CreateLink(" << Title << "), link #" << NumLink+1 << std::endl;
@@ -388,9 +393,11 @@ int CreateLink(int &NumLink, const string Title, const int LinkCode, const int I
 	Link[k-1].Flow         = Flow;
 	Link[k-1].ReturnFlowID = ReturnFlowID; //only used by ReturnFlow links
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving CreateLink(" << Title << "), DSNode " << DSNode << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving CreateLink(" << Title << "), DSNode " << DSNode << " ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

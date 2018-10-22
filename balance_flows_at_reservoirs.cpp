@@ -24,7 +24,7 @@ using namespace input_structures;
 using namespace other_structures;
 using namespace std;
 
-int remove_element(vector<int> &j_out, int &nj_out, const int iFound);
+int remove_element(valarray<int> &j_out, int &nj_out, const int iFound);
 
 int BalanceFlowsAtReservoirs(const int NumNode, const int NumLink, const int NumUser, const int NumReservoir, vector<double> &ReservoirNetStorage)
 {
@@ -36,6 +36,7 @@ int BalanceFlowsAtReservoirs(const int NumNode, const int NumLink, const int Num
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> BalanceFlowsAtReservoirs(" << ncalls << ")" << std::endl;
@@ -61,7 +62,7 @@ int BalanceFlowsAtReservoirs(const int NumNode, const int NumLink, const int Num
 		}
 
 		nj_out = Reservoir[i-1].n_taken;
-		vector<int> j_out(nj_out);
+		valarray<int> j_out(nj_out);
 		for (n = 0; n < nj_out; n++) {
 			j_out[n] = Reservoir[i-1].ifound_taken[n];
 		}
@@ -137,12 +138,14 @@ int BalanceFlowsAtReservoirs(const int NumNode, const int NumLink, const int Num
 			//  Link(jret)%Flow=Link(j_release)%Flow
 			//  Did not do this because DGT did not want to change code and Ross says will not change result.
 		}
-		ReservoirNetStorage[i-1] = Node[isn-1].Store-Reservoir[i-1].StoreMin;
+		ReservoirNetStorage[i-1] = Node[isn-1].Store - Reservoir[i-1].StoreMin;
 	}
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving BalanceFlowsAtReservoirs(" << ncalls << ")" << endl;
+        traceFile << setw(30) << caller << " <- Leaving BalanceFlowsAtReservoirs(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -150,7 +153,7 @@ int BalanceFlowsAtReservoirs(const int NumNode, const int NumLink, const int Num
 	return 0;
 }
 
-int remove_element(vector<int> &j_out, int &nj_out, const int iFound)
+int remove_element(valarray<int> &j_out, int &nj_out, const int iFound)
 {
 	int i;
 
