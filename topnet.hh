@@ -427,11 +427,14 @@ int Write_OutputLine_valarray(std::ofstream &oFile, const std::string fileName, 
     const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
 int Write_OutputTotal_valarray(std::ofstream &oFile, const std::string fileName, const std::string timestamp,
     const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
+int Write_OutputTotal_vector(std::ofstream &oFile, const std::string fileName, const std::string timestamp,
+    const std::vector<double> &Rvariable, const int NumDrainage, const double scalefactor);
 int Write_OutputLocalContributions(std::ofstream &o1File, std::ofstream &o2File, const int NumStreamNode, const int NumDrainage,
 		const std::vector<double> &BaseflowTopnet, const std::vector<double> &RunoffTopnet, const int timestep, const double scalefactor);
 int Write_Static_Output_Tables(const std::string dirname, const int NumUserSourceReturn);
 int Write_TimeVaryingOutput_Tables(const std::string dirname, const int NumUser, const int NumTimesteps,
 	const int NumNode, const int NumLink, const int NumReturnFlow, const int NumWWTP);
+int writeWithdrawalByUserType(const std::string dirname, const int NumUser, const int NumTimesteps);
 
 #endif
 

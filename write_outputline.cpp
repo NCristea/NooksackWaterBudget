@@ -204,7 +204,7 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
 	return 0;
 }
 
-//========================= valarray totals ===================
+//================== vector, valarray totals ===================
 
 int Write_OutputTotal_valarray(ofstream &oFile, const string fileName, const string timestamp,
 const valarray<double> &Rvariable, const int NumDrainage, const double scalefactor)
@@ -215,6 +215,30 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
 	// subroutine is called.
     if (!oFile.is_open()) {
         cerr << fileName << " is not open\n";
+        exit(EXIT_FAILURE);
+    }
+    oFile << dec << setw(11) << timestamp;
+    for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
+        if (fabs(Rvariable[j]*scalefactor) < 0.1) {
+            oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+        } else {
+            oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+        }
+    }
+    oFile << '\n';
+
+	return 0;
+}
+
+int Write_OutputTotal_vector(ofstream &oFile, const string fileName, const string timestamp,
+const vector<double> &Rvariable, const int NumDrainage, const double scalefactor)
+{
+	string LocationTypeString, str;
+	int j;
+	// Writing totals happens after timestep 0 so file initialization must be done before this
+	// subroutine is called.
+    if (!oFile.is_open()) {
+        cerr << fileName << " is not open: exiting\n";
         exit(EXIT_FAILURE);
     }
     oFile << dec << setw(11) << timestamp;

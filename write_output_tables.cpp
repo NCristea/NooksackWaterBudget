@@ -160,11 +160,11 @@ int write_integers_to_text(const string filenm, const vector<string> &headers, c
 #endif
 	ofstream outFile(filenm.c_str());
 	if (!outFile.is_open()) {
-			cerr << "Failed to open '" << filenm << "'\n";
+			cerr << "Failed to open '" << filenm << "': exiting.\n";
 			exit(EXIT_FAILURE);
-	} else {
-		cout << "Writing to '" << filenm << "'\n";
-	}
+	} //else {
+		//cout << "Writing to '" << filenm << "'\n";
+	//}
 	for (j = 0; j < ncols; j++) {
 		outFile << headers[j] << " ";
 	}
@@ -838,8 +838,6 @@ int write_struct_to_text(const string filenm, const vector<string> &headers, con
 	const int icall)
 {
 	// write out a data array that has 1 columns of integer data, and then columns of real data
-	string str;
-	string realfmt;
 	int i, j;
 #if TRACE
 	static int ncalls = 0;
@@ -851,7 +849,11 @@ int write_struct_to_text(const string filenm, const vector<string> &headers, con
 	caller = "write_struct_to_text";
 #endif
 	ofstream outFile(filenm.c_str());
-	cout << "Writing to '" << filenm << "'\n";
+	if (!outFile.is_open()) {
+			cerr << "Failed to open '" << filenm << "': exiting.\n";
+			exit(EXIT_FAILURE);
+	}
+	//cout << "Writing to '" << filenm << "'\n";
 
 	for (j = 0; j < ncols; j++) {
 		outFile << setw(18) << headers[j];

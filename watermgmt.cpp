@@ -647,6 +647,9 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		Write_OutputLine_vector(oFile[12], "results/TotalRunoff_noWithdrawal_cms.txt", Timestep, RunoffTopnet,      NumDrainage, scalefactor);
 		Write_OutputLocalContributions(oFile[13], oFile[14], NumStreamNode, NumDrainage, BaseflowTopnet, RunoffTopnet, Timestep, scalefactor);
 		t3 = (double)clock()/(double)CLOCKS_PER_SEC;
+		// ------------------------------------------------------------------------------------------------------------------------
+		writeWithdrawalByUserType("results", NumUser, RunControl.NumTimesteps);
+        // ------------------------------------------------------------------------------------------------------------------------
 		cerr << fixed << setw(12) << setprecision(6) << t3 - t2 << " seconds to write output files\n";
 
 		// END OF FINAL OUTPUTS
