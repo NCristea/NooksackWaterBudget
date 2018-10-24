@@ -150,16 +150,16 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
 
     while (!modelspcFile.eof()) {
         getline(modelspcFile, testStr);
-        if (testStr.compare("Number of points in a/tan b distribution") == 0) {
+        if (testStr.compare(0,40,"Number of points in a/tan b distribution") == 0) {
             modelspcFile >> maxA1;
             if (maxA2 < maxA1) {
                 maxA2 = maxA1;
             }
         }
-        else if  (testStr.compare("Following identifies the reaches to be used as response time series and output time series") == 0) {
+        else if  (testStr.compare(0,90,"Following identifies the reaches to be used as response time series and output time series") == 0) {
             modelspcFile >> Neq0 >> Nout0;
         }
-        if (testStr.compare("The number of points in the overland flow distance distribution") == 0) {
+        if (testStr.compare(0,63,"The number of points in the overland flow distance distribution") == 0) {
             modelspcFile >> maxC1;
             if (maxC2 < maxC1) {
                 maxC2 = maxC1;
