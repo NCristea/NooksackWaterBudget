@@ -37,7 +37,6 @@ int read_struct_from_text(string fileName, int &expected_numcols, const int ncom
 	if (!inFile.is_open()) {
 		cerr << "Failed to open " << fileName << '\n';
 		size_t position = fileName.find("/")+1;             // character following '/'
-        cout << fileName[position];
         if (isupper(fileName[position])) {
             fileName[position] = tolower(fileName[position]);
         } else {
