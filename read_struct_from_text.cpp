@@ -19,11 +19,12 @@
 
 #include "topnet.hh"
 #include <sstream>
+#include <cctype>
 
 using namespace std;
 using namespace data_array;
 
-int read_struct_from_text(const string fileName, int &expected_numcols, const int ncommentlines, int &nrows)
+int read_struct_from_text(string fileName, int &expected_numcols, const int ncommentlines, int &nrows)
 {
 	string title, headers, inLine, checkLine;
 	int i, k;
@@ -35,7 +36,19 @@ int read_struct_from_text(const string fileName, int &expected_numcols, const in
 	inFile.open(fileName.c_str());
 	if (!inFile.is_open()) {
 		cerr << "Failed to open " << fileName << '\n';
-		exit(EXIT_FAILURE);
+		size_t position = fileName.find("/")+1;             // character following '/'
+        cout << fileName[position];
+        if (isupper(fileName[position])) {
+            fileName[position] = tolower(fileName[position]);
+        } else {
+            fileName[position] = toupper(fileName[0]);
+        }
+        cerr << "Trying to open " << fileName << " instead\n";
+        inFile.open(fileName.c_str());
+        if (!inFile.is_open()) {
+            cerr << "Failed to open " << fileName << ". Exiting\n";
+            exit(EXIT_FAILURE);
+        }
 	}
 	if (ncommentlines >= 1)
 		getline(inFile, title, '\n');
