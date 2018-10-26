@@ -230,7 +230,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         } else {
             cerr << resultsFileNames[i-offset] << " opened" << endl;
         }
-        oFile[i] << setw(11) << "Year end";
+        oFile[i] << setw(11) << "Years";
         for (jsub = 1; jsub <= Nsub; jsub++) {
             oFile[i] << setw(12) << "Drainage" << dec << setw(3) << jsub;
         }
