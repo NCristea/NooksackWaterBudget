@@ -45,6 +45,7 @@ int BuildNodeStructure(const int NumDrainage, int &NumUser, const int NumReservo
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> BuildNodeStructure(" << ncalls << ")" << std::endl;
@@ -154,9 +155,11 @@ int BuildNodeStructure(const int NumDrainage, int &NumUser, const int NumReservo
 	//Sink - one node for all outlets (could split later)
 	CreateNode(NumNode, "SINK__", SinkNodeCode, ExternalCode, 0.0, 0.0, 0.0, -1, -1);
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving BuildNodeStructure(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving BuildNodeStructure(" << ncalls << ")" << " ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

@@ -24,15 +24,15 @@ using namespace input_structures;
 using namespace other_structures;
 using namespace std;
 
-int BalanceFlowsAtStreamNodes(const int NumNode, const int NumLink, int *DrainageOrder,
-	const int NumDrainage, vector<double> &DrainageOutFlow)
+int BalanceFlowsAtStreamNodes(int *DrainageOrder, const int NumDrainage, valarray<double> &DrainageOutFlow)
 {
-	vector<int> ifound_in(1000), ifound_taken(1000);
+	array<int,1000> ifound_in, ifound_taken;
 	int n, i, j, ii, n_in, n_taken, j_unallocated;
 	double flow_in, flow_taken;
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> BalanceFlowsAtStreamNodes(" << ncalls << ")" << std::endl;
@@ -42,7 +42,6 @@ int BalanceFlowsAtStreamNodes(const int NumNode, const int NumLink, int *Drainag
 	//Calculate Flow in all links
 	//  Process each stream node in drainage calculation order (from upstream to downstream) assigning the flow to the outgoing
 	//  unallocated link the sum of all inflows minus the sum of all withdrawals.
-
 	for (ii = 1; ii <= NumDrainage; ii++) {
 		i = DrainageOrder[ii-1];
 		n_in = Drainage[i-1].n_in;
@@ -51,6 +50,7 @@ int BalanceFlowsAtStreamNodes(const int NumNode, const int NumLink, int *Drainag
 			ifound_in[n] = Drainage[i-1].ifound_in[n];
 		}
 		n_taken = Drainage[i-1].n_taken;
+
 		for (n = 0; n < n_taken; n++) {
 			ifound_taken[n] = Drainage[i-1].ifound_taken[n];
 		}
@@ -70,9 +70,11 @@ int BalanceFlowsAtStreamNodes(const int NumNode, const int NumLink, int *Drainag
 	}
 
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving BalanceFlowsAtStreamNodes(" << ncalls << ")" << endl;
+        traceFile << setw(30) << caller << " <- Leaving BalanceFlowsAtStreamNodes(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

@@ -36,4 +36,7 @@ const int num_basinpars = 46;
 // WARNING - make sure nrx in NLFIT.INC is at least the maximum mnumber of time steps
 // in a simulation + 200
 
+// originally in snow.inc, Npar is read in from modelspc.dat
+const int Nsv = 9, Niv = 7;
+
 #endif

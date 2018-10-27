@@ -32,6 +32,7 @@
 #include <vector>
 #include <valarray>
 #include <array>
+#include <ctime>
 
 #define TRACE 10
 #define MAX_TRACE 5
@@ -49,13 +50,17 @@
     extern std::ofstream zbarFile;
 #endif
 
-//extern int *ifound;
-//extern std::ofstream debugFile;
+extern int *ifound;
+extern struct tm *timeinfo;  // Initialized in hyData()
+extern time_t startAnnual;   // Initialized in hyData()
+extern int NumUserSourceReturn; // initialized in AssignPriorityOrder()
+extern std::ofstream debugFile;
 extern std::ofstream topErrorFile;
-extern std::vector<int> ifound;
+extern std::vector<int> iFound;
 extern std::vector<int> find_counts;
 extern std::vector<int> done;
 extern int nfound, nfound_last, global_found;
+void find1_downstream(std::vector<DrainageType> Drainage, const int k, const int NumDrainage);
 void Find(std::vector<DrainageType> &iarray1, const int ival1,const int num);
 
 namespace data_array {
@@ -97,11 +102,11 @@ namespace input_structures {
 }
 
 namespace other_structures {
-	extern NodeType             *Node;
+	extern std::vector<NodeType> Node;
 	extern std::vector<LinkType> Link;
 	extern UserSourceTableType  *UserSourceTable;
 	extern StaticOutputTableType StaticOutput;
-	extern NodeType             *NodeSave;
+	extern std::vector<NodeType> NodeSave;
 	extern std::vector<LinkType> LinkSave;
 	extern int                  *UserSourceOrder;
 	extern int                  *WWTP_list;
@@ -278,23 +283,22 @@ extern int *DrainageOrder;
 
 int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLink, const int NumUser, const int NumReservoir,
 	const int NumSource, const int NumRights, const int NumSourceMixing, int *DrainageOrder, const int NumDrainage,
-	const int NumReturnFlow, const int NumUserSource, std::vector<double> &volume_irrig_sup,
-	double *groundwater_to_take, std::vector<double> &DrainageOutFlow);
+	const int NumReturnFlow, const int NumUserSource, std::valarray<double> &volume_irrig_sup,
+	double *groundwater_to_take, std::valarray<double> &DrainageOutFlow);
 int Append_To_Output_Tables(const int Timestep, const int dt,
 	const int NumStreamNode, const int yyyymmdd, const int hhmmss,
 	const int NumLink, const int NumNode, const int Nsteps, const int NumUser);
 int AssignDrainageFlows(const int Timestep, const int NumDrainage, const int NumNode, const int NumLink,
-	int *DrainageOrder, const int NumRunoff, const int NumBaseflow, std::vector<double> &DrainageOutFlow);
+	int *DrainageOrder, const int NumRunoff, const int NumBaseflow, std::valarray<double> &DrainageOutFlow);
 int AssignPriorityOrder(const int NumUser, const int NumSource, const int NumRights, const int NumReservoir,
 	const int AllocationMode, int *DrainageOrder, const int NumDrainage,
 	int &NumUserSource, int &NumUserSourceReturn, const int NumReturnFlow);
-int atf(double &atff, const double trange, const int month, const std::vector<double> &dtbar, const double a, const double c);
+int atf(double &atff, const double trange, const int month, const std::array<double,12> &dtbar, const double a, const double c);
 
 int BalanceFlowsAtReservoirs(const int NumNode, const int NumLink, const int NumUser,
 	const int NumReservoir, std::vector<double> &ReservoirNetStorage);
-int BalanceFlowsAtStreamNodes(const int NumNode, const int NumLink, int *DrainageOrder,
-	const int NumDrainage, std::vector<double> &DrainageOutFlow);
-int bcparm(std::vector<double> &dtBar, double &bca, double &bcc, const std::string bcFile);
+int BalanceFlowsAtStreamNodes(int *DrainageOrder, const int NumDrainage, std::valarray<double> &DrainageOutFlow);
+int bcparm(std::array<double,12> &dtBar, double &bca, double &bcc, const std::string bcFile);
 int BuildDrainageOrder(const int NumDrainage, int *DrainageOrder);
 int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSource,
 	const int NumReturnFlow, const int NumReservoir, const int NumMeasuredFlowInfo, const int NumNode, int &NumLink);
@@ -307,7 +311,7 @@ int calcts( double **Si,            const std::vector<std::vector<double> > &Sp,
             std::vector<std::vector<double> > &bRain,        const long int interval, const int m,        const int mi,
             const int mps,          const int mpe,         bool &ok,              const double *xlat, const double *xlong,
             const double stdlon,    const double *elevtg,  double **bdtBar,       const int sDate,    int &sHour,
-            const std::vector<double> &temper,   const std::vector<double> &dewp,    const std::vector<double> &tRange,  const int Neq,      const int Nout,
+            const std::valarray<double> &temper,   const std::valarray<double> &dewp,    const std::valarray<double> &tRange,  const int Neq,      const int Nout,
             const int nBout,        const int *iBout,      const double *wind2m,  double **bTmin,     double **bTmax,
             double **bTdew,         const double *bXlat,   const double *bXlon,   int *ntdh,    const int ndump,
             const int maxInt,       const int maxSlp,      const int maxA,        const int maxC,     const int maxChn,
@@ -318,7 +322,7 @@ int cliParam(double *xlat, double *xlong, double &stdlon, double *elevtg, double
 int CreateLink(int &NumLink, const std::string Title, const int LinkCode, const int IntExtCode,
 	const int USNode, const int DSNode, const double Flow, const int ReturnFlowID);
 int etall(const double xlat, const double xlong, const double stdlon, const double elevtg,
-	const std::vector<double> &dtbar, double &evap, const double temp, const double dewp, const double trange,
+	const std::array<double,12> &dtbar, double &evap, const double temp, const double dewp, const double trange,
 	const double elevsb, const double albedo, const double rlapse, const int sdate, const int shour,
 	const int dtsec, const int m, const int istep, int &iyear, int &month, int &iday,
 	int &ihr, int &imm, int &isec, double &hour1, const double tmin, const double tmax,
@@ -327,7 +331,7 @@ int hyri(const int year, const int month, const int day, const double hour, cons
 	const double slope, const double azi, const double lat, double &hri, double &coszen);
 int ImposeMeasuredFlows(const int Timestep, const int NumNode, const int NumLink, const int NumRunoff,
 	const int NumBaseflow, const int NumDrainage, const int NumMeasuredFlowInfo, const int NumMeasuredFlowData,
-	int *DrainageOrder, std::vector<double> &DrainageOutFlow);
+	int *DrainageOrder, std::valarray<double> &DrainageOutFlow);
 int inputT(int initT[], int iend[], int &Neq, std::vector<std::vector<double> > &qact, double actime[],
 	std::string &modelid, int &Npar, const int nrx, const int iex);
 int irrigation(const double Sr, const std::vector<std::vector<double> > &Sp, const int js, const long int interval, const int MAXSLP, double &Dapp);
@@ -341,10 +345,10 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, 
 	const int iex, int *llout, int &Neq, int &Nout, int &nBout, int *iBout, int &nRchSav, int *qMap, double *rel, int &relFlag,
 	double *minSp, double *maxSp,  double *minSi, double *maxSi, double *minRp, double *maxRp, bool &limitC, std::vector<std::vector<int> > &ClinkR, std::vector<int> &kllout,
 	int *ishift0, const int maxInt, const int maxGuage, const int maxSlp, const int maxResponse, const int maxA, const int maxC,
-	const int maxChn, const int maxRchAreas, const int maxSites, std::vector<std::vector<double> > &bp,
+	const int maxChn, const int maxRchAreas, const int maxSites, double **bp,
 	double *bXlat, double *bXlon, std::vector<std::vector<double> > &wrg1);
 int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
-	std::vector<std::vector<double> > &bRain, double **flow, int &iret, std::vector<double> &dewp, std::vector<double> &trange, double **dtBar, const int Ns, std::vector<std::vector<double> > &wrg,
+	std::vector<std::vector<double> > &bRain, double **flow, int &iret, std::valarray<double> &dewp, std::valarray<double> &trange, double **dtBar, const int Ns, std::vector<std::vector<double> > &wrg,
 	std::vector<std::vector<int> > &lrg, const double *elevtg, double **bTmax, double **bTmin, double **bTdew, double **bdtBar, const std::vector<std::vector<double> > &Sp,
 	const int maxGauge, const int maxInt, const int maxSites, const int maxResponse, const int maxTGauge, double *wind2m, std::vector<std::vector<double> > &wrg1,
 	int &idebugoutput, int &idebugbasin, int &idebugcase);
@@ -362,13 +366,13 @@ bool miss(const double train, const int nfill);
 int iposn(const int Nrch, const std::vector<std::vector<int> > &linkR, const int ii);
 int set_cor_data(const std::vector<std::vector<int> > &linkR, const int Neq, const int Nout, const int Nrch, const int Ns,
 	const std::vector<int> &kllout, double **flow, const std::vector<std::vector<double> > &Spd, const double *bArea, const int *ll,
-	const int *llOut, std::vector<double> &dFlow, std::vector<double> &suma, int *knt, int *iReach, int *lOut, const int maxInt,
+	const int *llOut, std::valarray<double> &dFlow, std::vector<double> &suma, int *knt, int *iReach, int *lOut, const int maxInt,
 	const int maxSlp, const int maxChn, const int maxResponse);
 int read_lakes(std::vector<int> &lake_reach, int *lzero, double *lake_areas, int *lake_beach_slps, int *lk_line, int *num_rat_vals,
 	int **lheads, int **loflows, const int max_lakes, const int max_lheads);
 int read_lakes_levels(const std::vector<int> &lake_reach, double *ini_levels, const int max_lakes);
 int setup_zbar0s(const int Ns, double **Si, const std::vector<std::vector<double> > &Sp, const double *tl, const long int dt,
-	const int *lOut, const int *iReach, const std::vector<double> &dFlow, const int *knt, const int maxResponse, const int maxSlp);
+	const int *lOut, const int *iReach, const std::valarray<double> &dFlow, const int *knt, const int maxResponse, const int maxSlp);
 int solve_for_zbar0(double &zbar0, const double *area, const double *f, const double *k,
 	const double *Lambda, const double q, const long int dt, const int ns);
 
@@ -382,17 +386,17 @@ int read_inputs(const std::string dirname, const int dt, const int StartDateTopn
 	int &NumReservoir, int &NumUser, int &NumSource, int &NumRights, int &NumSourceMixing,
 	int &NumSeasonsDefn, int &NumReturnFlow, int &NumMonthlyDemand, const int NumRunoff,
 	int &NumBaseflow, int &NumWWTP);
-int read_struct_from_text(const std::string fileName, int &expected_numcols, const int ncommentlines, int &nrows);
+int read_struct_from_text(std::string fileName, int &expected_numcols, const int ncommentlines, int &nrows);
 
 int Initialise_Output_Tables(const int NumDrainage, const int NumNode, const int NumStreamNode, const int NumLink, const int NumUser,
 	const int NumTimesteps, const int NumReservoir, const int NumUserSourceReturn, const int NumReturnFlow);
 
-int snow(std::ofstream &snowOutFile, const std::vector<double> &temper, const double elevTg, const double elevsb, const double rlapse, double &bRain,
+int snow(std::ofstream &snowOutFile, const std::valarray<double> &temper, const double elevTg, const double elevsb, const double rlapse, double &bRain,
 	const double ddf, double &snowst, const long int dt, const int Nsub, const int m, const int js, const int it,
 	const int maxSlp, const int maxInt);
-int snowueb(const std::vector<double> &snowsitev, std::vector<double> &snowstatev, const std::vector<double> &snowparam,
-    const int ndepletionpoints, double **dfc, const std::vector<int> &snowcontrol, const std::vector<double> &dtbar,
-	const std::vector<double> &snowforcing, std::vector<double> &snowsurfacetemp1, std::vector<double> &snowaveragetemp1,
+int snowueb(const int istep, const int jsub, const std::array<double,Nsv> &snowsitev, std::vector<double> &snowstatev, const std::vector<double> &snowparam,
+    const int ndepletionpoints, double **dfc, const std::array<int,7> &snowcontrol, const std::array<double,12> &dtbar,
+	const std::array<double,Niv> &snowforcing, std::vector<double> &snowsurfacetemp1, std::vector<double> &snowaveragetemp1,
     const double timestep, const int nstepday, double &surfacewaterinput, double &snowevaporation,  //outputs (both in m/h)
     double &areafractionsnow, const int modelelement);
 double svp(const double t);
@@ -410,20 +414,27 @@ int topmod(double **si, const std::vector<std::vector<double> > &Sp, const int i
 	double &sumsle, double &sumr1, double &qb, std::vector<double> &qinst, std::vector<double> &dr, double &sumqv,
 	double &sumse, double &zbar, const double zbar_new, double **tdh, double &zr, double &ak0fzrdt, double &logoqm,
 	double &qvmin, double &dth, double &sumad, double &evap_mm, double &qlat_mm,
-	const int ipflag, std::array<double,Nip1> &rirr, const int js);
+	const int ipflag, std::array<double,Nip1> &rirr, const int js, double &upwelling, double &recharge);
 int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timestep, const int NSteps,
 	std::vector<double> &RunoffTopnet, std::vector<double> &BaseflowTopnet, const std::vector<double> &ArtDrainageTopnet,
 	const std::vector<double> &vol_irrig_demand, const int maxSlp, const double *evaporation, const double *precipitation,
-	std::vector<double> &volume_irrig_sup, double *groundwater_to_take);
+	std::valarray<double> &volume_irrig_sup, double *groundwater_to_take);
 int Write_OutputLine(std::ofstream &oFile, const std::string filenm, const int timestep, const double *Rvariable,
 	const int NumDrainage, const double scalefactor);
-int Write_OutputLine_vector(std::ofstream &oFile, const std::string fileName, const int timestep, const std::vector<double> &Rvariable,
-	const int NumDrainage, const double scalefactor);
+int Write_OutputLine_vector(std::ofstream &oFile, const std::string fileName, const int timestep,
+    const std::vector<double> &Rvariable, const int NumDrainage, const double scalefactor);
+int Write_OutputLine_valarray(std::ofstream &oFile, const std::string fileName, const int timestep,
+    const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
+int Write_OutputTotal_valarray(std::ofstream &oFile, const std::string fileName, const std::string timestamp,
+    const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
+int Write_OutputTotal_vector(std::ofstream &oFile, const std::string fileName, const std::string timestamp,
+    const std::vector<double> &Rvariable, const int NumDrainage, const double scalefactor);
 int Write_OutputLocalContributions(std::ofstream &o1File, std::ofstream &o2File, const int NumStreamNode, const int NumDrainage,
 		const std::vector<double> &BaseflowTopnet, const std::vector<double> &RunoffTopnet, const int timestep, const double scalefactor);
 int Write_Static_Output_Tables(const std::string dirname, const int NumUserSourceReturn);
 int Write_TimeVaryingOutput_Tables(const std::string dirname, const int NumUser, const int NumTimesteps,
 	const int NumNode, const int NumLink, const int NumReturnFlow, const int NumWWTP);
+int writeWithdrawalByUserType(const std::string dirname, const int NumUser, const int NumTimesteps);
 
 #endif
 

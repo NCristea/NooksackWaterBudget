@@ -35,7 +35,7 @@ int Write_OutputLine(ofstream &oFile, const string fileName, const int timestep,
 			cerr << "Failed to open " << fileName << '\n';
 			exit(EXIT_FAILURE);
 		} //else {
-			//cerr << '\'' << fileName << "' opened" << endl;
+			//cout << '\'' << fileName << "' opened" << endl;
 		//}
 		LocationTypeString = "Drainage";
 		oFile << setw(9) << "TimeStep     ";
@@ -118,7 +118,8 @@ int Write_OutputLocalContributions(ofstream &o1File, ofstream &o2File, const int
 
 //========================= vector =========================
 
-int Write_OutputLine_vector(ofstream &oFile, const string fileName, const int timestep, const vector<double> &Rvariable, const int NumDrainage, const double scalefactor)
+int Write_OutputLine_vector(ofstream &oFile, const string fileName, const int timestep,
+const vector<double> &Rvariable, const int NumDrainage, const double scalefactor)
 {
 	string LocationTypeString, str;
 	int i, j;
@@ -155,6 +156,100 @@ int Write_OutputLine_vector(ofstream &oFile, const string fileName, const int ti
 	} else {	// timestep < 0
 		oFile.close();
 	}
+
+	return 0;
+}
+
+//========================= valarray =========================
+
+int Write_OutputLine_valarray(ofstream &oFile, const string fileName, const int timestep,
+const valarray<double> &Rvariable, const int NumDrainage, const double scalefactor)
+{
+	string LocationTypeString, str;
+	int i, j;
+
+	if (timestep == 0) {  // Initialize
+		oFile.open(fileName.c_str());
+		if (!oFile.is_open()) {
+			cerr << "Failed to open " << fileName << '\n';
+			exit(EXIT_FAILURE);
+		} else {
+			cerr << fileName << " opened" << endl;
+		}
+		LocationTypeString = "Drainage";
+		oFile << setw(9) << "TimeStep     ";
+		for (i = 1; i <= NumDrainage; i++) {
+			oFile << setw(12) << LocationTypeString << dec << setw(3) << i;
+		}
+		oFile << '\n';
+	} else if (timestep > 0) {
+		if (!oFile.is_open()) {
+			cerr << fileName << " is not open\n";
+			exit(EXIT_FAILURE);
+		}
+		oFile << dec << setw(12) << timestep;
+		for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
+            if (fabs(Rvariable[j]*scalefactor) < 0.1) {
+                oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+            } else {
+                oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+            }
+		}
+		oFile << '\n';
+
+	} else {	// timestep < 0
+		oFile.close();
+	}
+
+	return 0;
+}
+
+//================== vector, valarray totals ===================
+
+int Write_OutputTotal_valarray(ofstream &oFile, const string fileName, const string timestamp,
+const valarray<double> &Rvariable, const int NumDrainage, const double scalefactor)
+{
+	string LocationTypeString, str;
+	int j;
+	// Writing totals happens after timestep 0 so file initialization must be done before this
+	// subroutine is called.
+    if (!oFile.is_open()) {
+        cerr << fileName << " is not open\n";
+        exit(EXIT_FAILURE);
+    }
+    oFile << dec << setw(11) << timestamp;
+    for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
+        if (fabs(Rvariable[j]*scalefactor) < 0.1) {
+            oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+        } else {
+            oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+        }
+    }
+    oFile << '\n';
+
+	return 0;
+}
+
+int Write_OutputTotal_vector(ofstream &oFile, const string fileName, const string timestamp,
+const vector<double> &Rvariable, const int NumDrainage, const double scalefactor)
+{
+	string LocationTypeString, str;
+	int j;
+	// Writing totals happens after timestep 0 so file initialization must be done before this
+	// subroutine is called.
+    if (!oFile.is_open()) {
+        cerr << fileName << " is not open: exiting\n";
+        exit(EXIT_FAILURE);
+    }
+    oFile << dec << setw(11) << timestamp;
+    for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
+        if (fabs(Rvariable[j]*scalefactor) < 0.1) {
+            oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+        } else {
+            oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+        }
+    }
+    oFile << '\n';
 
 	return 0;
 }

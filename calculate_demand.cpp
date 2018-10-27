@@ -31,6 +31,7 @@ int CalculateDemand(const int ThisMonth, const int doy, const vector<double> &vo
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> CalculateDemand(" << ncalls << ")" << std::endl;
@@ -80,9 +81,11 @@ int CalculateDemand(const int ThisMonth, const int doy, const vector<double> &vo
 		User[i-1].DemandToday = User[i-1].DemandVble*User[i-1].DemandRate*DDF;
 	}
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving CalculateDemand(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving CalculateDemand(" << ncalls << ")" << " ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

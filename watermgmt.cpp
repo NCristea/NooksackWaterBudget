@@ -27,7 +27,7 @@ using namespace input_structures;
 using namespace other_structures;
 
 int *DrainageOrder;
-//double *DrainageOutFlow;
+int NumUserSourceReturn;
 
 int timecalcs(const int Timestep, const int dt, const long int i8startsecs,
 	int &doy, int &ThisMonth, int &ThisDay, int &yyyymmdd, int &hhmmss);
@@ -35,14 +35,14 @@ int timecalcs(const int Timestep, const int dt, const long int i8startsecs,
 int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timestep, const int NSteps,
 	vector<double> &RunoffTopnet, vector<double> &BaseflowTopnet, const vector<double> &ArtDrainageTopnet,
 	const vector<double> &vol_irrig_demand, const int maxSlp, const double *evaporation, const double *precipitation,
-	vector<double> &volume_irrig_sup, double *groundwater_to_take)
+	valarray<double> &volume_irrig_sup, double *groundwater_to_take)
 {
 	int i, j, k, m, n, ii, jj, kk, nfound, *ifound;
 	int isink, j_source, iSrcLocnID, i_node, j_sink, j_r, j_drainage;
-	static int NumUserSource, NumUserSourceReturn, NumReturnFlows;
+	static int NumUserSource, NumReturnFlows;
 	//save !so we remember from one Timestep to the next without passing stuff
 	double scalefactor;
-	static vector<double> DrainageOutFlow;
+	static valarray<double> DrainageOutFlow;
 	static string dirname;
 
 	static long int i8startsecs;
@@ -58,6 +58,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> watermgmt(" << ncalls << ")" << std::endl;
@@ -87,11 +88,13 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 
 		//Build Node Structure
 		MaxNodes = 3*NumDrainage + NumReservoir + (NumUser + 2*NumReservoir) + NumMeasuredFlowData + 1;
-		Node = new NodeType[MaxNodes];
+		//Node = new NodeType[MaxNodes];
+		Node.resize(MaxNodes);
 		BuildNodeStructure(NumDrainage, NumUser, NumReservoir, NumSource, NumReturnFlow, NumMeasuredFlowInfo, NumNode);
-		NodeSave = new NodeType[MaxNodes];
-		//NodeSave = Node;
-		for (i = 0; i < MaxNodes; i++) {
+		//NodeSave = new NodeType[MaxNodes];
+		NodeSave.resize(MaxNodes);
+		NodeSave = Node;
+		/*for (i = 0; i < MaxNodes; i++) {
 			NodeSave[i].Title      = Node[i].Title;
 			NodeSave[i].Type       = Node[i].Type;
 			NodeSave[i].IntExt     = Node[i].IntExt;
@@ -102,8 +105,9 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 			NodeSave[i].DrainageID = Node[i].DrainageID;
 			NodeSave[i].SelfID     = Node[i].SelfID;
 		}
-		delete [] Node;
-		Node = new NodeType[NumNode];
+		delete [] Node;*/
+		//Node = new NodeType[NumNode];
+		Node.resize(NumNode);
 		for (i = 0; i < NumNode; i++) {
 			Node[i].Title      = NodeSave[i].Title;
 			Node[i].Type       = NodeSave[i].Type;
@@ -115,8 +119,9 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 			Node[i].DrainageID = NodeSave[i].DrainageID;
 			Node[i].SelfID     = NodeSave[i].SelfID;
 		}
-		delete [] NodeSave;
-		NodeSave = new NodeType[NumNode];
+		//delete [] NodeSave;
+		//NodeSave = new NodeType[NumNode];
+		Node.resize(NumNode);
 
 		//Build Link Structure
 		MaxLinks = 3*NumDrainage + 5*(NumUser + 2*NumReservoir) + NumMeasuredFlowData;
@@ -124,8 +129,8 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		BuildLinkStructure(NumDrainage, NumUser, NumSource,	NumReturnFlow, NumReservoir, NumMeasuredFlowInfo, NumNode, NumLink);
 
 		LinkSave.resize(MaxLinks);
-		//LinkSave = Link;
-		for (i = 0; i < MaxLinks; i++) {
+		LinkSave = Link;
+		/*for (i = 0; i < MaxLinks; i++) {
 			LinkSave[i].Title        = Link[i].Title;
 			LinkSave[i].LinkCode     = Link[i].LinkCode;
 			LinkSave[i].IntExtCode   = Link[i].IntExtCode;
@@ -133,7 +138,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 			LinkSave[i].DSNode       = Link[i].DSNode;
 			LinkSave[i].Flow         = Link[i].Flow;
 			LinkSave[i].ReturnFlowID = Link[i].ReturnFlowID;
-		}
+		}*/
 
 		Link.resize(NumLink);
 		for (i = 0; i < NumLink; i++) {
@@ -175,6 +180,9 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		StaticOutput.DrainageID     = new DrainageIDType[NumDrainage];
 		StaticOutput.DrainageIDSize = NumDrainage;
 
+		// Added 2018 10 21 but not used, Bert Rubash
+		//StaticOutput.UserFlowLinks = new UserFlowLinksType[NumUser];
+        //StaticOutput.UserFlowLinksSize = NumUser;
 		StaticOutput.UserFlowLinks = 0;
 
 		Initialise_Output_Tables(NumDrainage, NumNode, NumStreamNode, NumLink, NumUser,
@@ -477,10 +485,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 					// reset
 					found = false;
 				}
-
-
 			}
-
 		}
 
 		// find1() identify the links which provide return flows
@@ -521,7 +526,6 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		// END OF INITIALISE
 
 	} else if (Timestep > 0) {
-
 		// do this Timestep
 		timecalcs(Timestep, dt, i8startsecs, doy, ThisMonth, ThisDay, yyyymmdd, hhmmss);
 
@@ -561,6 +565,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		for (n = 0; n < NumDrainage; n++) {
 			Baseflow[Timestep-1].Rate[n] = BaseflowTopnet[n]; //m3/Timestep
 		}
+
 		AssignDrainageFlows(Timestep, NumDrainage, NumNode, NumLink, DrainageOrder, NumRunoff, NumBaseflow, DrainageOutFlow);
 		//compare the measured runoffs at boundary condition sites to the flow
 		//in links there, and adjust the runoff and baseflows so the modelled
@@ -576,6 +581,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		for (n = 0; n < NumNode; n++) {
 			Node[n].StoreOld = Node[n].Store;
 		}
+
 		if (RunControl.AllocationMode != NoAllocationCode) {
 			AllocateWaterToUsers(Timestep, NumNode, NumLink, NumUser, NumReservoir, NumSource, NumRights, NumSourceMixing,
 				DrainageOrder, NumDrainage, NumReturnFlow, NumUserSource, volume_irrig_sup, groundwater_to_take, DrainageOutFlow);
@@ -641,14 +647,19 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		Write_OutputLine_vector(oFile[12], "results/TotalRunoff_noWithdrawal_cms.txt", Timestep, RunoffTopnet,      NumDrainage, scalefactor);
 		Write_OutputLocalContributions(oFile[13], oFile[14], NumStreamNode, NumDrainage, BaseflowTopnet, RunoffTopnet, Timestep, scalefactor);
 		t3 = (double)clock()/(double)CLOCKS_PER_SEC;
+		// ------------------------------------------------------------------------------------------------------------------------
+		writeWithdrawalByUserType("results", NumUser, RunControl.NumTimesteps);
+        // ------------------------------------------------------------------------------------------------------------------------
 		cerr << fixed << setw(12) << setprecision(6) << t3 - t2 << " seconds to write output files\n";
 
 		// END OF FINAL OUTPUTS
 	}
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving watermgmt(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving watermgmt(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

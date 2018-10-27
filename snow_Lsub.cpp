@@ -70,10 +70,10 @@ using namespace std;
 // dfc  -- depletion curve (wa/wmax, afraction)
 // baout,out  -- (basin output and point snowmelt output)
 
-int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
-	const int nStep, vector<vector<double> > &inpt, vector<double> &sitev, vector<double> &statev,
-	const vector<double> &param, vector<int> &iflag, const vector<double> &dtbar, const int nstepday,
-    double &cump, double &cume, double &cummr, vector<double> &outv,
+int snowLSub(const int istep, const int jsub, int &year, int &month, int &day, double &hour, const int dt,
+	const int nStep, vector<vector<double> > &inpt, array<double,8> &sitev, vector<double> &statev,
+	const vector<double> &param, array<int,5> &iflag, const array<double,12> &dtbar, const int nstepday,
+    double &cump, double &cume, double &cummr, array<double,23> &outv,
     vector<double> &tsbackup, vector<double> &tavebackup,
     const int ndepletionpoints, double **dfc, const int modelelement, const int jj)
 {
@@ -99,6 +99,7 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> snowLSub(" << ncalls << ")" << std::endl;
@@ -233,9 +234,8 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 		cump  = 0.0;
 		cume  = 0.0;
 		cummr = 0.0;
-		snowueb2(dt, 1, inpt, sitev, statev, tsbackup, tavebackup, nstepday, param, iflag,
+		snowueb2(istep, jsub, dt, 1, inpt, sitev, statev, tsbackup, tavebackup, nstepday, param, iflag,
 			cump, cume, cummr, outv, mtime, modelelement, jj);   //Add a pass varible to snow mtime
-
 		//  ************************ End of point model
 
 		//      DeltaW = Change in water equivalent
@@ -247,7 +247,7 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 				aftgt = afrac;
 				wtgtmax = wtgt;  // establish new upper limit of new excursion
 			}
-			baw = baw + deltaw;
+			baw += deltaw;
 			wtgtmax = max(baw, wtgtmax);
 			if (baw > wmax) {
 				wmax = baw;
@@ -261,6 +261,7 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 			afracnew = 1.0;
 			baswin = cummr;    // basin average surface water input
 			basub = cume;   // basin average sublimation
+
 		} else if ( deltaw > 0) {  // Here a rare case when W increases but there is no snowfall.
 			//    This may be due to rainfall absorbing and freezing into the snow or condensation.
 			//     This is assumed to only be effective over snow covered area fraction
@@ -279,6 +280,7 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 			//          One could increase Wmax here to keep on main depletion curve.  However I decided to handle this issue below with the Min statements so that Af never increases when there is melt.  Excursions below the depletion curve will therefore return back to the same Wa before further reductions in Af occur.
 			baswin = cummr*afrac + cump*(1.0 - afrac);  //  All precipitation is surface water input over snow free area
 			basub = cume*afrac;  // Sublimation is only counted over snow covered area.  Calling model has to handle ET from soil
+
 		} else {   // Here (DeltaW < 0) so there is melt
 			if (meltflag == 0 && (baw - deltaw*afrac) < wtgt) {
 				//    Here reduction passes target so do in two steps to avoid overshooting and large steps towards end of season
@@ -319,6 +321,7 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 				wref = wmax - (wtgtmax - baw)/(wtgtmax - wtgt)*(wmax - wtgt);  // See depletion curve logic.doc for derivation and picture
 				afracnew = min(ablat(wref/wmax, ndepletionpoints, dfc), afrac);
 			}
+
 		}
 		//   DGT 7/25/05.  Save in statev[1] the energy state variable that persists through depletion curve
 		//    baw and scaw adjustments
@@ -365,6 +368,7 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 				}
 			}
 		}
+
 		//    Output variables
 		outv[14] = baw;
 		outv[15] = afrac;
@@ -380,12 +384,11 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 		outv[22] = basub;
 		if (iflag[1] == 1) {
 			cout << iflag[2] << " ";
-			for (i = 15; i <= 23; i++) {
-				cout << outv[i-1] << " ";
+			for (i = 14; i < 23; i++) {
+				cout << outv[i] << " ";
 			}
 		}
 	}// end of time step loop
-
 	iflag[0]   = irad;  // reinstate iflag(1) for next call
 	statev[1]  = baw;
 	statev[5]  = wmax;
@@ -395,9 +398,11 @@ int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
 	statev[9] = wtgtmax;
 	statev[10] = aftgt;
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving snowLSub(" << ncalls << ")" << "\n" << endl;
+        traceFile << setw(30) << caller << " <- Leaving snowLSub(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

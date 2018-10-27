@@ -37,6 +37,7 @@ int AssignPriorityOrder(const int NumUser, const int NumSource, const int NumRig
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> AssignPriorityOrder(" << ncalls << ")" << std::endl;
@@ -85,7 +86,6 @@ int AssignPriorityOrder(const int NumUser, const int NumSource, const int NumRig
 		}
 	}
 	//  End DGT modifications to find latestdate
-
 
 	//Build a UserSource Table
 	NumUserSource = 0;
@@ -184,10 +184,12 @@ int AssignPriorityOrder(const int NumUser, const int NumSource, const int NumRig
 			// find1()
 			nfound = 0; //none found
 			ifound = new int[NumUserSource];
-			ifound[nfound] = 0;
+			for (n = 0; n < NumUserSource; n++) {
+                ifound[n] = 0;
+            }
 			for (n = 0; n < NumUserSource; n++) {
 				if (UserSourceTable[n].DrainageID == DrainageOrder[i-1]) {
-					nfound++;
+					nfound += 1;
 					ifound[nfound-1] = n+1;
 				}
 			}
@@ -205,7 +207,7 @@ int AssignPriorityOrder(const int NumUser, const int NumSource, const int NumRig
 						ifound[m-1] = ifound[0];
 						ifound[0]   = ifoundtemp;
 					}
-					m++;
+					m += 1;
 				}
 
 				for (m = 1; m <= nfound; m++) {
@@ -217,9 +219,11 @@ int AssignPriorityOrder(const int NumUser, const int NumSource, const int NumRig
 		}
 	}
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving AssignPriorityOrder(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving AssignPriorityOrder(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
 	}
 	ncalls++;
 #endif

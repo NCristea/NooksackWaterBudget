@@ -38,6 +38,7 @@ int Write_Static_Output_Tables(const string dirname, const int NumUserSourceRetu
 	int ncols, nrows, n;
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> Write_Static_Output_Tables(" << ncalls << ")" << std::endl;
@@ -52,6 +53,7 @@ int Write_Static_Output_Tables(const string dirname, const int NumUserSourceRetu
     filenm = dirname + "/" + "StreamFlowLinks.txt";
 	nrows = StaticOutput.StreamFlowLinksSize; // size(StaticOutput%StreamFlowLinks)
 
+	cout << '\n';
 	integer_array.resize(nrows,vector<int>(ncols));
 	for (int j = 0; j < nrows; ++j) {
         integer_array[j].resize(ncols);
@@ -87,7 +89,8 @@ int Write_Static_Output_Tables(const string dirname, const int NumUserSourceRetu
 	headers[3] = "SrcDrainID";
 	headers[4] = "DestDrainID";
 	headers[5] = "WWTP_ID";
-	ncols = 6;
+	headers[6] = "ReturnFlowID";
+	ncols = 7;
     filenm = dirname + "/" + "DrainageInfo.txt";
 	nrows = StaticOutput.DrainageInfoSize; // size(StaticOutput%DrainageInfo)
 	integer_array.resize(nrows,vector<int>(ncols));
@@ -101,6 +104,7 @@ int Write_Static_Output_Tables(const string dirname, const int NumUserSourceRetu
 		integer_array[n][3] = StaticOutput.DrainageInfo[n].SourceDrainageID;
 		integer_array[n][4] = StaticOutput.DrainageInfo[n].DestinationDrainageID;
 		integer_array[n][5] = StaticOutput.DrainageInfo[n].WWTP_ID;
+		integer_array[n][6] = StaticOutput.DrainageInfo[n].ReturnFlowID;
 	}
     write_integers_to_text(filenm, headers, nrows, ncols);
 
@@ -113,7 +117,7 @@ int Write_Static_Output_Tables(const string dirname, const int NumUserSourceRetu
 	headers[5] = "UsersType";
 	ncols = 6;
     filenm = dirname + "/" + "UserFlowLinks.txt";
-	nrows = StaticOutput.UserFlowLinksSize;	// size(StaticOutput%UserFlowLinks)	This wasn't allocated and used in the Fortran code.
+	nrows = StaticOutput.UserFlowLinksSize;	// size(StaticOutput%UserFlowLinks)	This wasn't allocated or used in the Fortran code.
 	integer_array.resize(nrows,vector<int>(ncols));
 	for (int j = 0; j < nrows; ++j) {
         integer_array[j].resize(ncols);
@@ -128,9 +132,11 @@ int Write_Static_Output_Tables(const string dirname, const int NumUserSourceRetu
 	}
     write_integers_to_text(filenm, headers, nrows, ncols);
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving Write_Static_Output_Tables(" << ncalls << ")\n" << endl;
+        traceFile << setw(30) << caller << " <- Leaving Write_Static_Output_Tables(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -145,6 +151,7 @@ int write_integers_to_text(const string filenm, const vector<string> &headers, c
 	int i, j;
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> write_integers_to_text(" << ncalls << ")" << std::endl;
@@ -153,11 +160,11 @@ int write_integers_to_text(const string filenm, const vector<string> &headers, c
 #endif
 	ofstream outFile(filenm.c_str());
 	if (!outFile.is_open()) {
-			cerr << "Failed to open '" << filenm << "'\n";
+			cerr << "Failed to open '" << filenm << "': exiting.\n";
 			exit(EXIT_FAILURE);
-	} else {
-		cout << "Writing to '" << filenm << "'\n";
-	}
+	} //else {
+		//cout << "Writing to '" << filenm << "'\n";
+	//}
 	for (j = 0; j < ncols; j++) {
 		outFile << headers[j] << " ";
 	}
@@ -170,9 +177,11 @@ int write_integers_to_text(const string filenm, const vector<string> &headers, c
 	}
 	outFile.close();
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving write_integers_to_text(" << ncalls << ")\n" << endl;
+        traceFile << setw(30) << caller << " <- Leaving write_integers_to_text(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -203,6 +212,7 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	int usernode, k0;
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> Write_TimeVaryingOutput_Tables(" << ncalls << ")" << std::endl;
@@ -812,9 +822,11 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	}
 	write_struct_to_text(filenm, headers, nrows, ncols, icall);
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving Write_TimeVaryingOutput_Tables(" << ncalls << ")\n" << endl;
+        traceFile << setw(30) << caller << " <- Leaving Write_TimeVaryingOutput_Tables(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -826,11 +838,10 @@ int write_struct_to_text(const string filenm, const vector<string> &headers, con
 	const int icall)
 {
 	// write out a data array that has 1 columns of integer data, and then columns of real data
-	string str;
-	string realfmt;
 	int i, j;
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> write_struct_to_text(" << ncalls << ")" << std::endl;
@@ -838,7 +849,11 @@ int write_struct_to_text(const string filenm, const vector<string> &headers, con
 	caller = "write_struct_to_text";
 #endif
 	ofstream outFile(filenm.c_str());
-	cout << "Writing to '" << filenm << "'\n";
+	if (!outFile.is_open()) {
+			cerr << "Failed to open '" << filenm << "': exiting.\n";
+			exit(EXIT_FAILURE);
+	}
+	//cout << "Writing to '" << filenm << "'\n";
 
 	for (j = 0; j < ncols; j++) {
 		outFile << setw(18) << headers[j];
@@ -875,9 +890,11 @@ int write_struct_to_text(const string filenm, const vector<string> &headers, con
 	}
 	outFile.close();
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving write_struct_to_text(" << ncalls << ")\n" << endl;
+        traceFile << setw(30) << caller << " <- Leaving write_struct_to_text(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

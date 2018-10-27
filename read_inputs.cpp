@@ -41,6 +41,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> read_inputs(" << ncalls << ")" << std::endl;
@@ -375,6 +376,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
       // SourceID2 RightID2 SourceID3 RightID3
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumUser);
 	User = new UserType[NumUser+2*NumReservoir];
+
 	//allocate (User(NumUser+2*NumReservoir))
 	for (i = 0; i < NumUser; i++) {
 		User[i].UserID           = real_array[i][0];
@@ -568,9 +570,11 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 		}
 	}
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving read_inputs(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving read_inputs(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

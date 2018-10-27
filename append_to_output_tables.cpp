@@ -40,6 +40,7 @@ int Append_To_Output_Tables(const int Timestep, const int dt,
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> Append_To_Output_Tables(" << ncalls << ")" << std::endl;
@@ -193,9 +194,11 @@ int Append_To_Output_Tables(const int Timestep, const int dt,
 		outFile.close();
 	}
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving Append_To_Output_Tables(" << ncalls << ")\n" << endl;
+        traceFile << setw(30) << caller << " <- Leaving Append_To_Output_Tables(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

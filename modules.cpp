@@ -80,11 +80,11 @@ namespace input_structures {
 }
 
 namespace other_structures {
-	NodeType             *Node;
+	std::vector<NodeType> Node;
 	vector<LinkType>      Link;
 	UserSourceTableType  *UserSourceTable;
 	StaticOutputTableType StaticOutput;
-	NodeType             *NodeSave;
+	std::vector<NodeType> NodeSave;
 	vector<LinkType>      LinkSave;
 	int                  *UserSourceOrder;
 	int                  *WWTP_list;

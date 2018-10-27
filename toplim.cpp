@@ -68,7 +68,7 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     bool exist;
     int *ll, *Ntr, *llOut, iret;
     int *Nts;
-    double **Si, **Rp, **atb, **pka, *tl, **pd, **cl;
+    double **Si, **Rp, **atb, **pka, *tl, **pd, **cl, **bp;
     double units;
     double **Sid, **Rpd;	// The arrays Sid, Spd and Rpd record the original values.
     int *Nka, *Nd, *iBout;
@@ -93,7 +93,6 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     double stdlon;
     double  *elevtg, **dtBar, **bdtBar;
     int *temper_id;
-    vector<double> dewp;
     int ns_temper, idebugoutput, idebugbasin, idebugcase;
     int i, j, k;
     struct dirent *dirp;
@@ -103,6 +102,7 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     // ***********************************************************************
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> inputT(" << ncalls << ")" << std::endl;
@@ -129,6 +129,7 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     topinpFile >> topinp;
     topinpFile.close();
     maxInt = topinp + 200;
+    valarray<double> dewp(0.0,maxInt);
 
     //------------ modelspc.dat -------------------
     modelspcFile.open("modelspc.dat");  // Fortran unit 2
@@ -149,16 +150,16 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
 
     while (!modelspcFile.eof()) {
         getline(modelspcFile, testStr);
-        if (testStr.compare("Number of points in a/tan b distribution") == 0) {
+        if (testStr.compare(0,40,"Number of points in a/tan b distribution") == 0) {
             modelspcFile >> maxA1;
             if (maxA2 < maxA1) {
                 maxA2 = maxA1;
             }
         }
-        else if  (testStr.compare("Following identifies the reaches to be used as response time series and output time series") == 0) {
+        else if  (testStr.compare(0,90,"Following identifies the reaches to be used as response time series and output time series") == 0) {
             modelspcFile >> Neq0 >> Nout0;
         }
-        if (testStr.compare("The number of points in the overland flow distance distribution") == 0) {
+        if (testStr.compare(0,63,"The number of points in the overland flow distance distribution") == 0) {
             modelspcFile >> maxC1;
             if (maxC2 < maxC1) {
                 maxC2 = maxC1;
@@ -373,9 +374,7 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     for (i = 0; i < maxResponse; i++) {
         flow[i] = new double[maxInt];
     }
-    dewp.resize(maxInt, 0.0);
-    vector<double> trange(maxInt);
-    fill(trange.begin(), trange.end(), 0.0);
+    valarray<double> trange(0.0,maxInt);
     Nts = new int[maxSlp];
     vector<vector<int> > linkS(2,vector<int>(maxSlp));
     Si  = new double*[Nsi];
@@ -385,7 +384,10 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
         Sid[i] = new double[maxSlp];
     }
     vector<vector<double> > Spd(Nsp,vector<double>(maxSlp));
-    vector<vector<double> > bp(num_basinpars,vector<double>(maxSlp));
+    bp = new double*[num_basinpars];
+    for (j = 0; j < num_basinpars; ++j) {
+        bp[j] = new double[maxSlp];
+    }
     Nka   = new int[maxSlp];
     Nd    = new int[maxSlp];
     iBout = new int[maxSlp];
@@ -572,10 +574,16 @@ L150:
     }
     delete [] dtBar;
     delete [] bdtBar;
+    for (i = 0; i < num_basinpars; ++i) {
+        delete [] bp[i];
+    }
+    delete [] bp;
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving inputT(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving inputT(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -617,7 +625,7 @@ L150:
 int Model(const int it, const int iflag, const int iopt, const char prt, int &Neq, int &Npar, const int npx, const int iEx,
           const int nfor, double qfit[], const double par[], const int mfit[], const int ifit, const int ibeale)
 {
-    int n;
+    int n, j, i, k;
     // Note that Nchn is the same as Nrch by way of fortran common blocks within toplim_v7.f but not including calv46sn_v7.f:9:
     // Passed variables
     vector<vector<int> >  linkR(4,vector<int>(maxChn));
@@ -626,10 +634,13 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     int *Nts;
     int *Qmap;
     int iret;
-    double **Si, **Rp;
+    double **Si, **Rp, **bp;
     vector<vector<double> > Sp(Nsp,vector<double>(maxSlp));
     vector<vector<double> > Spd(Nsp,vector<double>(maxSlp));
-    vector<vector<double> > bp(num_basinpars,vector<double>(maxSlp));
+    bp = new double*[num_basinpars];
+    for (j = 0; j < num_basinpars; ++j) {
+        bp[j] = new double[maxSlp];
+    }
     vector<vector<double> > bRain(maxSlp,vector<double>(maxInt));
 
     //     ***********
@@ -679,8 +690,8 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     double stdlon;
     double *elevtg, **dtBar, **bdtBar;
     int *temper_id;
-    vector<double> temper(maxInt);
-    vector<double> dewp;
+    valarray<double> temper(maxInt);
+    valarray<double> dewp(0.0,maxInt);
 
     string fname;
     //     declarations for lake varibales
@@ -689,11 +700,11 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     int *lake_beach_slps, *num_rat_vals;
     int **lheads, **loflows;
     double *lake_areas, *ini_levels;
-    int j, i, k;
     int idebugoutput, idebugbasin, idebugcase;
 
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> Model(" << ncalls << ")" << std::endl;
@@ -711,14 +722,14 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     //     ********************************************
     //     To solve the problem created by common block
     iret = 0;
-    static vector<double> dFlow(maxResponse);
-    static vector<double> trange(maxInt);
+    static valarray<double> dFlow(maxResponse);
+    static valarray<double> trange(maxInt);
 
     if (model_master::iDoIt == 0) {
         model_master::iDoIt = 1;
 
-        fill(dFlow.begin(), dFlow.end(), 0.0);
-        fill(trange.begin(), trange.end(), 0.0);
+        fill(begin(dFlow), end(dFlow), 0.0);
+        fill(begin(trange), end(trange), 0.0);
 
         //       All these variables have been dynamically allocated to solve the problem
         //       ALLOCATE DYNAMIC ARRAYS
@@ -751,7 +762,6 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
             dtBar[i] = new double[maxTGauge];
             bdtBar[i] = new double[maxSlp];
         }
-        dewp.resize(maxInt,0.0);
         vector<vector<int> > linkS(2,vector<int>(maxSlp));
         Si  = new double*[Nsi];
         Sid = new double*[Nsi];
@@ -1030,25 +1040,24 @@ L150:
             ipsub = model1::Ns/2 + 1;
             ipatb = Nka[model1::Ns-1]/2 + 1;
             modwrt = false;
-            calcts( Si,            Sp,           Rp,               ll,
-                    model1::Ns,                  Nka,              tl,            atb,
-                    pka,           Nd,           cl,               pd,            units,
-                    ipsub,         ipatb,        reinit,           modwrt,        model2::stim,
-                    bRain,        model2::interval, model2::m,     model2::mi,
-                    model2::mps,   model2::mpe,  ok,               Xlat,          Xlong,
-                    stdlon,        elevtg,       bdtBar,           model2::sDate, model2::sHour,
-                    temper,        dewp,         trange,           Neq,           model4::Nout,
-                    model4::nBout, iBout,        wind2m,           bTmin,         bTmax,
-                    bTdew,         bXlat,        bXlon,            ntdh,          ndump,
-                    maxInt,        maxSlp,       maxA,             maxC,          maxChn,
-                    idebugoutput,  idebugbasin,  idebugcase);
+            calcts( Si,            Sp,            Rp,            ll,            model1::Ns,
+                    Nka,           tl,            atb,           pka,           Nd,
+                    cl,            pd,            units,         ipsub,         ipatb,
+                    reinit,        modwrt,        model2::stim,  bRain,         model2::interval,
+                    model2::m,     model2::mi,    model2::mps,   model2::mpe,   ok,
+                    Xlat,          Xlong,         stdlon,        elevtg,        bdtBar,
+                    model2::sDate, model2::sHour, temper,        dewp,          trange,
+                    Neq,           model4::Nout,  model4::nBout, iBout,         wind2m,
+                    bTmin,         bTmax,         bTdew,         bXlat,         bXlon,
+                    ntdh,          ndump,         maxInt,        maxSlp,        maxA,
+                    maxC,          maxChn,        idebugoutput,  idebugbasin,   idebugcase);
         }
         else {	// l1
             if (idebugoutput >= 1) {
-                lunmodFile.open("results/topsbd_v8.cpp.txt");
-                luntopFile.open("results/topreachd_v7.cpp.txt");
-                lundatFile.open("results/detail_v7.cpp.txt");
-                lunpFile.open("results/topinfo_v7.cpp.txt");
+                lunmodFile.open("results/topsbd_v8.txt");
+                luntopFile.open("results/topreachd_v7.txt");
+                lundatFile.open("results/detail_v7.txt");
+                lunpFile.open("results/topinfo_v7.txt");
                 lunpFile << "Topmodel output\n";
                 lunpFile << " Simulation starts at" << dec << setw(9) << model2::sDate;
                 lunpFile << dec << setw(8) << model2::sHour << " uses a time interval of ";
@@ -1149,10 +1158,16 @@ L150:
     //     &       '----------------------')
     //2     format(' ',i4,f10.0,f13.0,f11.0,f14.0,f13.0,6x,a)
     //-----
+    for (i = 0; i < num_basinpars; ++i) {
+        delete [] bp[i];
+    }
+    delete [] bp;
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving Model(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving Model(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -1164,7 +1179,7 @@ L150:
 
 int set_cor_data(const vector<vector<int> > &linkR, const int Neq, const int Nout, const int Nrch, const int Ns,
                  const vector<int> &kllout, double **flow, const vector<vector<double> > &Spd, const double *bArea, const int *ll,
-                 const int *llOut, vector<double> &dFlow, vector<double> &suma, int *knt, int *iReach, int *lOut, const int maxInt,
+                 const int *llOut, valarray<double> &dFlow, vector<double> &suma, int *knt, int *iReach, int *lOut, const int maxInt,
                  const int maxSlp, const int maxChn, const int maxResponse)
 {
     double fArea[maxResponse], nflow_mean,  pArea[maxResponse];
@@ -1179,6 +1194,7 @@ int set_cor_data(const vector<vector<int> > &linkR, const int Neq, const int Nou
 
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> set_cor_data()" << std::endl;
@@ -1327,9 +1343,11 @@ L51:
         // dflow(i) = dabs(dflow(i))
     }
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving set_cor_data(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving set_cor_data(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
@@ -1342,7 +1360,7 @@ L51:
 //     SUBROUTINE SETUP_ZBAR0S
 // *****************************************************************************
 int setup_zbar0s(const int Ns, double **Si, const vector<vector<double> > &Sp, const double *tl, const long int dt,
-                 const int *lOut, const int *iReach, const vector<double> &dFlow, const int *knt, const int maxResponse, const int maxSlp)
+                 const int *lOut, const int *iReach, const valarray<double> &dFlow, const int *knt, const int maxResponse, const int maxSlp)
 {
     double sumF[maxResponse], sumC[maxResponse];
     double area[maxSlp], k[maxSlp], f[maxSlp], Lambda[maxSlp];
@@ -1353,6 +1371,7 @@ int setup_zbar0s(const int Ns, double **Si, const vector<vector<double> > &Sp, c
     int i, i1, i2, i3, i6, i7, ikeep_i6, inb, inz_zbar0;
 #if TRACE
     static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
     if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> setup_zbar0s()" << std::endl;
@@ -1463,9 +1482,11 @@ L5:
     }
     delete [] Si_copy;
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving setup_zbar0s(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving setup_zbar0s(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

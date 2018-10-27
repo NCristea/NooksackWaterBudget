@@ -22,20 +22,23 @@
 
 #include <vector>
 
+const int Npar = 25;    // Snow only: a different Npar is read in from modelspc.dat for other program subroutines
+const int Nxv = 11;
+
 extern std::ofstream snowcontrol3_File;	// unit 10
 double svpi(const double t);
 double svpw(const double t);
 int qlif(double &qliff, const double ta, const double rh, const double tk, const double sbc, const double cf);
 double ablat(const double DimBaw, const int ndfc, double **dfc);
-int snowLSub(int &year, int &month, int &day, double &hour, const int dt,
-	const int nStep, std::vector<std::vector<double> > &inpt, std::vector<double> &sitev, std::vector<double> &statev,
-	const std::vector<double> &param, std::vector<int> &iflag, const std::vector<double> &dtbar, const int nstepday,
-    double &cump, double &cume, double &cummr, std::vector<double> &outv,
+int snowLSub(const int istep, const int jsub, int &year, int &month, int &day, double &hour, const int dt,
+	const int nStep, std::vector<std::vector<double> > &inpt, std::array<double,8> &sitev, std::vector<double> &statev,
+	const std::vector<double> &param, std::array<int,5> &iflag, const std::array<double,12> &dtbar, const int nstepday,
+    double &cump, double &cume, double &cummr, std::array<double,23> &outv,
     std::vector<double> &tsbackup, std::vector<double> &tavebackup,
     const int ndepletionpoints, double **dfc, const int modelelement, const int jj);
-int snowueb2(const double dt, const int nt, const std::vector<std::vector<double> > &input, const std::vector<double> &sitev, std::vector<double> &statev,
-	std::vector<double> &tsprevday, std::vector<double> &taveprevday, const int nstepday, const std::vector<double> &param, std::vector<int> &iflag,
-	double &cump, double &cume, double &cummr, std::vector<double> &outv, const std::vector<double> &mtime, const int modelelement, const int jj);
+int snowueb2(const int istep, const int jsub, const double dt, const int nt, const std::vector<std::vector<double> > &input, const std::array<double,8> &sitev, std::vector<double> &statev,
+	std::vector<double> &tsprevday, std::vector<double> &taveprevday, const int nstepday, const std::vector<double> &param, std::array<int,5> &iflag,
+	double &cump, double &cume, double &cummr, std::array<double,23> &outv, const std::vector<double> &mtime, const int modelelement, const int jj);
 double daily_ave(const std::vector<double> &backup, const int n, const double a);
 double partsnow(const double p, const double ta, const double tr, const double ts);
 double tavg(const double ub, const double w, const double rhow, const double cs,
@@ -44,11 +47,11 @@ double albedo(const double tausn, const double coszen, const double d,
 	const double aep, const double abg, const double avo, const double airo);
 int agesn(double &tausn, const double dt, const double ps,
 	const double tsurf, const double tk, const double dnews);
-int predicorr(const double dt, double &ub, double &w, const double a,
+int predicorr(const int istep, const int jsub, const double dt, double &ub, double &w, const double a,
 	const double ta, const double pRain, const double ps, const double ws, const double rh,
 	const double qsi, const double  qli, const double iradfl, const double rkn,
 	const double qnetob, const double rid,
-	const std::vector<double> &param, const std::vector<double> &sitev, const double iTsMethod,
+	const std::vector<double> &param, const std::array<double,8> &sitev, const double iTsMethod,
 	const std::vector<double> &mtime,
 	double &qh, double &qe, double &e,  double &mr, double &qm, double &q, double &fm,
 	double &tsurf, double &tave, double &qnet, double &refDepth, double &totalRefDepth ,
@@ -56,7 +59,7 @@ int predicorr(const double dt, double &ub, double &w, const double a,
 int qfm(const double ub, const double w, const double a, const double ta, const double pRain,
 	const double ps, const double ws, const double rh, const double qsi, const double qli,
 	const double rkn, const double iradfl, const double qnetob,
-	const double rid, const std::vector<double> &param, const std::vector<double> &sitev, const int iTsMethod, const std::vector<double> &mtime,
+	const double rid, const std::vector<double> &param, const std::array<double,8> &sitev, const int iTsMethod, const std::vector<double> &mtime,
 	double &fm, double &q, double &qm, double &mr, double &qe,
 	double &e, double &tsurf, double &tave, double &qh, double &qnet,
 	const double dt, double &refDepth, const double totalRefDepth, double &smelt);

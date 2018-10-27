@@ -24,6 +24,7 @@
 using namespace input_structures;
 
 int SetOrder(int &k, int *DrainageOrder, int &Position, const int NumDrainage);
+//int SetOrder(int k, int *DrainageOrder, int &Position, const int NumDrainage);
 
 int BuildDrainageOrder(const int NumDrainage, int *DrainageOrder)
 {
@@ -36,25 +37,26 @@ int BuildDrainageOrder(const int NumDrainage, int *DrainageOrder)
 
     i = 1;
 	while (Position < NumDrainage) {
-		while (DrainageOrder[i-1] > 0) {	// Seek to the first unordered position
+        while (DrainageOrder[i-1] > 0) {	// Seek to the first unordered position
 			i++;
 		}
+//std::cout << "Call: Position " << Position << " DrainageOrder[" << i << "] " << DrainageOrder[i-1] << std::endl;
 		// find first unordered drainage
         SetOrder(i, DrainageOrder, Position, NumDrainage);
 	}
-    /*
+/*
     for (i = 0; i < NumDrainage; i++) {
-        cout << dec << setw(4) << DrainageOrder[i];
+        std::cout << std::dec << std::setw(4) << DrainageOrder[i];
         if ((i+1)%10 == 0)
-            cout << "\n";
+            std::cout << "\n";
     }
-    cout << "\n\n";
+    std::cout << "\n\n";
 	for (i = 0; i < NumDrainage; i++) {
-        cout << dec << setw(4) << Drainage(i).DSDrainage;
+        std::cout << std::dec << std::setw(4) << Drainage[i].DSDrainage;
         if ((i+1)%10 == 0)
-            cout << "\n";
+            std::cout << "\n";
     }
-    cout << endl;
+    std::cout << std::endl;
 	exit(0); */
 	return 0;
 }
@@ -86,9 +88,9 @@ int SetOrder(int &k, int *DrainageOrder, int &Position, const int NumDrainage)
             nfound_last = find_counts.back();
 
             if (find_counts.size() > 0) {
-                if ( std::find(done.begin(), done.end(), ifound[global_found-nfound_last]) == done.end()) {   // if not set
-                    DrainageOrder[Position] = ifound[global_found-nfound_last];
-                    done.push_back(ifound[global_found-nfound_last]);
+                if ( std::find(done.begin(), done.end(), iFound[global_found-nfound_last]) == done.end()) {   // if not set
+                    DrainageOrder[Position] = iFound[global_found-nfound_last];
+                    done.push_back(iFound[global_found-nfound_last]);
                     Position++;
                     skip_step = false;
                 }
@@ -113,8 +115,8 @@ int SetOrder(int &k, int *DrainageOrder, int &Position, const int NumDrainage)
             }
 
             if (!skip_step) {
-                if (ifound.size() > 0) {
-                    ifound.erase (ifound.begin()+global_found-nfound_last);
+                if (iFound.size() > 0) {
+                    iFound.erase (iFound.begin()+global_found-nfound_last);
                     find_counts.back()--;
                     global_found--;
                     if (nfound_last > global_found)
@@ -128,12 +130,80 @@ int SetOrder(int &k, int *DrainageOrder, int &Position, const int NumDrainage)
             }
         }
 
-        if (ifound.size() > 0) {
-            k = ifound[global_found-nfound_last+1];
+        if (iFound.size() > 0) {
+            k = iFound[global_found-nfound_last+1];
         } else {
-            k = ifound[0];
+            k = iFound[0];
         }
 	}
 
 	return 0;
 }
+/*
+	int jfound[50];
+
+	int SetOrder(int k, int *DrainageOrder, int &Position, const int NumDrainage)
+	{
+	static int i, saveNfound;
+	static int iallpositive;
+
+
+    if (DrainageOrder[k-1] > 0) {
+		std::cerr << "attempt to order a node twice\n";
+		return 1;
+	} else {
+        find1_downstream(Drainage, k, NumDrainage);
+
+		iallpositive = 1;
+		for (i = 0; i < nfound; i++) {
+			jfound[i] = ifound[i]; // we need a local copy that won't get clobbered during recursion
+std::cout << "jfound[" << i+1 << "] " << jfound[i] << std::endl;
+			if (DrainageOrder[jfound[i]-1] <= 0) iallpositive = 0;
+		}
+		if (nfound > 0 && iallpositive != 1 ) {
+            saveNfound = nfound;
+			for (i = 0; i < saveNfound; i++) {
+				if (DrainageOrder[jfound[i]-1] <= 0) {
+std::cout << "recursion in : jfound[" << i+1 << "] " << jfound[i] << " nfound " << nfound << " k " << k << std:: endl;
+				   SetOrder(jfound[i], DrainageOrder, Position, NumDrainage);
+std::cout << "recursion out: jfound[" << i+1 << "] " << jfound[i] << " nfound " << nfound << " k " << k << std:: endl;
+				}
+			}
+		}
+		Position += 1;
+//		DrainageOrder(k)=Position
+		DrainageOrder[Position-1] = k;
+std::cout << "DrainageOrder[" << Position << "] " << DrainageOrder[Position-1] << "\n";
+      }
+      return 0;
+	}
+*/
+/*
+	void find1(iarray1,ival1,num)
+	use findmodule
+	integer num,ival1,i
+	integer iarray1(num)
+
+	if (allocated(ifound)) deallocate (ifound)
+	allocate (ifound(num))
+
+	nfound=0 !none found
+	do i =1,num
+		if (iarray1(i).eq.ival1) then
+			nfound=nfound+1
+			ifound(nfound)=i
+		endif
+	end do
+	end
+
+            // find1()
+			nfound = 0; //none found
+			ifound = new int[NumSource];
+			ifound[nfound] = 0;
+			for (n = 0; n < NumSource; n++) {
+				if (Source[n].SourceID == User[i-1].SourceID[j-1]) {
+					nfound += 1;
+					ifound[nfound-1] = n+1;
+				}
+			}   // end find1()
+*/

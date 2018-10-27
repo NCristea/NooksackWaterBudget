@@ -32,6 +32,7 @@ int Initialise_Output_Tables(const int NumDrainage, const int NumNode, const int
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
 	string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> Initialise_Output_Tables(" << ncalls << ")" << std::endl;
@@ -92,8 +93,8 @@ int Initialise_Output_Tables(const int NumDrainage, const int NumNode, const int
 
 	k = 0;
 	for (i = 1; i <= NumUser; i++) {
-		for (js = 1; js <= User[i-1].NumSources; js++) {
-			j_src = User[i-1].SourceID[js-1];
+		for (js = 0; js < User[i-1].NumSources; js++) {
+			j_src = User[i-1].SourceID[js];
 			j_ret = User[i-1].ReturnFlowID;
 			if (j_ret > 0) {
 
@@ -129,9 +130,11 @@ int Initialise_Output_Tables(const int NumDrainage, const int NumNode, const int
 		}
 	}
 #if TRACE
-	caller = save_caller;
+	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
+    caller = save_caller;
 	if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving Initialise_Output_Tables(" << ncalls << ")" << "\n\n";
+        traceFile << setw(30) << caller << " <- Leaving Initialise_Output_Tables(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif

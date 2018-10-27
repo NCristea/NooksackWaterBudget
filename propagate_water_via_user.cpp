@@ -35,11 +35,12 @@ int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int
 	bool found;
 	//int k, SrcLocnID, RFNodeID;
 
-	vector<double> DrainageOutFlow(NumDrainage);	// This is a local array.
+	valarray<double> DrainageOutFlow(NumDrainage);	// This is a local array.
 	vector<double> ReservoirNetStorage(NumReservoir);
 
 #if TRACE
 	static int ncalls = 0;
+    double tm0 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     string save_caller = caller;
 	if (ncalls < MAX_TRACE) {
         traceFile << setw(30) << caller << " -> PropagateWaterViaUser(" << ncalls << ")" << std::endl;
@@ -139,34 +140,38 @@ int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int
 		Link[j_return-1].Flow += RF;
 		//    end do
 		Link[j_sink-1].Flow -= RF;
+debugFile << " return: Link[" << dec << setw(3) << j_return << "].Flow=";  //debug
+debugFile << fixed << setw(13) << setprecision(6) << Link[j_return-1].Flow << endl;
 	}
 
 	BalanceFlowsAtReservoirs(NumNode, NumLink, NumUser, NumReservoir, ReservoirNetStorage);
-	BalanceFlowsAtStreamNodes(NumNode, NumLink,	DrainageOrder, NumDrainage, DrainageOutFlow);
+	BalanceFlowsAtStreamNodes(DrainageOrder, NumDrainage, DrainageOutFlow);
 	iFeasible = 1;
-    double minDrainage = 1.0e10, minReservoir = 1.0e10;
+	double minDrainage = 1.0e10, minReservoir = 1.0e10;
 	for (ii = 0; ii < NumDrainage; ii++) {
-		if (DrainageOutFlow[ii] < 0) {
+		if (DrainageOutFlow[ii] < 0.0) {
 			iFeasible = 0;
 		}
-        if (minDrainage > DrainageOutFlow[ii]) {
-            minDrainage = DrainageOutFlow[ii];
+		if (minDrainage > DrainageOutFlow[ii]) {
+			minDrainage = DrainageOutFlow[ii];
 		}
 	}
 	for (ii = 0; ii < NumReservoir; ii++) {
 
-		if (ReservoirNetStorage[ii] < 0) {
+		if (ReservoirNetStorage[ii] < 0.0) {
 			iFeasible = 0;
 		}
-        if (minReservoir > ReservoirNetStorage[ii]) {
-            minReservoir = ReservoirNetStorage[ii];
+		if (minReservoir > ReservoirNetStorage[ii]) {
+			minReservoir = ReservoirNetStorage[ii];
 		}
 	}
 	Capacity = min(minDrainage, minReservoir);
 #if TRACE
+    double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;
     if (ncalls < MAX_TRACE) {
-        traceFile << setw(30) << caller << " <- Leaving PropagateWaterViaUser(" << ncalls << ")\n" << endl;
+        traceFile << setw(30) << caller << " <- Leaving PropagateWaterViaUser(" << ncalls << ") ";
+        traceFile << tm1 - tm0 << " seconds\n\n";
     }
     ncalls++;
 #endif
