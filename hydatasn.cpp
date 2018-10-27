@@ -422,7 +422,7 @@ L3104: ;
 #endif
 	ifstream tmaxtmintdewFile(tmaxtmintdewFileName);		// fortran unit lung
 	if (!tmaxtmintdewFile.is_open()) {
-		cerr << "Failed to open " << tmaxtmintdewFileName << '\n';
+		cerr << "Failed to open " << tmaxtmintdewFileName << ". Exiting\n";
 		exit(EXIT_FAILURE);
 	}
 

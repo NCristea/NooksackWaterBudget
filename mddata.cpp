@@ -1163,6 +1163,7 @@ L120:
         modelspcFile >> Nka[i-1];
         getline(modelspcFile, inLine, '\n');            // Read the rest of the line.
         //	write(6,5090)ngauge,ns,nrch,nka,nd,ll,ntr,nts,links,linkr
+
         if ( Nka[i-1] > maxA ) {
             cerr << " too many points in ln(a/tanb) distbn, maxA = " << dec << setw(3) << maxA << endl;
             exit(EXIT_FAILURE);

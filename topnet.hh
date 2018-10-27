@@ -37,7 +37,7 @@
 #define TRACE 10
 #define MAX_TRACE 5
 #define ZBAR_OUT
-#define ZBAR_IN
+//#define ZBAR_IN
 //#define WRIA1
 //#define LNWB
 
@@ -386,7 +386,7 @@ int read_inputs(const std::string dirname, const int dt, const int StartDateTopn
 	int &NumReservoir, int &NumUser, int &NumSource, int &NumRights, int &NumSourceMixing,
 	int &NumSeasonsDefn, int &NumReturnFlow, int &NumMonthlyDemand, const int NumRunoff,
 	int &NumBaseflow, int &NumWWTP);
-int read_struct_from_text(const std::string fileName, int &expected_numcols, const int ncommentlines, int &nrows);
+int read_struct_from_text(std::string fileName, int &expected_numcols, const int ncommentlines, int &nrows);
 
 int Initialise_Output_Tables(const int NumDrainage, const int NumNode, const int NumStreamNode, const int NumLink, const int NumUser,
 	const int NumTimesteps, const int NumReservoir, const int NumUserSourceReturn, const int NumReturnFlow);
