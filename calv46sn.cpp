@@ -567,15 +567,19 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             luntopFile << " and printing, followed by the reach numbers to which they relate\n";
         }
     }
-    // get any snow input parameters
-    ddf = -1.0;
-    ifstream snowinpFile("snowinp.txt");
-    if (!snowinpFile.is_open()) {
-        cerr << "Failed to open 'snowinp.txt'\n";
-    }
-    else {
-        snowinpFile >> ddf;
-        snowinpFile.close();
+    isnow_method = 2;
+    if (isnow_method != 2) {
+        // get any snow input parameters
+        ddf = -1.0;
+        ifstream snowinpFile("snowinp.txt");
+        if (!snowinpFile.is_open()) {
+            cerr << "Failed to open 'snowinp.txt'\n";
+        } else {
+            snowinpFile >> ddf;
+            snowinpFile.close();
+        }
+    } else {
+        cout << "Snow input parameters are not used in this version of TopNet (isnow_method == 2)\n";
     }
 
     ofstream snowoutFile("snowout.txt");	// unit 78
@@ -714,7 +718,6 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                 //		RH=1 !unknown for Nooksack, hope we don't need it!
                 qsiobs = 0; // unknown for Nooksack, hope we don't need it!
                 qnetob = 0; // unknown for Nooksack, hope we don't need it!
-                isnow_method = 2;
                 if (isnow_method == 2) {
                     snowcontrol[4] = iyear*10000 + month*100 + iday;
                     ihh = hour1;
