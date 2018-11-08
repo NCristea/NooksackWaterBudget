@@ -68,10 +68,9 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     bool exist;
     int *Ntr, *llOut, iret;
     int *Nts;
-    double **Si, **Rp, **atb, **pka, *tl, **pd, **cl, **bp;
+    double **Si, **Rp, **atb, **pka, **pd, **cl, **bp;
     double units;
     double **Sid, **Rpd;	// The arrays Sid, Spd and Rpd record the original values.
-    int *Nd, *iBout;
     int maxFgauge;
     int relFlag, neq_temp;
     int *Qmap;
@@ -81,16 +80,13 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     int *ishift0;
     double **bTmax;
     double **bTmin;
-    double  *wind2m;
     double **bTdew;
-    double  *bXlat;
-    double  *bXlon;
     double **flow;
     double dummyq;
 
     //   ET variables  DGT
     double stdlon;
-    double  *elevtg, **dtBar, **bdtBar;
+    double **dtBar, **bdtBar;
     int *temper_id;
     int ns_temper, idebugoutput, idebugbasin, idebugcase;
     int i, j, k;
@@ -366,9 +362,9 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
         bTmin[i] = new double[maxInt];
         bTdew[i] = new double[maxInt];
     }
-    wind2m = new double[maxInt];
-    bXlat  = new double[maxSlp];
-    bXlon  = new double[maxSlp];
+    valarray<double> wind2m(0.0,maxInt);
+    valarray<double> bXlat(0.0,maxSlp);
+    valarray<double> bXlon(0.0,maxSlp);
     flow = new double*[maxResponse];
     for (i = 0; i < maxResponse; i++) {
         flow[i] = new double[maxInt];
@@ -387,16 +383,16 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     for (j = 0; j < num_basinpars; ++j) {
         bp[j] = new double[maxSlp];
     }
-    valarray<int> Nka(0,maxSlp);
-    Nd    = new int[maxSlp];
-    iBout = new int[maxSlp];
+    valarray<int>    Nka(0,maxSlp);
+    valarray<int>    Nd(0,maxSlp);
+    valarray<int> iBout(0,maxSlp);
     atb = new double*[maxA];
     pka = new double*[maxA];
     for (i = 0; i < maxA; i++) {
         atb[i] = new double[maxSlp];
         pka[i] = new double[maxSlp];
     }
-    tl = new double[maxSlp];
+    valarray<double> tl(0.0,maxSlp);
     pd = new double*[maxC];
     cl = new double*[maxC];
     for (i = 0; i < maxC; i++) {
@@ -415,9 +411,9 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     }
     vector<int> kllout(maxResponse);
     Qmap   = new int[maxResponse];
-    valarray<double> Xlat(0.0,maxTGauge);
-    valarray<double> Xlong(0.0,maxTGauge);
-    elevtg = new double[maxTGauge];
+    valarray<double>   Xlat(0.0,maxTGauge);
+    valarray<double>  Xlong(0.0,maxTGauge);
+    valarray<double> elevtg(0.0,maxTGauge);
     temper_id = new int[maxTGauge];
     dtBar  = new double*[12];
     bdtBar = new double*[12];
@@ -521,7 +517,6 @@ L150:
     delete [] bTmin;
     delete [] bTdew;
 
-    delete [] wind2m;
     for (i = 0; i < maxResponse; i++) {
         delete [] flow[i];
     }
@@ -550,10 +545,6 @@ L150:
     }
     delete [] pd;
     delete [] cl;
-
-    delete [] tl;
-    delete [] Nd;
-    delete [] iBout;
     delete [] Qmap;
     delete [] Nts;
     delete [] rel;
@@ -563,10 +554,7 @@ L150:
 
     // Following are variable arrays left undeleted in the fortran code
     // which are then reallocated in subroutine model().
-    delete [] bXlat;
-    delete [] bXlon;
     delete [] temper_id;
-    delete [] elevtg;
     for (i = 0; i < 12; i++) {
         delete [] dtBar[i];
         delete [] bdtBar[i];
@@ -652,12 +640,11 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     int relflag;
     int ngut, jg1, jg, irch, jr, jr1, ipos;
     double *rel;
-    int *Nd, *iBout;
-    int *lOut;
-    int *iReach, *knt;
+    valarray<int> lOut(0,maxResponse);
+    valarray<int> knt(0,maxResponse);
     int neq_temp;
 
-    double **atb, **pka, *tl;
+    double **atb, **pka;
     double **pd, **cl;
     double units;
 
@@ -680,14 +667,11 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     int ndump;
     double **bTmax;
     double **bTmin;
-    double *wind2m;
     double **bTdew;
-    double *bXlat;
-    double *bXlon;
     double **flow;
     //     etvariables  dgt
     double stdlon;
-    double *elevtg, **dtBar, **bdtBar;
+    double **dtBar, **bdtBar;
     int *temper_id;
     valarray<double> temper(maxInt);
     valarray<double> dewp(0.0,maxInt);
@@ -726,7 +710,55 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     valarray<int> Nka(0,maxSlp);
     valarray<double> Xlat(0.0,maxTGauge);
     valarray<double> Xlong(0.0,maxTGauge);
-
+    valarray<int> iBout(0,maxSlp);
+    valarray<int> Nd(0,maxSlp);
+    valarray<int>iReach(0,maxResponse);
+    valarray<double> elevtg(0.0,maxTGauge);
+    valarray<double> bXlat(0.0,maxSlp);
+    valarray<double> bXlon(0.0,maxSlp);
+    valarray<double> tl(0.0,maxSlp);
+    bTmax = new double*[maxSlp];
+    bTmin = new double*[maxSlp];
+    bTdew = new double*[maxSlp];
+    for (i = 0; i < maxSlp; i++) {
+        bTmax[i] = new double[maxInt];
+        bTmin[i] = new double[maxInt];
+        bTdew[i] = new double[maxInt];
+    }
+    dtBar  = new double*[12];
+    bdtBar = new double*[12];
+    for (i = 0; i < 12; i++) {
+        dtBar[i] = new double[maxTGauge];
+        bdtBar[i] = new double[maxSlp];
+        for (j = 0; j < maxSlp; ++j) {
+            bdtBar[i][j] = 0.0;
+        }
+    }
+    valarray<double> wind2m(0.0,maxInt);
+    Si  = new double*[Nsi];
+    Sid = new double*[Nsi];
+    for (i = 0; i < Nsi; i++) {
+        Si[i]  = new double[maxSlp];
+        Sid[i] = new double[maxSlp];
+    }
+    atb = new double*[maxA];
+    pka = new double*[maxA];
+    for (i = 0; i < maxA; i++) {
+        atb[i] = new double[maxSlp];
+        pka[i] = new double[maxSlp];
+    }
+    pd = new double*[maxC];
+    cl = new double*[maxC];
+    for (i = 0; i < maxC; i++) {
+        pd[i] = new double[maxSlp];
+        cl[i] = new double[maxSlp];
+    }
+    Rp  = new double*[Nrp];
+    Rpd = new double*[Nrp];
+    for (i = 0; i < Nrp; i++) {
+        Rp[i]  = new double[maxChn];
+        Rpd[i] = new double[maxChn];
+    }
     if (model_master::iDoIt == 0) {
         model_master::iDoIt = 1;
 
@@ -737,77 +769,26 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
         //       ALLOCATE DYNAMIC ARRAYS
         rel  = new double[maxRchAreas];
         ishift0 = new int[maxRchAreas];
-        bTmax = new double*[maxSlp];
-        bTmin = new double*[maxSlp];
-        bTdew = new double*[maxSlp];
         vector<vector<double> > wrg(maxSlp,vector<double>(maxGauge));
         vector<vector<double> > wrg1(maxSlp,vector<double>(maxGauge));	//  Interpolation weights
         vector<vector<int> > lrg(maxSlp,vector<int>(maxGauge));
         Nts = new int[maxSlp];
-        for (i = 0; i < maxSlp; i++) {
-            bTmax[i] = new double[maxInt];
-            bTmin[i] = new double[maxInt];
-            bTdew[i] = new double[maxInt];
-        }
-        wind2m = new double[maxInt];
-        bXlat  = new double[maxSlp];
-        bXlon  = new double[maxSlp];
         flow = new double*[maxResponse];
         for (i = 0; i < maxResponse; i++) {
             flow[i] = new double[maxInt];
         }
-        elevtg = new double[maxTGauge];
         temper_id = new int[maxTGauge];
-        dtBar  = new double*[12];
-        bdtBar = new double*[12];
-        for (i = 0; i < 12; i++) {
-            dtBar[i] = new double[maxTGauge];
-            bdtBar[i] = new double[maxSlp];
-            for (j = 0; j < maxSlp; ++j) {
-                bdtBar[i][j] = 0.0;
-            }
-        }
         vector<vector<int> > linkS(2,vector<int>(maxSlp));
-        Si  = new double*[Nsi];
-        Sid = new double*[Nsi];
-        for (i = 0; i < Nsi; i++) {
-            Si[i]  = new double[maxSlp];
-            Sid[i] = new double[maxSlp];
-        }
-        Nd    = new int[maxSlp];
-        iBout = new int[maxSlp];
-        atb = new double*[maxA];
-        pka = new double*[maxA];
-        for (i = 0; i < maxA; i++) {
-            atb[i] = new double[maxSlp];
-            pka[i] = new double[maxSlp];
-        }
-        tl = new double[maxSlp];
-        pd = new double*[maxC];
-        cl = new double*[maxC];
-        for (i = 0; i < maxC; i++) {
-            pd[i] = new double[maxSlp];
-            cl[i] = new double[maxSlp];
-        }
+
         Ntr   = new int[maxChn];
         llOut = new int[maxChn];
-        Rp  = new double*[Nrp];
-        Rpd = new double*[Nrp];
-        for (i = 0; i < Nrp; i++) {
-            Rp[i]  = new double[maxChn];
-            Rpd[i] = new double[maxChn];
-        }
         vector<int> kllout(maxResponse);
         Qmap   = new int[maxResponse];
-        lOut   = new int[maxResponse];
-        iReach = new int[maxResponse];
-        knt    = new int[maxResponse];
         vector<double> suma(maxResponse);
         fill(suma.begin(), suma.end(), 0.0);
 
         for (n = 0; n < maxResponse; ++n) {
             Qmap[n]   = 0;
-            lOut[n]   = 0;
             iReach[n] = 0;
             knt[n]    = 0;
         }
@@ -1180,7 +1161,7 @@ L150:
 
 int set_cor_data(const vector<vector<int> > &linkR, const int Neq, const int Nout, const int Nrch, const int Ns,
                  const vector<int> &kllout, double **flow, const vector<vector<double> > &Spd, const double *bArea, const valarray<int> &ll,
-                 const int *llOut, valarray<double> &dFlow, vector<double> &suma, int *knt, int *iReach, int *lOut, const int maxInt,
+                 const int *llOut, valarray<double> &dFlow, vector<double> &suma, valarray<int> &knt, valarray<int> &iReach, valarray<int> &lOut, const int maxInt,
                  const int maxSlp, const int maxChn, const int maxResponse)
 {
     double fArea[maxResponse], nflow_mean,  pArea[maxResponse];
@@ -1360,8 +1341,9 @@ L51:
 // *****************************************************************************
 //     SUBROUTINE SETUP_ZBAR0S
 // *****************************************************************************
-int setup_zbar0s(const int Ns, double **Si, const vector<vector<double> > &Sp, const double *tl, const long int dt,
-                 const int *lOut, const int *iReach, const valarray<double> &dFlow, const int *knt, const int maxResponse, const int maxSlp)
+int setup_zbar0s(const int Ns, double **Si, const vector<vector<double> > &Sp, const valarray<double> &tl, const long int dt,
+    const valarray<int> &lOut, const valarray<int> &iReach, const valarray<double> &dFlow, const valarray<int> &knt,
+    const int maxResponse, const int maxSlp)
 {
     double sumF[maxResponse], sumC[maxResponse];
     double area[maxSlp], k[maxSlp], f[maxSlp], Lambda[maxSlp];

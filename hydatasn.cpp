@@ -34,9 +34,9 @@ time_t startAnnual;
 // V3 also has checking/matching of the flow sites with reaches.
 int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
 	vector<vector<double> >  &bRain, double **flow, int &iret, valarray<double> &dewp, valarray<double> &trange, double **dtBar,
-	const int Ns, vector<vector<double> >&wrg, vector<vector<int> > &lrg, const double *elevtg, double **bTmax, double **bTmin, double
+	const int Ns, vector<vector<double> >&wrg, vector<vector<int> > &lrg, const valarray<double> &elevtg, double **bTmax, double **bTmin, double
 	**bTdew, double **bdtBar, const vector<vector<double> > &Sp, const int maxGauge, const int maxInt, const int maxSites,
-	const int maxResponse, const int maxTGauge, double *wind2m, vector<vector<double> > &wrg1,
+	const int maxResponse, const int maxTGauge, valarray<double> &wind2m, vector<vector<double> > &wrg1,
 	int &idebugoutput, int &idebugbasin, int &idebugcase, const string calledFrom)   // Note that temper was passed in here but has has no use.
 {
 	int date, year, month, day, hour, minutes, seconds;

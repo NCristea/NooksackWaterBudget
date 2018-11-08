@@ -29,14 +29,14 @@
 
 using namespace std;
 
-int mdData(int &Ngauge, int &Ns, int &Nrch, valarray<int> &Nka, double *tl, double **atb, double **pka, int *Nd, double **cl2, double **pd2,
+int mdData(int &Ngauge, int &Ns, int &Nrch, valarray<int> &Nka, valarray<double> &tl, double **atb, double **pka, valarray<int> &Nd, double **cl2, double **pd2,
     double &units, valarray<int> &ll, int *Ntr, int *Nts, vector<vector<int> > &linkS, vector<vector<int> > &linkR, double **si,
     vector<vector<double> > &Sp, double **Rp,  const int iret, vector<vector<int> > &pMap, int &Npar, vector<vector<int> >  &lrg,
-    vector<vector<double> > &wrg, const int iex, int *llout, int &Neq, int &Nout, int &nBout, int *iBout, int &nRchSav, int *Qmap,
+    vector<vector<double> > &wrg, const int iex, int *llout, int &Neq, int &Nout, int &nBout, valarray<int> &iBout, int &nRchSav, int *Qmap,
     double *rel, int &relFlag, double *minSp, double *maxSp, double *minSi, double *maxSi, double *minRp, double *maxRp, bool &limitC,
     vector<vector<int> > &ClinkR, vector<int> &kllout, int *ishift0, const int maxInt, const int maxGuage, const int maxSlp,
     const int maxResponse, const int maxA, const int maxC, const int maxChn, const int maxRchAreas, const int maxSites,
-    double **bp, double *bXlat, double *bXlon, vector<vector<double> > &wrg1)
+    double **bp, valarray<double> &bXlat, valarray<double> &bXlon, vector<vector<double> > &wrg1)
 {
     // *********************************************************************
     //  This subroutine represents an amalgamation of subroutines READPS and

@@ -305,20 +305,20 @@ int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSo
 int BuildNodeStructure(const int NumDrainage, int &NumUser, const int NumReservoir, int &NumSource,
 	int &NumReturnFlow, const int NumMeasuredFlowInfo, int &NumNode);
 int calcts( double **Si,            const std::vector<std::vector<double> > &Sp,  double **Rp,        const std::valarray<int> &ll,
-            const int Nsub,         const std::valarray<int> &Nka,        const double *tl,   double **atb,
-            double **pka,           const int *nd,         double **cl,           double **pd,        const double units,
+            const int Nsub,         const std::valarray<int> &Nka,        const std::valarray<double> &tl,   double **atb,
+            double **pka,           const std::valarray<int> &nd,         double **cl,           double **pd,        const double units,
             const int ipsub,        const int ipatb,       const bool reinit,     const bool modwrt,  const int stim,
             std::vector<std::vector<double> > &bRain,        const long int interval, const int m,        const int mi,
             const int mps,          const int mpe,         bool &ok,              const std::valarray<double> &xlat, const std::valarray<double> &xlong,
-            const double stdlon,    const double *elevtg,  double **bdtBar,       const int sDate,    int &sHour,
-            const std::valarray<double> &temper,   const std::valarray<double> &dewp,    const std::valarray<double> &tRange,  const int Neq,      const int Nout,
-            const int nBout,        const int *iBout,      const double *wind2m,  double **bTmin,     double **bTmax,
-            double **bTdew,         const double *bXlat,   const double *bXlon,   int *ntdh,    const int ndump,
+            const double stdlon,    const std::valarray<double> &elevtg,  double **bdtBar,       const int sDate,    int &sHour,
+            const std::valarray<double> &temper,   const std::valarray<double> &dewp, const std::valarray<double> &tRange,  const int Neq,      const int Nout,
+            const int nBout,        const std::valarray<int> &iBout,      const std::valarray<double> &wind2m,  double **bTmin,     double **bTmax,
+            double **bTdew,         const std::valarray<double> &bXlat,   const std::valarray<double> &bXlon,   int *ntdh,    const int ndump,
             const int maxInt,       const int maxSlp,      const int maxA,        const int maxC,     const int maxChn,
             const int idebugoutput, const int idebugbasin, const int idebugcase);
 int CalculateDemand(const int ThisMonth, const int doy, const std::vector<double> &vol_irrig_demand, const int NumUser, const int NumMonthlyDemand);
 int chk_sites(int &lrg, const int sites, const int j, int &iMatch);
-int cliParam(std::valarray<double> &xlat, std::valarray<double> &xlong, double &stdlon, double *elevtg, double **dtBar, int &ns_temper, int *temper_id);
+int cliParam(std::valarray<double> &xlat, std::valarray<double> &xlong, double &stdlon, std::valarray<double> &elevtg, double **dtBar, int &ns_temper, int *temper_id);
 int CreateLink(int &NumLink, const std::string Title, const int LinkCode, const int IntExtCode,
 	const int USNode, const int DSNode, const double Flow, const int ReturnFlowID);
 int etall(const double xlat, const double xlong, const double stdlon, const double elevtg,
@@ -339,18 +339,18 @@ int read_bdryflow(const std::string fileName, int &expected_numcols, const int n
 
 int Model(const int it, const int iflag, const int iopt, const char prt, int &Neq, int &Npar, const int npx, const int iEx,
 	const int nfor, double qfit[], const double par[], const int mfit[], const int ifit, const int ibeale);
-int mdData(int &Ngauge, int &Ns, int &Nrch, std::valarray<int> &Nka, double *tl, double **atb, double **pka, int *Nd, double **cl2, double **pd2, double &units,
+int mdData(int &Ngauge, int &Ns, int &Nrch, std::valarray<int> &Nka, std::valarray<double> &tl, double **atb, double **pka, std::valarray<int> &Nd, double **cl2, double **pd2, double &units,
 	std::valarray<int> &ll, int *Ntr, int *Nts, std::vector<std::vector<int> > &linkS, std::vector<std::vector<int> > &linkR, double **si, std::vector<std::vector<double> > &Sp, double **Rp,  const int iret,
 	std::vector<std::vector<int> > &pMap, int &Npar, std::vector<std::vector<int> > &lrg, std::vector<std::vector<double> > &wrg,
-	const int iex, int *llout, int &Neq, int &Nout, int &nBout, int *iBout, int &nRchSav, int *qMap, double *rel, int &relFlag,
+	const int iex, int *llout, int &Neq, int &Nout, int &nBout, std::valarray<int> &iBout, int &nRchSav, int *qMap, double *rel, int &relFlag,
 	double *minSp, double *maxSp,  double *minSi, double *maxSi, double *minRp, double *maxRp, bool &limitC, std::vector<std::vector<int> > &ClinkR, std::vector<int> &kllout,
 	int *ishift0, const int maxInt, const int maxGuage, const int maxSlp, const int maxResponse, const int maxA, const int maxC,
 	const int maxChn, const int maxRchAreas, const int maxSites, double **bp,
-	double *bXlat, double *bXlon, std::vector<std::vector<double> > &wrg1);
+	std::valarray<double> &bXlat, std::valarray<double> &bXlon, std::vector<std::vector<double> > &wrg1);
 int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
 	std::vector<std::vector<double> > &bRain, double **flow, int &iret, std::valarray<double> &dewp, std::valarray<double> &trange, double **dtBar, const int Ns, std::vector<std::vector<double> > &wrg,
-	std::vector<std::vector<int> > &lrg, const double *elevtg, double **bTmax, double **bTmin, double **bTdew, double **bdtBar, const std::vector<std::vector<double> > &Sp,
-	const int maxGauge, const int maxInt, const int maxSites, const int maxResponse, const int maxTGauge, double *wind2m, std::vector<std::vector<double> > &wrg1,
+	std::vector<std::vector<int> > &lrg, const std::valarray<double> &elevtg, double **bTmax, double **bTmin, double **bTdew, double **bdtBar, const std::vector<std::vector<double> > &Sp,
+	const int maxGauge, const int maxInt, const int maxSites, const int maxResponse, const int maxTGauge, std::valarray<double> &wind2m, std::vector<std::vector<double> > &wrg1,
 	int &idebugoutput, int &idebugbasin, int &idebugcase, const std::string calledFrom);
 
 int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int NumNode,
@@ -366,13 +366,14 @@ bool miss(const double train, const int nfill);
 int iposn(const int Nrch, const std::vector<std::vector<int> > &linkR, const int ii);
 int set_cor_data(const std::vector<std::vector<int> > &linkR, const int Neq, const int Nout, const int Nrch, const int Ns,
 	const std::vector<int> &kllout, double **flow, const std::vector<std::vector<double> > &Spd, const double *bArea, const std::valarray<int> &ll,
-	const int *llOut, std::valarray<double> &dFlow, std::vector<double> &suma, int *knt, int *iReach, int *lOut, const int maxInt,
-	const int maxSlp, const int maxChn, const int maxResponse);
+	const int *llOut, std::valarray<double> &dFlow, std::vector<double> &suma, std::valarray<int> &knt, std::valarray<int> &iReach,
+	std::valarray<int> &lOut, const int maxInt,	const int maxSlp, const int maxChn, const int maxResponse);
 int read_lakes(std::vector<int> &lake_reach, int *lzero, double *lake_areas, int *lake_beach_slps, int *lk_line, int *num_rat_vals,
 	int **lheads, int **loflows, const int max_lakes, const int max_lheads);
 int read_lakes_levels(const std::vector<int> &lake_reach, double *ini_levels, const int max_lakes);
-int setup_zbar0s(const int Ns, double **Si, const std::vector<std::vector<double> > &Sp, const double *tl, const long int dt,
-	const int *lOut, const int *iReach, const std::valarray<double> &dFlow, const int *knt, const int maxResponse, const int maxSlp);
+int setup_zbar0s(const int Ns, double **Si, const std::vector<std::vector<double> > &Sp, const std::valarray<double> &tl, const long int dt,
+	const std::valarray<int> &lOut, const std::valarray<int> &iReach, const std::valarray<double> &dFlow, const std::valarray<int> &knt,
+	const int maxResponse, const int maxSlp);
 int solve_for_zbar0(double &zbar0, const double *area, const double *f, const double *k,
 	const double *Lambda, const double q, const long int dt, const int ns);
 
@@ -403,7 +404,7 @@ double svp(const double t);
 int td8micsec(const int jdatem, int &jhour, long int &isec);
 int td81micdh(int &idate, int &ihour, const long int jsec);
 int topmod(double **si, const std::vector<std::vector<double> > &Sp, const int isub, const std::valarray<int> &Nka, const double Lambda,
-	double **atb, double **pka, const int *nd, double **cl, double **pd, const double units,
+	double **atb, double **pka, const std::valarray<int> &nd, double **cl, double **pd, const double units,
 	std::vector<int> &irr, const bool modwrt, const int ipsub, const int ipatb, const int stim,
 	const double r, const double pet, const long int interval, const double art_drainage, const double rate_irrig,
 	const int imonth, const int ndata, const int mps, const int mpe, double &qinst_out, double &dr_out,

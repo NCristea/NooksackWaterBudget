@@ -33,17 +33,17 @@ ofstream snowcontrol3_File;	// unit 10
 // *  subroutine  calcts
 // ******************************************************
 int calcts( double **Si,            const vector<vector<double> > &Sp,  double **Rp,                    const valarray<int> &ll,
-            const int Nsub,         const valarray<int> &Nka,           const double *tl,               double **atb,
-            double **pka,           const int *nd,                      double **cl,                    double **pd,
+            const int Nsub,         const valarray<int> &Nka,           const valarray<double> &tl,               double **atb,
+            double **pka,           const valarray<int> &nd,                      double **cl,                    double **pd,
             const double units,     const int ipsub,                    const int ipatb,                const bool reinit,
             const bool modwrt,      const int stim,                     vector<vector<double> > &bRain, const long int interval,
             const int m,            const int mi,                       const int mps,                  const int mpe,
             bool &ok,               const valarray<double> &xlat,       const valarray<double> &xlong,  const double stdlon,
-            const double *elevtg,   double **bdtBar,                    const int sDate,                int &sHour,
+            const valarray<double> &elevtg,   double **bdtBar,                    const int sDate,                int &sHour,
             const valarray<double> &temper, const valarray<double> &dewp, const valarray<double> &tRange, const int Neq,
-            const int Nout,         const int nBout,                    const int *iBout,               const double *wind2m,
-            double **bTmin,         double **bTmax,                     double **bTdew,                 const double *bXlat,
-            const double *bXlon,    int *ntdh,                          const int ndump,                const int maxInt,
+            const int Nout,         const int nBout,                    const valarray<int> &iBout,     const valarray<double> &wind2m,
+            double **bTmin,         double **bTmax,                     double **bTdew,                 const valarray<double> &bXlat,
+            const valarray<double> &bXlon,    int *ntdh,                          const int ndump,                const int maxInt,
             const int maxSlp,       const int maxA,                     const int maxC,                 const int maxChn,
             const int idebugoutput, const int idebugbasin,              const int idebugcase)
 {
@@ -1232,7 +1232,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     Write_OutputTotal_valarray(oFile[24], resultsFileNames[24-offset], dateStr, monthly_recharge,      Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[25], resultsFileNames[25-offset], dateStr, monthly_precipitation, Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[26], resultsFileNames[26-offset], dateStr, monthly_potentialevap, Nsub, scalefactor);
-    cout << " timestep " << setw(5) << istep-1 << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
+    cout << " timestep " << setw(5) << istep-1 << " " << asctime(timeinfo);
 
     // End of time loop  for reaches ***************************************************
     // Added ArtDrainage to arguments for output
