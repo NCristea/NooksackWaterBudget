@@ -32,13 +32,13 @@ ofstream snowcontrol3_File;	// unit 10
 // ******************************************************
 // *  subroutine  calcts
 // ******************************************************
-int calcts( double **Si,            const vector<vector<double> > &Sp,  double **Rp,                    const int *ll,
-            const int Nsub,         const int *Nka,                     const double *tl,               double **atb,
+int calcts( double **Si,            const vector<vector<double> > &Sp,  double **Rp,                    const valarray<int> &ll,
+            const int Nsub,         const valarray<int> &Nka,           const double *tl,               double **atb,
             double **pka,           const int *nd,                      double **cl,                    double **pd,
             const double units,     const int ipsub,                    const int ipatb,                const bool reinit,
             const bool modwrt,      const int stim,                     vector<vector<double> > &bRain, const long int interval,
             const int m,            const int mi,                       const int mps,                  const int mpe,
-            bool &ok,               const double *xlat,                 const double *xlong,            const double stdlon,
+            bool &ok,               const valarray<double> &xlat,       const valarray<double> &xlong,  const double stdlon,
             const double *elevtg,   double **bdtBar,                    const int sDate,                int &sHour,
             const valarray<double> &temper, const valarray<double> &dewp, const valarray<double> &tRange, const int Neq,
             const int Nout,         const int nBout,                    const int *iBout,               const double *wind2m,
@@ -648,7 +648,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
 #endif
         if (timeinfo->tm_mday == 1) {
             strftime(dateStr, 11,"%Y %m %d", timeinfo);
-            cout << "--------------------------- " << istep << " --- " << dateStr << "---------------------------\n";
+            cout << "--------------------------- " << dec << setw(4) << istep << " --- " << dateStr << "---------------------------\n";
         }
         //   LOOP OVER SUBBASINS
         // Work through basins in "stream order" order, i.e.,
@@ -1071,7 +1071,8 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             }
             cout << "daysInYear " << fixed << setw(5) << setprecision(0) << daysInYear;
             cout << fixed << setw(9) << setprecision(6) << " scalefactor " << scalefactor;
-            cout << " timestep " << setw(5) << istep << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
+            cout << " timestep " << setw(5) << istep << " " << asctime(timeinfo);
+            //cout << " timestep " << setw(5) << istep << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
             strftime(dateStr, 11,"%Y %m %d", timeinfo);
             Write_OutputTotal_valarray(oFile[18], resultsFileNames[18-offset], dateStr, annual_upwelling,     Nsub, scalefactor);
             Write_OutputTotal_valarray(oFile[19], resultsFileNames[19-offset], dateStr, annual_recharge,      Nsub, scalefactor);
@@ -1086,7 +1087,8 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         // ------------------------------------------------------------------------------
         if (timeinfo->tm_mday == 1 && istep > 0) {   // start of the next month
             scalefactor = 1.0;
-            cout << " timestep " << setw(5) << istep << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
+            //cout << " timestep " << setw(5) << istep << " " << asctime(timeinfo);
+            //cout << " timestep " << setw(5) << istep << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
             strftime(dateStr, 11,"%Y %m %d", timeinfo);
             Write_OutputTotal_valarray(oFile[23], resultsFileNames[23-offset], dateStr, monthly_upwelling,     Nsub, scalefactor);
             Write_OutputTotal_valarray(oFile[24], resultsFileNames[24-offset], dateStr, monthly_recharge,      Nsub, scalefactor);

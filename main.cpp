@@ -143,9 +143,9 @@ int main()
 	ifstream topinpFile;
 	topinpFile.open("topinp.dat");
 	if (topinpFile.good()) {
-        cout << "topinp.dat opened for reading in main()\n";
+        cout << "main(): topinp.dat opened for reading.\n";
     } else {
-        cout << "topinp.dat not found\n";
+        cout << "main(): topinp.dat not found\n";
         exit(1);
     }
     for (i = 0; i < 7; ++i) {

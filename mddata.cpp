@@ -29,8 +29,8 @@
 
 using namespace std;
 
-int mdData(int &Ngauge, int &Ns, int &Nrch, int *Nka, double *tl, double **atb, double **pka, int *Nd, double **cl2, double **pd2,
-    double &units, int *ll, int *Ntr, int *Nts, vector<vector<int> > &linkS, vector<vector<int> > &linkR, double **si,
+int mdData(int &Ngauge, int &Ns, int &Nrch, valarray<int> &Nka, double *tl, double **atb, double **pka, int *Nd, double **cl2, double **pd2,
+    double &units, valarray<int> &ll, int *Ntr, int *Nts, vector<vector<int> > &linkS, vector<vector<int> > &linkR, double **si,
     vector<vector<double> > &Sp, double **Rp,  const int iret, vector<vector<int> > &pMap, int &Npar, vector<vector<int> >  &lrg,
     vector<vector<double> > &wrg, const int iex, int *llout, int &Neq, int &Nout, int &nBout, int *iBout, int &nRchSav, int *Qmap,
     double *rel, int &relFlag, double *minSp, double *maxSp, double *minSi, double *maxSi, double *minRp, double *maxRp, bool &limitC,
@@ -952,8 +952,8 @@ L120:
                 // the test on HIGH. We will only re-instate if we have problems - RPI
                 //	  IF(HIGH) THEN  ! RAW commented this out 16/7/2002
                 //	    WRITE(21,555) LINKR(1,II)   ! RAW commented this out 16/7/2002
-                //  555 FORMAT(" Reach link data corrupt! Reach no. ",I3," is the second r
-                //     1each encountered"/" that does not have a downstream link.")
+                //  555 FORMAT(" Reach link data corrupt! Reach no. ",I3," is the second
+                //     reach encountered"/" that does not have a downstream link.")
                 //	    GOTO 290  ! RAW commented this out 16/7/2002
                 //	  ENDIF   ! RAW commented this out 16/7/2002
                 high = true;

@@ -206,7 +206,7 @@ int et(const int iyear,  const int month,     const int iday,      const double 
 // **************************** cliparam () ****************************
 //     To read in the parameters needed for ET calculations
 //
-int cliParam(double *xlat, double *xlong, double &stdlon, double *elevtg, double **dtBar, int &ns_temper, int *temper_id)
+int cliParam(valarray<double> &xlat, valarray<double> &xlong, double &stdlon, double *elevtg, double **dtBar, int &ns_temper, int *temper_id)
 {
 	// 8-dec-2004 special nooksack version
     int i, j;

@@ -45,7 +45,7 @@ int soil(const double sr, const double r2, double &r3, double &rie, double &rd, 
 	const double ak0fzrdt, const double c, const double soilc,
 	const double psif, const bool global, const double ad_cap, double &ad_now);
 
-int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const int *Nka, const double Lambda,
+int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const valarray<int> &Nka, const double Lambda,
 	double **atb, double **pka, const int *nd, double **cl, double **pd, const double units,
 	vector<int> &irr, const bool modwrt, const int ipsub, const int ipatb, const int stim,
 	const double r, const double pet, const long int interval, const double art_drainage, const double rate_irrig,
