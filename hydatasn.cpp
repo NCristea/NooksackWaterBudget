@@ -572,11 +572,21 @@ L304: ;
 	}
 	i = 0;
 L207: for (jj = 1; jj <= Neq; jj++) {
-		if (!(streamflow_calibrationFile >> tempf[jj-1]))
-			goto L206;
+		if (!(streamflow_calibrationFile >> tempf[jj-1])) {
+            if (streamflow_calibrationFile.eof()) {
+                goto L206;
+            } else {
+                goto L204;
+            }
+        }
 	}
-	if (!(streamflow_calibrationFile >> date >> hour))
-		goto L206;
+	if (!(streamflow_calibrationFile >> date >> hour)) {
+        if (streamflow_calibrationFile.eof()) {
+            goto L206;
+        } else {
+            goto L204;
+        }
+    }
 
 	td8micsec(date, hour, itemp1);
 	topErrorFile << dec << setw(4) << i;
@@ -667,16 +677,10 @@ L2031: if (m != i) {
 //	}
 //	cerr << " ***** Rainfall ends prematurely - number of values reduced to " << dec << setw(6) << m << '\n';
 //	goto L220;
-//L204: cerr << " ***** Error in file streamflow_calibration.dat at ";
-//	cerr << dec << setw(9) << date << setw(7) << hour << '\n';
-//	iret = 4;
-//	for (i = 0; i < maxGauge; i++) {
-//		delete [] rcoeff[i];
-//		delete [] fsite[i];
-//	}
-//	delete rcoeff;
-//	delete fsite;
-//	return 0;
+L204: cerr << " ***** Error in file streamflow_calibration.dat at ";
+	cerr << dec << setw(9) << date << setw(7) << hour << '\n';
+	iret = 4;
+	return 0;
 L206: for (ij = i+1; ij <= m; ij++) {
  		for (jj = 1; jj <= Neq; jj++) {
  			flow[jj-1][ij-1] = -1.0;

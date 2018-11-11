@@ -99,7 +99,9 @@ ifstream topinpFile, modelspcFile, rchareasFile, rainFile;
 #ifdef ZBAR_OUT
     ofstream zbarFile;
 #endif
-ofstream debugFile;
+#ifdef DEBUG
+    ofstream debugFile;
+#endif
 ofstream r3File;
 ofstream rdFile;
 
@@ -124,7 +126,9 @@ int main()
 #ifdef ZBAR_OUT
     zbarFile.open("results/zbar.dat");
 #endif
+#ifdef DEBUG
     debugFile.open("results/debug.dat");
+#endif
     inputT(initT, iend, Neq, qact, actime, modelid, Npar, Nrx, iex);
 	if (Neq > iex)
 		cout << "Too many responses - increase iex dimension\n";
@@ -173,6 +177,8 @@ int main()
     zbarFile.close();
 #endif
     r3File.close();
+#ifdef DEBUG
     debugFile.close();
+#endif
     return 0;
 }

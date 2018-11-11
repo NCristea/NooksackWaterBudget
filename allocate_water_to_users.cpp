@@ -55,7 +55,9 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 		User[i].Demand[Timestep-1]  = User[i].DemandToday;
 		User[i].Withdrawal[Timestep-1] = 0.0;
 	}
-debugFile << " AllocateWaterToUsers(), Timestep " << dec << setw(4) << Timestep << " -> PropagateWaterViaUser()\n";    //debug
+#ifdef DEBUG
+    debugFile << " AllocateWaterToUsers(), Timestep " << dec << setw(4) << Timestep << " -> PropagateWaterViaUser()\n";
+#endif
 	for (ii = 1; ii <= NumUserSource; ii++) {
 		k = UserSourceOrder[ii-1];
 		i = UserSourceTable[k-1].UserID;
@@ -134,10 +136,11 @@ debugFile << " AllocateWaterToUsers(), Timestep " << dec << setw(4) << Timestep 
 
 			i_count = 1;
 			i_count_max = 100;
-
-debugFile <<  "UserSourceTable[" << dec << setw(3) << k << "].UserID " << dec << setw(3) << UserSourceTable[k-1].UserID;
-debugFile << " DrainageID " << dec << setw(3) << UserSourceTable[k-1].DrainageID;//debug
-debugFile << " Source[" << dec << setw(3) << ii << "] " << Source[ii-1].SourceID;
+#ifdef DEBUG
+            debugFile <<  "UserSourceTable[" << dec << setw(3) << k << "].UserID " << dec << setw(3) << UserSourceTable[k-1].UserID;
+            debugFile << " DrainageID " << dec << setw(3) << UserSourceTable[k-1].DrainageID;//debug
+            debugFile << " Source[" << dec << setw(3) << ii << "] " << Source[ii-1].SourceID;
+#endif
 			while (Qtry > (0.01*Qtry0) && AllocatedFlow == 0.0 && i_count <= i_count_max) {
 				//give Qtry to the user node and follow it through
 				PropagateWaterViaUser(i, j, Qtry, NumNode, NumLink, NumUser, NumReservoir, NumSource,

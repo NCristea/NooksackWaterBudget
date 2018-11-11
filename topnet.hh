@@ -40,6 +40,7 @@
 //#define ZBAR_IN
 //#define WRIA1
 //#define LNWB
+//#define DEBUG
 
 #if TRACE
     extern std::ofstream traceFile;
@@ -49,12 +50,14 @@
 #ifdef ZBAR_OUT
     extern std::ofstream zbarFile;
 #endif
+#ifdef DEBUG
+    extern std::ofstream debugFile;
+#endif
 
 extern int *ifound;
 extern struct tm *timeinfo;  // Initialized in hyData()
 extern time_t startAnnual;   // Initialized in hyData()
 extern int NumUserSourceReturn; // initialized in AssignPriorityOrder()
-extern std::ofstream debugFile;
 extern std::ofstream topErrorFile;
 extern std::vector<int> iFound;
 extern std::vector<int> find_counts;
@@ -417,9 +420,9 @@ int topmod(double **si, const std::vector<std::vector<double> > &Sp, const int i
 	double &qvmin, double &dth, double &sumad, double &evap_mm, double &qlat_mm,
 	const int ipflag, std::array<double,Nip1> &rirr, const int js, double &upwelling, double &recharge);
 int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timestep, const int NSteps,
-	std::vector<double> &RunoffTopnet, std::vector<double> &BaseflowTopnet, const std::vector<double> &ArtDrainageTopnet,
-	const std::vector<double> &vol_irrig_demand, const int maxSlp, const double *evaporation, const double *precipitation,
-	std::valarray<double> &volume_irrig_sup, double *groundwater_to_take);
+	std::vector<double> &RunoffTopnet, std::vector<double> &BaseflowTopnet, const std::valarray<double> &ArtDrainageTopnet,
+	const std::vector<double> &vol_irrig_demand, const int maxSlp, const std::valarray<double> &evaporation,
+	const std::valarray<double> &precipitation,	std::valarray<double> &volume_irrig_sup, double *groundwater_to_take);
 int Write_OutputLine(std::ofstream &oFile, const std::string filenm, const int timestep, const double *Rvariable,
 	const int NumDrainage, const double scalefactor);
 int Write_OutputLine_vector(std::ofstream &oFile, const std::string fileName, const int timestep,
