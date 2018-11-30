@@ -24,7 +24,7 @@
 
 using namespace std;
 
-ofstream oFile[46];
+ofstream oFile[51];
 ofstream snowcontrol3_File;	// unit 10
 
 // This version,V3, has lakes and snow modelling added to it
@@ -32,26 +32,26 @@ ofstream snowcontrol3_File;	// unit 10
 // ******************************************************
 // *  subroutine  calcts
 // ******************************************************
-int calcts( double **Si,            const vector<vector<double> > &Sp,  double **Rp,                    const int *ll,
-            const int Nsub,         const int *Nka,                     const double *tl,               double **atb,
-            double **pka,           const int *nd,                      double **cl,                    double **pd,
+int calcts( double **Si,            const vector<vector<double> > &Sp,  double **Rp,                    const valarray<int> &ll,
+            const int Nsub,         const valarray<int> &Nka,           const valarray<double> &tl,     double **atb,
+            double **pka,           const valarray<int> &nd,            double **cl,                    double **pd,
             const double units,     const int ipsub,                    const int ipatb,                const bool reinit,
             const bool modwrt,      const int stim,                     vector<vector<double> > &bRain, const long int interval,
             const int m,            const int mi,                       const int mps,                  const int mpe,
-            bool &ok,               const double *xlat,                 const double *xlong,            const double stdlon,
-            const double *elevtg,   double **bdtBar,                    const int sDate,                int &sHour,
+            bool &ok,               const valarray<double> &xlat,       const valarray<double> &xlong,  const double stdlon,
+            const valarray<double> &elevtg,   double **bdtBar,                    const int sDate,                int &sHour,
             const valarray<double> &temper, const valarray<double> &dewp, const valarray<double> &tRange, const int Neq,
-            const int Nout,         const int nBout,                    const int *iBout,               const double *wind2m,
-            double **bTmin,         double **bTmax,                     double **bTdew,                 const double *bXlat,
-            const double *bXlon,    int *ntdh,                          const int ndump,                const int maxInt,
+            const int Nout,         const int nBout,                    const valarray<int> &iBout,     const valarray<double> &wind2m,
+            double **bTmin,         double **bTmax,                     double **bTdew,                 const valarray<double> &bXlat,
+            const valarray<double> &bXlon,    int *ntdh,                          const int ndump,                const int maxInt,
             const int maxSlp,       const int maxA,                     const int maxC,                 const int maxChn,
             const int idebugoutput, const int idebugbasin,              const int idebugcase)
 {
     istringstream line;
     char dateStr[11];
     double daysInYear = -1.0;
-    const int offset = 18;    // Offset needed for file name array.
-    const int withdrawalOffset = 33;  // Offset for withdrawal by user type file output code.
+    const int offset = 18;            // Offset needed for file name array.
+    const int withdrawalOffset = 39;  // Offset for withdrawal by user type file output code.
     const int NuserTypes = 6;
     ostringstream TcodeStr, AcodeStr;
     int ncode;
@@ -82,7 +82,6 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     double *quc;
     double *groundwater_to_take; 					// groundwater_to_take(maxSlp)
     double evap_mm, qlat_mm;
-    double *evap_for_watermgmt, *precip_for_watermgmt;
     const int nreg = 6;								// how many regions can we model within a sub-basin?
     // use these regions for irrigation and drainage
 
@@ -197,7 +196,16 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                                  "results/annual_mean_recharge_mm.txt",                  // 29
                                  "results/annual_mean_precipitation_mm.txt",             // 30
                                  "results/annual_mean_potentialevap_mm.txt",             // 31
-                                 "results/annual_mean_return_flow_cmy.txt"};             // 32, cubic meters per year
+                                 "results/annual_mean_return_flow_cmy.txt",              // 32, cubic meters per year
+
+                                 "results/annual_artificial_drainage_cmy.txt",           // 33
+                                 "results/monthly_artificial_drainage_cmm.txt",          // 34
+                                 "results/annual_mean_artificial_drainage_cmy.txt",      // 35
+
+                                 "results/annual_evaporation_mm.txt",                    // 36
+                                 "results/monthly_evaporation_mm.txt",                   // 37
+                                 "results/annual_mean_evaporation_mm.txt"};              // 38
+
 
     // cms calculation for e.g. user withdrawal is dividided by 864000 which implies that user withdrawal
     // stored in the User structure is in units of cubic meters per day. See the
@@ -228,9 +236,13 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             cerr << "Failed to open " << resultsFileNames[i-offset] << '\n';
             exit(EXIT_FAILURE);
         } else {
-            cerr << resultsFileNames[i-offset] << " opened" << endl;
+            cerr << "# " << dec << setw(2) << i << " " << resultsFileNames[i-offset] << " opened" << endl;
         }
-        oFile[i] << setw(11) << "Years";
+        if (i == 34 || i == 37) {
+            oFile[i] << setw(11) << "Months";
+        } else {
+            oFile[i] << setw(11) << "Years";
+        }
         for (jsub = 1; jsub <= Nsub; jsub++) {
             oFile[i] << setw(12) << "Drainage" << dec << setw(3) << jsub;
         }
@@ -247,7 +259,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             cerr << "Failed to open " << TcodeStr.str() << '\n';
             exit(EXIT_FAILURE);
         } else {
-            cerr << TcodeStr.str() << " opened" << endl;
+            cerr << "# " << dec << setw(2) << i+ncode << " " << TcodeStr.str() << " opened" << endl;
         }
         if (!oFile[i+ncode+NuserTypes].is_open()) {
             cerr << "Failed to open " << AcodeStr.str() << '\n';
@@ -262,7 +274,11 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         AcodeStr.clear();
         AcodeStr.str("");
         oFile[i+ncode] << setw(11) << "Year end";
-        oFile[i+ncode+NuserTypes] << setw(11) << "Years";
+        if (i+ncode+NuserTypes >= 23 &&i+ncode+NuserTypes < 28) {
+            oFile[i+ncode+NuserTypes] << setw(11) << "Months";
+        } else {
+            oFile[i+ncode+NuserTypes] << setw(11) << "Years";
+        }
         for (jsub = 1; jsub <= Nsub; jsub++) {
             oFile[i+ncode] << setw(12) << "Drainage" << dec << setw(3) << jsub;
             oFile[i+ncode+NuserTypes] << setw(12) << "Drainage" << dec << setw(3) << jsub;
@@ -277,37 +293,51 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     // Allocate and initialize all the now dynamic arrays
     vector<double>         baseflow(maxSlp,0.0);
     vector<double>      totalrunoff(maxSlp,0.0);
-    vector<double>    potentialevap(maxSlp,0.0);
+
     vector<double>          tempave(maxSlp,0.0);
     vector<double>           surfro(maxSlp,0.0);
     vector<double>         canstore(maxSlp,0.0);
     vector<double>        soilstore(maxSlp,0.0);
     vector<double>            tiled(maxSlp,0.0);
     vector<double>           ditchd(maxSlp,0.0);
-    vector<double>      ArtDrainage(maxSlp,0.0);
     valarray<double>       volume_irrig_sup(0.0,maxSlp);
 
+    valarray<double>            ArtDrainage(0.0,maxSlp);
+    valarray<double>     annual_ArtDrainage(0.0,maxSlp);
+    valarray<double>    monthly_ArtDrainage(0.0,maxSlp);
+    valarray<double>     annAve_ArtDrainage(0.0,maxSlp);
+
     valarray<double>              upwelling(0.0,maxSlp);
-    valarray<double>               recharge(0.0,maxSlp);
-    valarray<double>             returnflow(0.0,maxSlp);
-
     valarray<double>       annual_upwelling(0.0,maxSlp);
-    valarray<double>        annual_recharge(0.0,maxSlp);
-    valarray<double>   annual_precipitation(0.0,maxSlp);
-    valarray<double>   annual_potentialevap(0.0,maxSlp);
-    valarray<double>      annual_returnflow(0.0,maxSlp);
-
     valarray<double>      monthly_upwelling(0.0,maxSlp);
-    valarray<double>       monthly_recharge(0.0,maxSlp);
-    valarray<double>  monthly_precipitation(0.0,maxSlp);
-    valarray<double>  monthly_potentialevap(0.0,maxSlp);
-    valarray<double>     monthly_returnflow(0.0,maxSlp);
-
     valarray<double>       annAve_upwelling(0.0,maxSlp);
+
+    valarray<double>               recharge(0.0,maxSlp);
+    valarray<double>        annual_recharge(0.0,maxSlp);
+    valarray<double>       monthly_recharge(0.0,maxSlp);
     valarray<double>        annAve_recharge(0.0,maxSlp);
-    valarray<double>   annAve_precipitation(0.0,maxSlp);
-    valarray<double>   annAve_potentialevap(0.0,maxSlp);
+
+    valarray<double>             returnflow(0.0,maxSlp);
+    valarray<double>      annual_returnflow(0.0,maxSlp);
+    valarray<double>     monthly_returnflow(0.0,maxSlp);
     valarray<double>      annAve_returnflow(0.0,maxSlp);
+
+    valarray<double>   precip_for_watermgmt(0.0,maxSlp);
+    valarray<double>   annual_precipitation(0.0,maxSlp);
+    valarray<double>  monthly_precipitation(0.0,maxSlp);
+    valarray<double>   annAve_precipitation(0.0,maxSlp);
+
+    valarray<double>          potentialevap(0.0,maxSlp);
+    valarray<double>   annual_potentialevap(0.0,maxSlp);
+    valarray<double>  monthly_potentialevap(0.0,maxSlp);
+    valarray<double>   annAve_potentialevap(0.0,maxSlp);
+
+    valarray<double>     evap_for_watermgmt(0.0,maxSlp);
+    valarray<double>     annual_evaporation(0.0,maxSlp);
+    valarray<double>    monthly_evaporation(0.0,maxSlp);
+    valarray<double>     annAve_evaporation(0.0,maxSlp);
+
+
     vector<vector<double> > BasinWithdrawalByUser(NuserTypes,vector<double>(Nsub));  // first 6 user types
     vector<vector<double> > annAve_basin_withdrawal(NuserTypes,vector<double>(Nsub));  // first 6 user types
     int countFullYears = 0;
@@ -315,12 +345,8 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     vector<double> vol_irrig_demand(maxSlp,0.0);
 
     groundwater_to_take  = new double[maxSlp];
-    evap_for_watermgmt   = new double[maxSlp];
-    precip_for_watermgmt = new double[maxSlp];
     for (i = 0; i < maxSlp; i++) {
         groundwater_to_take[i]  = 0.0;
-        evap_for_watermgmt[i]   = 0.0;
-        precip_for_watermgmt[i] = 0.0;
     }
     quc = new double[maxInt];
     for (i = 0; i < maxInt; i++) {
@@ -648,7 +674,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
 #endif
         if (timeinfo->tm_mday == 1) {
             strftime(dateStr, 11,"%Y %m %d", timeinfo);
-            cout << "--------------------------- " << istep << " --- " << dateStr << "---------------------------\n";
+            cout << "--------------------------- " << dec << setw(4) << istep << " --- " << dateStr << "---------------------------\n";
         }
         //   LOOP OVER SUBBASINS
         // Work through basins in "stream order" order, i.e.,
@@ -842,18 +868,18 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                         //   /(float(interval))
                     }
                 }
-                for (i_drainage = 0; i_drainage <= (n_drainage); i_drainage++) {
+                for (i_drainage = 1; i_drainage <= (n_drainage+1); i_drainage++) {
                     kp = (i_irrig - 1)*3 + i_drainage;   // DGT 11/3/07
                     // kp is a variable to index the combinations of irrigation and drainage to compare with kcase and control
                     // detail output.  There are 3 drainage cases.  The first the associated with i_irrig will be numbered 1,2,3
                     // The next three will be numbered 4, 5, 6 and so on.
-                    if (i_drainage == 0) { //Naturally drained
+                    if (i_drainage == 1) { //Naturally drained
                         wt2 = 1.0 - Sp[15][js] - Sp[16][js]; //16=tilefraction, 17=ditchfraction
                         art_drainage = 0;
-                    } else if (i_drainage == 1) {     //Tile drained
+                    } else if (i_drainage == 2) {     //Tile drained
                         wt2 = Sp[15][js]; //16=tilefraction
                         art_drainage = Sp[17][js]; //watch for units
-                    } else if (i_drainage == 2) {      //Ditch drained
+                    } else if (i_drainage == 3) {      //Ditch drained
                         wt2 = Sp[16][js]; //17=ditchfraction
                         art_drainage = Sp[18][js];
                     }
@@ -912,14 +938,16 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                         s0_d                   += wt12*s0[js][kk-1];
                         qinst_out_d            += wt12*qinst_out_0;
                         dr_out_d               += wt12*dr_out_0;    // 6/10/05  DGT keeping track of total runoff
-                        art_drainage_out       += wt12*sumad;  // 6/28/05   DGT Artificial drainage
-                        evap_for_watermgmt[js] += wt12*evap_mm;   // DGT 8/17/05 keeping track of evap
-                        potentialevap[js]      += wt12*rirr[12];  // DGT 10/21/12  keeping track of pet
+                        art_drainage_out       += wt12*sumad;       // 6/28/05   DGT Artificial drainage
+                        evap_for_watermgmt[js] += wt12*evap_mm;     // DGT 8/17/05 keeping track of evap
+                        potentialevap[js]      += wt12*rirr[12];    // DGT 10/21/12  keeping track of pet
                         surfro[js]             += wt12*rirr[6]/1000.0*(Sp[0][js]/1.0e6)/interval;
                         canstore[js]           += wt12*rirr[9];
                         soilstore[js]          += wt12*rirr[11];
                         annual_potentialevap[js]  += potentialevap[js];
                         monthly_potentialevap[js] += potentialevap[js];
+                        annual_evaporation[js]    += evap_for_watermgmt[js];
+                        monthly_evaporation[js]   += evap_for_watermgmt[js];
 
                         if (i_drainage  == 2) {
                             tiled[js] += wt12*sumad*1.0e-9; // sumad is mm^3/s - now in m^3/s
@@ -985,6 +1013,8 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             //    to avoid some divide by zero's later on in water management
             totalrunoff[js] = dr_out_d*interval*1.0e-9; // m^3/ts = mm^3/s *s/ts *m3/mm3
             ArtDrainage[js] = art_drainage_out*interval*1.0e-9 ;  // DGT 6/28/05  Keep in same units as totalrunoff
+            annual_ArtDrainage[js]  += ArtDrainage[js];
+            monthly_ArtDrainage[js] += ArtDrainage[js];
 
             if (modwrt && istep == m) {
                 if (idebugoutput >= 1) {  // DGT 8/17/05 debugout
@@ -1055,7 +1085,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         Write_OutputLine_valarray(oFile[15], "results/upwelling_mm.txt", istep, upwelling, Nsub, scalefactor);
         Write_OutputLine_valarray(oFile[16], "results/recharge_mm.txt", istep, recharge, Nsub, scalefactor);
 
-        if (timeinfo->tm_mon == 8 && timeinfo->tm_mday == 30 && istep > 0) {
+        if (timeinfo->tm_mon == 8 && timeinfo->tm_mday == 30 && istep > 0) {    // start of the next water year
             daysInYear = difftime(mktime(timeinfo),startAnnual)/86400.0;
             if (daysInYear >= 365.0) {
                 scalefactor = 1.0;
@@ -1064,6 +1094,8 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                     annAve_recharge[jsub]      += annual_recharge[jsub];
                     annAve_precipitation[jsub] += annual_precipitation[jsub];
                     annAve_potentialevap[jsub] += annual_potentialevap[jsub];
+                    annAve_evaporation[jsub]   += annual_evaporation[jsub];
+                    annAve_ArtDrainage[jsub]   += annual_ArtDrainage[jsub];
                 }
                 countFullYears++;
             } else {
@@ -1071,47 +1103,49 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             }
             cout << "daysInYear " << fixed << setw(5) << setprecision(0) << daysInYear;
             cout << fixed << setw(9) << setprecision(6) << " scalefactor " << scalefactor;
-            cout << " timestep " << setw(5) << istep << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
+            cout << " timestep " << setw(5) << istep << " " << asctime(timeinfo);
+            //cout << " timestep " << setw(5) << istep << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
             strftime(dateStr, 11,"%Y %m %d", timeinfo);
             Write_OutputTotal_valarray(oFile[18], resultsFileNames[18-offset], dateStr, annual_upwelling,     Nsub, scalefactor);
             Write_OutputTotal_valarray(oFile[19], resultsFileNames[19-offset], dateStr, annual_recharge,      Nsub, scalefactor);
             Write_OutputTotal_valarray(oFile[20], resultsFileNames[20-offset], dateStr, annual_precipitation, Nsub, scalefactor);
             Write_OutputTotal_valarray(oFile[21], resultsFileNames[21-offset], dateStr, annual_potentialevap, Nsub, scalefactor);
+            Write_OutputTotal_valarray(oFile[36], resultsFileNames[36-offset], dateStr, annual_evaporation,   Nsub, scalefactor);
+            Write_OutputTotal_valarray(oFile[33], resultsFileNames[33-offset], dateStr, annual_ArtDrainage,   Nsub, scalefactor);
             annual_upwelling      = 0.0; // re-initialize array
             annual_recharge       = 0.0; // re-initialize array
             annual_precipitation  = 0.0; // re-initialize array
             annual_potentialevap  = 0.0; // re-initialize array
+            annual_evaporation    = 0.0; // re-initialize array
+            annual_ArtDrainage    = 0.0; // re-initialize array
             startAnnual = mktime(timeinfo);
         }
         // ------------------------------------------------------------------------------
         if (timeinfo->tm_mday == 1 && istep > 0) {   // start of the next month
             scalefactor = 1.0;
-            cout << " timestep " << setw(5) << istep << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
+            //cout << " timestep " << setw(5) << istep << " " << asctime(timeinfo);
+            //cout << " timestep " << setw(5) << istep << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
             strftime(dateStr, 11,"%Y %m %d", timeinfo);
             Write_OutputTotal_valarray(oFile[23], resultsFileNames[23-offset], dateStr, monthly_upwelling,     Nsub, scalefactor);
             Write_OutputTotal_valarray(oFile[24], resultsFileNames[24-offset], dateStr, monthly_recharge,      Nsub, scalefactor);
             Write_OutputTotal_valarray(oFile[25], resultsFileNames[25-offset], dateStr, monthly_precipitation, Nsub, scalefactor);
             Write_OutputTotal_valarray(oFile[26], resultsFileNames[26-offset], dateStr, monthly_potentialevap, Nsub, scalefactor);
+            Write_OutputTotal_valarray(oFile[37], resultsFileNames[37-offset], dateStr, monthly_evaporation,   Nsub, scalefactor);
+            Write_OutputTotal_valarray(oFile[34], resultsFileNames[34-offset], dateStr, monthly_ArtDrainage,   Nsub, scalefactor);
             monthly_upwelling      = 0.0; // re-initialize array
             monthly_recharge       = 0.0; // re-initialize array
             monthly_precipitation  = 0.0; // re-initialize array
             monthly_potentialevap  = 0.0; // re-initialize array
+            monthly_evaporation    = 0.0; // re-initialize array
+            monthly_ArtDrainage    = 0.0; // re-initialize array
         }
         // DGT 10/21/12  Additional writes for Christina
         scalefactor = 1.0;
-        Write_OutputLine_vector(oFile[0], "results/Potential_evapotranspiration_mm.txt", istep, potentialevap, Nsub, scalefactor);
-
-        scalefactor = 1.0;
-        Write_OutputLine_vector(oFile[1], "results/TemperatureAve_C.txt", istep, tempave, Nsub, scalefactor);
-
-        scalefactor = 1.0;
-        Write_OutputLine_vector(oFile[2], "results/Surface_runoff_cms.txt", istep, surfro, Nsub, scalefactor);
-
-        scalefactor = 1.0;
-        Write_OutputLine_vector(oFile[3], "results/Canopy_storage_mm.txt", istep, canstore, Nsub, scalefactor);
-
-        scalefactor = 1.0;
-        Write_OutputLine_vector(oFile[4], "results/Soil_storage_mm.txt", istep, soilstore, Nsub, scalefactor);
+        Write_OutputLine_valarray(oFile[0], "results/Potential_evapotranspiration_mm.txt", istep, potentialevap, Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[1],   "results/TemperatureAve_C.txt",                istep, tempave,       Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[2],   "results/Surface_runoff_cms.txt",              istep, surfro,        Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[3],   "results/Canopy_storage_mm.txt",               istep, canstore,      Nsub, scalefactor);
+        Write_OutputLine_vector(oFile[4],   "results/Soil_storage_mm.txt",                 istep, soilstore,     Nsub, scalefactor);
 
         scalefactor = 1000.0;
         double *temporary = new double[Nsub];
@@ -1123,8 +1157,6 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
 
         scalefactor = 1.0;
         Write_OutputLine_vector(oFile[6], "results/Tile_drainage_cms.txt", istep, tiled, Nsub, scalefactor);
-
-        scalefactor = 1.0;
         Write_OutputLine_vector(oFile[7], "results/Ditch_drainage_cms.txt", istep, ditchd, Nsub, scalefactor);
 
         // Added ArtDrainage to arguments for output
@@ -1132,6 +1164,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                   evap_for_watermgmt, precip_for_watermgmt, volume_irrig_sup, groundwater_to_take);
         // ---------------------------------------------------------------------------------------------
         if (istep > 0) {
+#ifdef DEBUG
             for (i = 0; i < NumUser; ++i) {
                 debugFile << "User[" << dec << setw(3) << i+1 << "].LinkUserToReturnflow[1] = ";
                 int j_return = input_structures::User[i].LinkUserToReturnflow[0];
@@ -1141,7 +1174,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                 debugFile << " Link.USNode = " << other_structures::Link[j_return-1].USNode;
                 debugFile << " Link.DSNode = " << other_structures::Link[j_return-1].DSNode << endl;
             }
-
+#endif
             // ---------------------------------------------------------------------------------------------
             // The code in the next two blocks must come after watermgmt() is called.
             for (i = 0; i < NumUser; ++i) { // NumUsers > NumuserSourceReturn
@@ -1161,10 +1194,12 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                     if (input_structures::User[i].UsersType == userTypeCode[ncode]) {
                         n = other_structures::UserSourceTable[i].DrainageID;
                         BasinWithdrawalByUser[userTypeCode[ncode]-1][n-1] += input_structures::User[i].Withdrawal[istep-1];
+#ifdef DEBUG
                         debugFile << "Drainage " << dec << setw(3) << n << " User " << dec << setw(3) << i+1;
                         debugFile << " UserType " << dec << setw(3) << userTypeCode[ncode] << " ReturnFlowID ";
                         debugFile << dec << setw(3) << input_structures::User[i].ReturnFlowID;
-                        debugFile << " SourceMixingID "  << dec << setw(3) <<  input_structures::User[i].SourceMixingID << endl;;
+                        debugFile << " SourceMixingID "  << dec << setw(3) <<  input_structures::User[i].SourceMixingID << endl;
+#endif
                     }
                 }
             }
@@ -1222,6 +1257,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     Write_OutputTotal_valarray(oFile[19], resultsFileNames[19-offset], dateStr, annual_recharge,      Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[20], resultsFileNames[20-offset], dateStr, annual_precipitation, Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[21], resultsFileNames[21-offset], dateStr, annual_potentialevap, Nsub, scalefactor);
+    Write_OutputTotal_valarray(oFile[33], resultsFileNames[33-offset], dateStr, annual_ArtDrainage,   Nsub, scalefactor);
     for (int ncode = 0; ncode < NuserTypes; ++ncode) {
         Write_OutputTotal_vector(oFile[withdrawalOffset+ncode], drainageWithdrawalTotalsFileNames[ncode], dateStr, BasinWithdrawalByUser[ncode], Nsub, scalefactor);
     }
@@ -1230,7 +1266,8 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     Write_OutputTotal_valarray(oFile[24], resultsFileNames[24-offset], dateStr, monthly_recharge,      Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[25], resultsFileNames[25-offset], dateStr, monthly_precipitation, Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[26], resultsFileNames[26-offset], dateStr, monthly_potentialevap, Nsub, scalefactor);
-    cout << " timestep " << setw(5) << istep-1 << " " << timeinfo->tm_zone << " " << asctime(timeinfo);
+    Write_OutputTotal_valarray(oFile[34], resultsFileNames[34-offset], dateStr, monthly_ArtDrainage,   Nsub, scalefactor);
+    cout << " timestep " << setw(5) << istep-1 << " " << asctime(timeinfo);
 
     // End of time loop  for reaches ***************************************************
     // Added ArtDrainage to arguments for output
@@ -1269,7 +1306,9 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     Write_OutputTotal_valarray(oFile[29], resultsFileNames[29-offset], yearStr.str(), annAve_recharge,      Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[30], resultsFileNames[30-offset], yearStr.str(), annAve_precipitation, Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[31], resultsFileNames[31-offset], yearStr.str(), annAve_potentialevap, Nsub, scalefactor);
+    Write_OutputTotal_valarray(oFile[38], resultsFileNames[38-offset], yearStr.str(), annAve_evaporation,   Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[32], resultsFileNames[32-offset], yearStr.str(), annAve_returnflow,    Nsub, scalefactor);
+    Write_OutputTotal_valarray(oFile[35], resultsFileNames[35-offset], yearStr.str(), annAve_ArtDrainage,   Nsub, scalefactor);
     for (int ncode = 0; ncode < NuserTypes; ++ncode) {
         Write_OutputTotal_vector(oFile[withdrawalOffset+ncode+NuserTypes], drainageWithdrawalAnnAveFileNames[ncode], yearStr.str(),
             annAve_basin_withdrawal[ncode], Nsub, scalefactor);
@@ -1278,11 +1317,11 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     //  Close files on additional writes for Christina
     istep = -1;
     scalefactor = 1.0;
-    Write_OutputLine_vector(oFile[0],"results/Potential_evapotranspiration_mm.txt", istep, potentialevap, Nsub, scalefactor);
-    Write_OutputLine_vector(oFile[1],"results/TemperatureAve_C.txt", istep, tempave, Nsub, scalefactor);
-    Write_OutputLine_vector(oFile[2],"results/Surface_runoff_cms.txt", istep, surfro, Nsub, scalefactor);
-    Write_OutputLine_vector(oFile[3],"results/Canopy_storage_mm.txt", istep, canstore, Nsub, scalefactor);
-    Write_OutputLine_vector(oFile[4],"results/Soil_storage_mm.txt", istep, soilstore, Nsub, scalefactor);
+    Write_OutputLine_valarray(oFile[0],"results/Potential_evapotranspiration_mm.txt", istep, potentialevap, Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[1],"results/TemperatureAve_C.txt",                  istep, tempave,       Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[2],"results/Surface_runoff_cms.txt",                istep, surfro,        Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[3],"results/Canopy_storage_mm.txt",                 istep, canstore,      Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[4],"results/Soil_storage_mm.txt",                   istep, soilstore,     Nsub, scalefactor);
 
     scalefactor = 1000.0;   // convert to mm
     double *temporary = new double[Nsub];
@@ -1293,7 +1332,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     delete [] temporary;
 
     scalefactor = 1.0;
-    Write_OutputLine_vector(oFile[6], "results/Tile_drainage_cms.txt", istep, tiled, Nsub, scalefactor);
+    Write_OutputLine_vector(oFile[6], "results/Tile_drainage_cms.txt",  istep, tiled,  Nsub, scalefactor);
     Write_OutputLine_vector(oFile[7], "results/Ditch_drainage_cms.txt", istep, ditchd, Nsub, scalefactor);
 
     if (idebugoutput >= 1)
@@ -1319,8 +1358,6 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     delete [] zbar_in;
 
     delete [] groundwater_to_take;
-    delete [] evap_for_watermgmt;
-    delete [] precip_for_watermgmt;
 
 #if TRACE
     double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);

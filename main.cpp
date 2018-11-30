@@ -99,7 +99,9 @@ ifstream topinpFile, modelspcFile, rchareasFile, rainFile;
 #ifdef ZBAR_OUT
     ofstream zbarFile;
 #endif
-ofstream debugFile;
+#ifdef DEBUG
+    ofstream debugFile;
+#endif
 ofstream r3File;
 ofstream rdFile;
 
@@ -124,7 +126,9 @@ int main()
 #ifdef ZBAR_OUT
     zbarFile.open("results/zbar.dat");
 #endif
+#ifdef DEBUG
     debugFile.open("results/debug.dat");
+#endif
     inputT(initT, iend, Neq, qact, actime, modelid, Npar, Nrx, iex);
 	if (Neq > iex)
 		cout << "Too many responses - increase iex dimension\n";
@@ -143,9 +147,9 @@ int main()
 	ifstream topinpFile;
 	topinpFile.open("topinp.dat");
 	if (topinpFile.good()) {
-        cout << "topinp.dat opened for reading in main()\n";
+        cout << "main(): topinp.dat opened for reading.\n";
     } else {
-        cout << "topinp.dat not found\n";
+        cout << "main(): topinp.dat not found\n";
         exit(1);
     }
     for (i = 0; i < 7; ++i) {
@@ -173,6 +177,8 @@ int main()
     zbarFile.close();
 #endif
     r3File.close();
+#ifdef DEBUG
     debugFile.close();
+#endif
     return 0;
 }

@@ -44,7 +44,7 @@ int ImposeMeasuredFlows(const int Timestep, const int NumNode, const int NumLink
 	caller = "ImposeMeasuredFlows";
 #endif
 	// Impose any external measured flows by
-	// identifying the node with NodeType =  3  STREAM (whose ID is NODE-ID) at which the flow was measured,
+	// identifying the node with NodeType =  3 STREAM (whose ID is NODE-ID) at which the flow was measured,
 	// noting the ratio of measured to modelled flow at this node, and then
 	// applying that ratio to Runoff and Baseflow rates for this timestep in any
 	// drainage which is upstream of this node (including the drainage the node lies in)
@@ -84,6 +84,7 @@ int ImposeMeasuredFlows(const int Timestep, const int NumNode, const int NumLink
 			NodeOutFlow += Link[j_out-1].Flow;
 		}
 		delete [] ifound;
+
 		//  added the check for NodeOutFlow Greater than 0 to avoid infinity and Nan in the results
 		if (MeasuredFlowData[Timestep-1].Flow[MeasuredFlowInfo[i-1].ColInMeasFlow-1] >= 0.0 && NodeOutFlow > 0.0) {
 			FlowRatio = MeasuredFlowInfo[i-1].ScalingFactor*MeasuredFlowData[Timestep-1].Flow[MeasuredFlowInfo[i-1].ColInMeasFlow-1]/NodeOutFlow;

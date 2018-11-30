@@ -308,71 +308,10 @@ int snowueb2(const int istep, const int jsub, const double dt, const int nt, con
 		//     + mtime(3)==1 && mtime(4) >12 && mtime(5)==169) {
 		//	   mtime(1)=mtime(1)
 		//	}
-		/*
-if (istep > 154 && istep <= 161 && jsub == 4) {
-cout << "\n              " << setw(18) << "ub";
-cout << setw(18) << "w";
-cout << setw(18) << "rh";
-cout << setw(18) << "qsi";
-cout << setw(18) << "qli";
-cout << setw(18) << "rkn";
-cout << setw(18) << "rid";
-cout << setw(18) << "QH";
-cout << setw(18) << "QE";
-cout << setw(18) << "E";
-cout << setw(18) << "MR";
-cout << setw(18) << "QM";
-cout << setw(18) << "Q";
-cout << setw(18) << "FM";
-cout << setw(18) << "TSURF";
-cout << setw(18) << "tave";
-cout << setw(18) << "qnet";
-cout << setw(18) << "smelt" << endl;
-cout << "predicorr in  ";
-cout << fixed << setw(18) << setprecision(9) << ub;
-cout << fixed << setw(18) << setprecision(9) << w;
-cout << fixed << setw(18) << setprecision(9) << rh;
-cout << fixed << setw(18) << setprecision(9) << qsi;
-cout << fixed << setw(18) << setprecision(9) << qli;
-cout << fixed << setw(18) << setprecision(9) << rkn;
-cout << fixed << setw(18) << setprecision(9) << rid;
-cout << fixed << setw(18) << setprecision(9) << qh;
-cout << fixed << setw(18) << setprecision(9) << qe;
-cout << fixed << setw(18) << setprecision(9) << e;
-cout << fixed << setw(18) << setprecision(9) << mr;
-cout << fixed << setw(18) << setprecision(9) << qm;
-cout << fixed << setw(18) << setprecision(9) << q;
-cout << fixed << setw(18) << setprecision(9) << fm;
-cout << fixed << setw(18) << setprecision(9) << tsurf;
-cout << fixed << setw(18) << setprecision(9) << tave;
-cout << fixed << setw(18) << setprecision(9) << qnet;
-cout << fixed << setw(18) << setprecision(9) << smelt << endl;
-} */
 		//   Call predictor corrector subroutine to do all the work
 		predicorr(istep, jsub, dt, ub, w, a, ta, pRain, ps, ws, rh, qsi, qli, iradfl, rkn,  qnetob, rid, param, sitev,
 			iTsMethod, mtime, qh, qe, e, mr, qm, q, fm, tsurf, tave, qnet, refDepth, totalRefDepth, smelt);
-			/*
-if (istep > 154 && istep <= 161 && jsub == 4) {
-cout << "predicorr out ";
-cout << fixed << setw(18) << setprecision(9) << ub;
-cout << fixed << setw(18) << setprecision(9) << w;
-cout << fixed << setw(18) << setprecision(9) << rh;
-cout << fixed << setw(18) << setprecision(9) << qsi;
-cout << fixed << setw(18) << setprecision(9) << qli;
-cout << fixed << setw(18) << setprecision(9) << rkn;
-cout << fixed << setw(18) << setprecision(9) << rid;
-cout << fixed << setw(18) << setprecision(9) << qh;
-cout << fixed << setw(18) << setprecision(9) << qe;
-cout << fixed << setw(18) << setprecision(9) << e;
-cout << fixed << setw(18) << setprecision(9) << mr;
-cout << fixed << setw(18) << setprecision(9) << qm;
-cout << fixed << setw(18) << setprecision(9) << q;
-cout << fixed << setw(18) << setprecision(9) << fm;
-cout << fixed << setw(18) << setprecision(9) << tsurf;
-cout << fixed << setw(18) << setprecision(9) << tave;
-cout << fixed << setw(18) << setprecision(9) << qnet;
-cout << fixed << setw(18) << setprecision(9) << smelt << endl;
-} */
+
 		//  DGT 4/2/05   Despite all checks in predicor It can (and does) occur that
 		//   we still have ub so large that it results in tave greater than 0, which implies that all the
 		//   snow is liquid.  In these cases - just force the snow to disappear and add the energy involved to Qm.

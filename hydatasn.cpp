@@ -34,10 +34,10 @@ time_t startAnnual;
 // V3 also has checking/matching of the flow sites with reaches.
 int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
 	vector<vector<double> >  &bRain, double **flow, int &iret, valarray<double> &dewp, valarray<double> &trange, double **dtBar,
-	const int Ns, vector<vector<double> >&wrg, vector<vector<int> > &lrg, const double *elevtg, double **bTmax, double **bTmin, double
+	const int Ns, vector<vector<double> >&wrg, vector<vector<int> > &lrg, const valarray<double> &elevtg, double **bTmax, double **bTmin, double
 	**bTdew, double **bdtBar, const vector<vector<double> > &Sp, const int maxGauge, const int maxInt, const int maxSites,
-	const int maxResponse, const int maxTGauge, double *wind2m, vector<vector<double> > &wrg1,
-	int &idebugoutput, int &idebugbasin, int &idebugcase)   // Note that temper was passed in here but has has no use.
+	const int maxResponse, const int maxTGauge, valarray<double> &wind2m, vector<vector<double> > &wrg1,
+	int &idebugoutput, int &idebugbasin, int &idebugcase, const string calledFrom)   // Note that temper was passed in here but has has no use.
 {
 	int date, year, month, day, hour, minutes, seconds;
 	int  ntri, jj, ij;
@@ -96,9 +96,9 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 #endif
     topinpFile.open(topinpFileName);
 	if (topinpFile.good()) {
-        cout << topinpFileName << " opened for reading in hyData()\n";
+        cout << calledFrom << ": hyData(): " << topinpFileName << " opened for reading.\n";
     } else {
-        cout << topinpFileName << " not found\n";
+        cout << calledFrom << ": hyData(): " << topinpFileName << " not found.\n";
         exit(1);
     }
     getline(topinpFile, inLine, '\n');
@@ -177,7 +177,7 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 
     // call mktime: timeinfo->tm_wday will be set
     startAnnual = mktime ( timeinfo );
-    cout << "Model starting date/time is: " << asctime(timeinfo);
+    cout << calledFrom << ": hyData(): Model starting date/time is: " << asctime(timeinfo);
 	//------------ topinp.dat -------------------
 
 	td8micsec(sDate, sHour, itemp2);
@@ -194,10 +194,10 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 #endif
 	rainFile.open(rainFileName);		// fortran unit lung
 	if (!rainFile.is_open()) {
-		cerr << "Failed to open " << rainFileName << '\n';
+		cerr << calledFrom << ": hyData(): Failed to open " << rainFileName << '\n';
 		exit(EXIT_FAILURE);
 	} else {
-        cerr << rainFileName << " opened for reading.\n";
+        cerr << calledFrom << ": hyData(): " << rainFileName << " opened for reading.\n";
     }
 	getline(rainFile, inLine, '\n');
 	getline(rainFile, inLine, '\n');
@@ -239,21 +239,21 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 		}
 	}
 	if (exist == false) {
-		cerr << " No " << rainfill_file << " file found, continuing without it.\n";
+		cerr << calledFrom << ": hyData(): No " << rainfill_file << " file found, continuing without it.\n";
 	} else {
 		rainfill_read(rainfill_file, ntri, rsite, rcoeff, fsite, nfill, fillflag, maxGauge);
 		if (fillflag < 0) {
-            cerr << " Empty " << rainfill_file << " file found, continuing without it.\n";
+            cerr << calledFrom << ": hyData():  Empty " << rainfill_file << " file found, continuing without it.\n";
 		}
 	}
 	date = 0;
 	hour = 0;
 	rainFile.open(rainFileName);		// fortran unit lung
 	if (!rainFile.is_open()) {
-		cerr << "Failed to open " << rainFileName << '\n';
+		cerr << calledFrom << ": hyData(): Failed to open " << rainFileName << '\n';
 		exit(EXIT_FAILURE);
 	} else {
-        cerr << rainFileName << " opened for reading\n";
+        cerr << calledFrom << ": hyData(): " << rainFileName << " opened for reading.\n";
 	}
 	getline(rainFile, inLine, '\n');
 	getline(rainFile, inLine, '\n');
@@ -267,10 +267,10 @@ L203: for (jj = 0; jj < ntri; jj++) {
 	if (i == 0) {
 		// data starts after given start - flag as an error
 		if ( itemp2 < itemp1-interval) {
-			cerr << " Start time of the rainfall, or runoff data " << dec << setw(9) << date;
+			cerr << calledFrom << ": hyData():  Start time of the rainfall, or runoff data " << dec << setw(9) << date;
 			cerr << dec << setw(7) << hour;
 			cerr << " before start of filed data at " << dec << setw(9) << sDate;
-			cerr << dec << setw(7) << sHour << '\n';
+			cerr << dec << setw(7) << sHour << ". Exiting.\n";;
 			exit(EXIT_FAILURE);	// iret != 0 in the fortran code stops the program
 		}
 		// present data is before given start - go and read the next value
@@ -285,11 +285,12 @@ L203: for (jj = 0; jj < ntri; jj++) {
 
 	if (itemp1-itemp3 != interval) {
 		if (itemp1-itemp3 < interval) {
-			cerr << " Check data in " << rainFileName << " near " << date << " " << hour << '\n';
+			cerr << calledFrom << ": hyData(): Check data in " << rainFileName << " near " << date << " " << hour << '\n';
+			cerr << "Exiting.\n";
 			exit(EXIT_FAILURE);
 		}
-		cerr << " Data missing in " << rainFileName << " near " << date << " " << hour << '\n';
-		cerr << " Missing data replaced with last given value\n";
+		cerr << calledFrom << ": hyData(): Data missing in " << rainFileName << " near " << date << " " << hour << '\n';
+		cerr << calledFrom << ": hyData(): Missing data replaced with last given value\n";
 		itemp3 += interval;
 		for (jj = 0; jj < ntri; jj++) {
 			tempr[jj] = tempr_last[jj];
@@ -322,10 +323,10 @@ L203: for (jj = 0; jj < ntri; jj++) {
 	// reset number of values if missing data at end of record
 	if ( i_reset_flag ) {
 		m = it_save_old;
-		cerr << " +++++++++++ WARNING WARNING ++++++++++++\n";
-		cerr << "***** Owing to missing rainfall at all stations to the end of the record\n";
-		cerr << " it is not possible to reliably estimate flows beyond interval " << dec << setw(5) << it_save_old << ",\n";
-		cerr << " therefore M reset accordingly\n";
+		cerr << calledFrom << ": hyData(): +++++++++++ WARNING WARNING ++++++++++++\n";
+		cerr << calledFrom << ": hyData(): ***** Owing to missing rainfall at all stations to the end of the record\n";
+		cerr << calledFrom << ": hyData(): it is not possible to reliably estimate flows beyond interval " << dec << setw(5) << it_save_old << ",\n";
+		cerr << calledFrom << ": hyData(): therefore M reset accordingly\n";
 	}
 	if ( i < m  )
 		goto L203;
@@ -344,7 +345,7 @@ L203: for (jj = 0; jj < ntri; jj++) {
 
 	ifstream windFile("wind.dat");		// fortran unit lung
 	if (!windFile.is_open()) {
-		cerr << "Failed to open wind.dat\n";
+		cerr << calledFrom << ": hyData(): Failed to open wind.dat. Exiting.\n";
 		exit(EXIT_FAILURE);
 	}
 
@@ -375,11 +376,11 @@ L3103: if (!(windFile >> tempr[0] >> date >> hour))
 	}
 	if (itemp1-itemp3 != interval) {
 L1682:	if (itemp1-itemp3 < interval) {
-				cerr << " Check data in wind.dat near " << date << " " << hour << '\n';
+				cerr << calledFrom << ": hyData(): Check data in wind.dat near " << date << " " << hour << ". Exiting.\n";;
 				exit(EXIT_FAILURE);
 		}
-		cerr << " Data missing in wind.dat near " << date << " " << hour << '\n';
-		cerr << " Missing data replaced with last given value\n";
+		cerr << calledFrom << ": hyData(): Data missing in wind.dat near " << date << " " << hour << '\n';
+		cerr << calledFrom << ": hyData(): Missing data replaced with last given value\n";
 		itemp3 = itemp3 + interval;
 		i++;
 		if (itemp1-itemp3 != interval)
@@ -391,15 +392,15 @@ L1682:	if (itemp1-itemp3 < interval) {
 		goto L3103;
 	windFile.close();
 	goto L3104;
-L3100: cerr << " ***** Warning: wind.dat does not exist or contains an error at ";
+L3100: cerr << calledFrom << ": hyData():  ***** Warning: wind.dat does not exist or contains an error at ";
 	cerr << dec << setw(9) << date << setw(7) << hour << '\n';
-	cerr << " Proceeding with constant temperature\n";
+	cerr << calledFrom << ": hyData():  Proceeding with constant temperature\n";
 L3101: if (m != i) {
 		m = i;
-        cerr << "Warning: Temperature file Ends prematurely. Number of time steps reduced to " << m << '\n';
+        cerr << calledFrom << ": hyData(): Warning: Temperature file Ends prematurely. Number of time steps reduced to " << m << '\n';
 	}
 	if ( m <= 0 ) {
-		cerr << " **** Change to length of temperature data has caused";
+		cerr << calledFrom << ": hyData():  **** Change to length of temperature data has caused";
 		cerr << " a value of data length < 1 - check simulation dates in";
 		cerr << " topinp.dat and temper.dat\n";
 		exit(EXIT_FAILURE);
@@ -422,7 +423,7 @@ L3104: ;
 #endif
 	ifstream tmaxtmintdewFile(tmaxtmintdewFileName);		// fortran unit lung
 	if (!tmaxtmintdewFile.is_open()) {
-		cerr << "Failed to open " << tmaxtmintdewFileName << ". Exiting\n";
+		cerr << calledFrom << ": hyData(): Failed to open " << tmaxtmintdewFileName << ". Exiting.\n";
 		exit(EXIT_FAILURE);
 	}
 
@@ -457,10 +458,10 @@ L303: for (jj = 0; jj < ntri; jj++) {
 	}
 	if (itemp1-itemp3 != interval) {
 L682: 	if (itemp1-itemp3 < interval) {
-			cerr << " Check data in tmaxtmintdew.dat near " << date << hour << '\n';
+			cerr << calledFrom << ": hyData():  Check data in tmaxtmintdew.dat near " << date << hour << ". Exiting.\n";
 			exit(EXIT_FAILURE);
 		}
-		cerr << " Data missing in tmaxtmintdew.dat near " << date << hour << '\n';
+		cerr << calledFrom << ": hyData():  Data missing in tmaxtmintdew.dat near " << date << hour << '\n';
 		cerr << " Missing data replaced with last given value\n";
 		itemp3 = itemp3 + interval;
 		//  4/23/07  DGT added code below to implement missing within IF
@@ -512,16 +513,16 @@ L682: 	if (itemp1-itemp3 < interval) {
 
 	tmaxtmintdewFile.close();
 	goto L304;
-L300: cerr << " ***** Warning: temper.dat does not exist or contains an error at ";
+L300: cerr << calledFrom << ": hyData(): ***** Warning: temper.dat does not exist or contains an error at ";
 	cerr << dec << setw(9) << date << setw(7) << hour << '\n';
-	cerr << " Proceeding with constant temperature\n";
+	cerr << calledFrom << ": hyData(): Proceeding with constant temperature\n";
 L301: if (m != i) {
 		m = i;
-        cerr << "Warning: Temperature file Ends prematurely\n";
-		cerr << "number of time steps set to " << m << '\n';
+        cerr << calledFrom << ": hyData(): Warning: Temperature file Ends prematurely\n";
+		cerr << calledFrom << ": hyData(): number of time steps set to " << m << '\n';
 	}
 	if ( m <= 0 ) {
-		cerr << " **** Change to length of temperature data has caused";
+		cerr << calledFrom << ": hyData(): **** Change to length of temperature data has caused";
 		cerr << " a value of data length < 1 - check simulation dates in";
 		cerr << " topinp.dat and temper.dat\n";
 		exit(EXIT_FAILURE);
@@ -540,7 +541,7 @@ L304: ;
 
 	ifstream streamflow_calibrationFile("streamflow_calibration.dat");		// fortran unit lung
 	if (!streamflow_calibrationFile.is_open()) {
-		cerr << "Failed to open streamflow_calibration.dat\n";
+		cerr << calledFrom << ": hyData(): Failed to open streamflow_calibration.dat.\n";
 		goto L2031;
 	}
 
@@ -559,9 +560,9 @@ L304: ;
 		streamflow_calibrationFile >> verno >> ntri;
 		getline(streamflow_calibrationFile, inLine, '\n');	// read the rest of the line
 		if (ntri != Neq) {
-			cerr << " *****ERROR - Number of sites in streamflow_calibration.dat " << ntri;
+			cerr << calledFrom << ": hyData(): *****ERROR - Number of sites in streamflow_calibration.dat " << ntri;
 			cerr << " does not match what modelspc.dat is expecting, " << Neq << "\n";
-			cerr << " Setting Neq = ntri\n";
+			cerr << calledFrom << ": hyData(): Setting Neq = ntri\n";
 			Neq = ntri;
 		}
 		tempf.resize(ntri,0.0);
@@ -571,11 +572,21 @@ L304: ;
 	}
 	i = 0;
 L207: for (jj = 1; jj <= Neq; jj++) {
-		if (!(streamflow_calibrationFile >> tempf[jj-1]))
-			goto L206;
+		if (!(streamflow_calibrationFile >> tempf[jj-1])) {
+            if (streamflow_calibrationFile.eof()) {
+                goto L206;
+            } else {
+                goto L204;
+            }
+        }
 	}
-	if (!(streamflow_calibrationFile >> date >> hour))
-		goto L206;
+	if (!(streamflow_calibrationFile >> date >> hour)) {
+        if (streamflow_calibrationFile.eof()) {
+            goto L206;
+        } else {
+            goto L204;
+        }
+    }
 
 	td8micsec(date, hour, itemp1);
 	topErrorFile << dec << setw(4) << i;
@@ -603,13 +614,13 @@ L207: for (jj = 1; jj <= Neq; jj++) {
 	}
 	if (itemp1-itemp3 != interval) {
 L782:	if (itemp1-itemp3 < interval) {
-			cerr << " Check data in streamflow_calibration.dat near ";
-			cerr << dec << setw(9) << date << setw(7) << hour << '\n';
+			cerr << calledFrom << ": hyData():  Check data in streamflow_calibration.dat near ";
+			cerr << dec << setw(9) << date << setw(7) << hour << ". Exiting.\n";
 			exit(EXIT_FAILURE);
 		}
-		cerr << " Data missing in streamflow_calibration.dat near ";
+		cerr << calledFrom << ": hyData():  Data missing in streamflow_calibration.dat near ";
 		cerr << dec << setw(9) << date << setw(7) << hour << '\n';
-		cerr << " Missing data replaced with last given value\n";
+		cerr << calledFrom << ": hyData():  Missing data replaced with last given value\n";
 		itemp3 = itemp3 + interval;
 		for (jj = 0; jj < Neq; jj++) {
 			flow[jj][i-1] = tempf_last[jj]/1000.0;
@@ -632,9 +643,9 @@ L782:	if (itemp1-itemp3 < interval) {
 	streamflow_calibrationFile.close();
 	//	close(20) not closed so that top1 can read from this
 L2031: if (m != i) {
-		cerr << "***** Warning: streamflow_calibration.dat does not exist or contains an error at ";
+		cerr << calledFrom << ": hyData(): ***** Warning: streamflow_calibration.dat does not exist or contains an error at ";
 		cerr << dec << setw(9) << date << setw(7) << hour << '\n';
-		cerr << " Proceeding with measured runoff = 0\n";
+		cerr << calledFrom << ": hyData():  Proceeding with measured runoff = 0\n";
 	}
 #if TRACE
 	tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
@@ -666,26 +677,20 @@ L2031: if (m != i) {
 //	}
 //	cerr << " ***** Rainfall ends prematurely - number of values reduced to " << dec << setw(6) << m << '\n';
 //	goto L220;
-//L204: cerr << " ***** Error in file streamflow_calibration.dat at ";
-//	cerr << dec << setw(9) << date << setw(7) << hour << '\n';
-//	iret = 4;
-//	for (i = 0; i < maxGauge; i++) {
-//		delete [] rcoeff[i];
-//		delete [] fsite[i];
-//	}
-//	delete rcoeff;
-//	delete fsite;
-//	return 0;
+L204: cerr << " ***** Error in file streamflow_calibration.dat at ";
+	cerr << dec << setw(9) << date << setw(7) << hour << '\n';
+	iret = 4;
+	return 0;
 L206: for (ij = i+1; ij <= m; ij++) {
  		for (jj = 1; jj <= Neq; jj++) {
  			flow[jj-1][ij-1] = -1.0;
  		}
 	}
- 	cerr << " ***** RUNOFF DATA ENDS PREMATURELY - Flows set to -1 - Ignore this message if forecasting\n";
+ 	cerr << calledFrom << ": hyData():  ***** RUNOFF DATA ENDS PREMATURELY - Flows set to -1 - Ignore this message if forecasting\n";
 	if ( m <= 0 ) {
-		cerr << " **** Premature end to data has caused a value of data";
+		cerr << calledFrom << ": hyData():  **** Premature end to data has caused a value of data";
 		cerr << " length < 1 - check simulation dates in topinp.dat and/or";
-		cerr << " the dates in rain.dat and streamflow_calibration.dat";
+		cerr << " the dates in rain.dat and streamflow_calibration.dat. Exiting.\n";
 		exit(EXIT_FAILURE);
 	}
 	// need to close this because we will be opening it again later

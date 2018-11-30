@@ -310,8 +310,14 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 				ifound[nfound-1] = n+1;
 			}
 		}
-		j = ifound[0];
+		j = ifound[0];  // first match
 		delete [] ifound;
+		if (j == 0) {
+            cerr << "The number of columns in measured flow specified in \"bndryflow.dat\"";
+            cerr << " fails to match the number specified in \"MeasuredFlowInfo.txt\"\n";
+            cerr << "Exiting\n";
+            exit(1);
+        }
 		MeasuredFlowInfo[i-1].ColInMeasFlow = j;
 	}
 

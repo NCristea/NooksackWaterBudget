@@ -33,8 +33,8 @@ int timecalcs(const int Timestep, const int dt, const long int i8startsecs,
 	int &doy, int &ThisMonth, int &ThisDay, int &yyyymmdd, int &hhmmss);
 
 int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timestep, const int NSteps,
-	vector<double> &RunoffTopnet, vector<double> &BaseflowTopnet, const vector<double> &ArtDrainageTopnet,
-	const vector<double> &vol_irrig_demand, const int maxSlp, const double *evaporation, const double *precipitation,
+	vector<double> &RunoffTopnet, vector<double> &BaseflowTopnet, const valarray<double> &ArtDrainageTopnet,
+	const vector<double> &vol_irrig_demand, const int maxSlp, const valarray<double> &evaporation, const valarray<double> &precipitation,
 	valarray<double> &volume_irrig_sup, double *groundwater_to_take)
 {
 	int i, j, k, m, n, ii, jj, kk, nfound, *ifound;
@@ -515,11 +515,11 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		cout << t1 - ccompr2::t0 << " seconds to read input files\n";
 		//  Stuff for writing files as we go
 		scalefactor = 1.0;
-		Write_OutputLine_vector(oFile[8], "results/Artificial_Drainage_cms.txt",       Timestep, ArtDrainageTopnet, NumDrainage, scalefactor);
-		Write_OutputLine(oFile[9], "results/Precipitation_mm.txt",                    Timestep, precipitation, NumDrainage, scalefactor);
-		Write_OutputLine(oFile[10], "results/Evaporation_mm.txt",                     Timestep, evaporation, NumDrainage, scalefactor);
-		Write_OutputLine_vector(oFile[11], "results/Baseflow_cms.txt",                 Timestep, BaseflowTopnet, NumDrainage, scalefactor);
-		Write_OutputLine_vector(oFile[12], "results/TotalRunoff_noWithdrawal_cms.txt", Timestep, RunoffTopnet, NumDrainage, scalefactor);
+		Write_OutputLine_valarray(oFile[8], "results/Artificial_Drainage_cms.txt",     Timestep, ArtDrainageTopnet, NumDrainage, scalefactor);
+		Write_OutputLine_valarray(oFile[9], "results/Precipitation_mm.txt",            Timestep, precipitation,     NumDrainage, scalefactor);
+		Write_OutputLine_valarray(oFile[10], "results/Evaporation_mm.txt",             Timestep, evaporation,       NumDrainage, scalefactor);
+		Write_OutputLine_vector(oFile[11], "results/Baseflow_cms.txt",                 Timestep, BaseflowTopnet,    NumDrainage, scalefactor);
+		Write_OutputLine_vector(oFile[12], "results/TotalRunoff_noWithdrawal_cms.txt", Timestep, RunoffTopnet,      NumDrainage, scalefactor);
 		//  Added this function to output Local Contributions to each StreamNode
 		Write_OutputLocalContributions(oFile[13], oFile[14], NumStreamNode, NumDrainage, BaseflowTopnet, RunoffTopnet, Timestep, scalefactor);
 
@@ -598,22 +598,18 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		Append_To_Output_Tables(Timestep, dt, NumStreamNode, yyyymmdd, hhmmss, NumLink, NumNode, NSteps, NumUser);
 
 		// Artificial drainage and write outputs each step
+		scalefactor = 1.0;
+		Write_OutputLine_valarray(oFile[9],  "results/Precipitation_mm.txt",        Timestep, precipitation,     NumDrainage, scalefactor);
+		Write_OutputLine_valarray(oFile[10], "results/Evaporation_mm.txt",          Timestep, evaporation,       NumDrainage, scalefactor);
+
 		scalefactor = 1.0/(double)dt;   // Scale factor to change units.  This was previously done in Append_to_output_tables subroutine
-		Write_OutputLine_vector(oFile[8],  "results/Artificial_Drainage_cms.txt", Timestep, ArtDrainageTopnet, NumDrainage, scalefactor);
-		scalefactor = 1.0;
-		Write_OutputLine(oFile[9],  "results/Precipitation_mm.txt",              Timestep, precipitation,     NumDrainage, scalefactor);
-		scalefactor = 1.0;
-		Write_OutputLine(oFile[10], "results/Evaporation_mm.txt",                Timestep, evaporation,       NumDrainage, scalefactor);
-		scalefactor = 1.0/(double)dt;
+		Write_OutputLine_valarray(oFile[8],  "results/Artificial_Drainage_cms.txt", Timestep, ArtDrainageTopnet, NumDrainage, scalefactor);
 		// Overwrite BaseflowTopnet for writing.  It is not needed any more
 		for (n = 0; n < NumDrainage; n++) {
 			BaseflowTopnet[n] = Baseflow[Timestep-1].Rate[n];
+            RunoffTopnet[n]   = Runoff[Timestep-1].Rate[n];
 		}
-		Write_OutputLine_vector(oFile[11], "results/Baseflow_cms.txt",            Timestep, BaseflowTopnet,    NumDrainage, scalefactor);
-		scalefactor = 1.0/(double)dt;
-		for (n = 0; n < NumDrainage; n++) {
-			RunoffTopnet[n] = Runoff[Timestep-1].Rate[n];
-		}
+		Write_OutputLine_vector(oFile[11], "results/Baseflow_cms.txt",              Timestep, BaseflowTopnet,    NumDrainage, scalefactor);
 		Write_OutputLine_vector(oFile[12], "results/TotalRunoff_noWithdrawal_cms.txt", Timestep, RunoffTopnet,      NumDrainage, scalefactor);
 		Write_OutputLocalContributions(oFile[13], oFile[14], NumStreamNode, NumDrainage, BaseflowTopnet, RunoffTopnet, Timestep, scalefactor);
 
@@ -636,14 +632,12 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		Write_TimeVaryingOutput_Tables("results", NumUser, RunControl.NumTimesteps, NumNode, NumLink, NumReturnFlow, NumWWTP);
 
 		//  Writing as we go close files
+		scalefactor = 1.0;
+		Write_OutputLine_valarray(oFile[9], "results/Precipitation_mm.txt",        Timestep, precipitation,     NumDrainage, scalefactor);
+		Write_OutputLine_valarray(oFile[10], "results/Evaporation_mm.txt",         Timestep, evaporation,       NumDrainage, scalefactor);
 		scalefactor = 1.0/(double)dt;   // Scale factor to change units.
-		Write_OutputLine_vector(oFile[8], "results/Artificial_Drainage_cms.txt", Timestep, ArtDrainageTopnet, NumDrainage, scalefactor);
-		scalefactor = 1.0;
-		Write_OutputLine(oFile[9], "results/Precipitation_mm.txt",              Timestep, precipitation,     NumDrainage, scalefactor);
-		scalefactor = 1.0;
-		Write_OutputLine(oFile[10], "results/Evaporation_mm.txt",               Timestep, evaporation,       NumDrainage, scalefactor);
-		scalefactor = 1.0/(double)dt;
-		Write_OutputLine_vector(oFile[11], "results/Baseflow_cms.txt",                 Timestep, BaseflowTopnet,    NumDrainage, scalefactor);
+		Write_OutputLine_valarray(oFile[8], "results/Artificial_Drainage_cms.txt", Timestep, ArtDrainageTopnet, NumDrainage, scalefactor);
+		Write_OutputLine_vector(oFile[11], "results/Baseflow_cms.txt",             Timestep, BaseflowTopnet,    NumDrainage, scalefactor);
 		Write_OutputLine_vector(oFile[12], "results/TotalRunoff_noWithdrawal_cms.txt", Timestep, RunoffTopnet,      NumDrainage, scalefactor);
 		Write_OutputLocalContributions(oFile[13], oFile[14], NumStreamNode, NumDrainage, BaseflowTopnet, RunoffTopnet, Timestep, scalefactor);
 		t3 = (double)clock()/(double)CLOCKS_PER_SEC;

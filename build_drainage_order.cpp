@@ -44,7 +44,7 @@ int BuildDrainageOrder(const int NumDrainage, int *DrainageOrder)
 		// find first unordered drainage
         SetOrder(i, DrainageOrder, Position, NumDrainage);
 	}
-/*
+
     for (i = 0; i < NumDrainage; i++) {
         std::cout << std::dec << std::setw(4) << DrainageOrder[i];
         if ((i+1)%10 == 0)
@@ -57,7 +57,7 @@ int BuildDrainageOrder(const int NumDrainage, int *DrainageOrder)
             std::cout << "\n";
     }
     std::cout << std::endl;
-	exit(0); */
+	exit(0);
 	return 0;
 }
 

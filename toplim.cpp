@@ -66,12 +66,11 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     string verno;
 
     bool exist;
-    int *ll, *Ntr, *llOut, iret;
+    int *Ntr, *llOut, iret;
     int *Nts;
-    double **Si, **Rp, **atb, **pka, *tl, **pd, **cl, **bp;
+    double **Si, **Rp, **atb, **pka, **pd, **cl, **bp;
     double units;
     double **Sid, **Rpd;	// The arrays Sid, Spd and Rpd record the original values.
-    int *Nka, *Nd, *iBout;
     int maxFgauge;
     int relFlag, neq_temp;
     int *Qmap;
@@ -81,17 +80,13 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     int *ishift0;
     double **bTmax;
     double **bTmin;
-    double  *wind2m;
     double **bTdew;
-    double  *bXlat;
-    double  *bXlon;
     double **flow;
     double dummyq;
 
     //   ET variables  DGT
-    double  *Xlat, *Xlong;
     double stdlon;
-    double  *elevtg, **dtBar, **bdtBar;
+    double **dtBar, **bdtBar;
     int *temper_id;
     int ns_temper, idebugoutput, idebugbasin, idebugcase;
     int i, j, k;
@@ -367,9 +362,9 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
         bTmin[i] = new double[maxInt];
         bTdew[i] = new double[maxInt];
     }
-    wind2m = new double[maxInt];
-    bXlat  = new double[maxSlp];
-    bXlon  = new double[maxSlp];
+    valarray<double> wind2m(0.0,maxInt);
+    valarray<double> bXlat(0.0,maxSlp);
+    valarray<double> bXlon(0.0,maxSlp);
     flow = new double*[maxResponse];
     for (i = 0; i < maxResponse; i++) {
         flow[i] = new double[maxInt];
@@ -388,16 +383,16 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     for (j = 0; j < num_basinpars; ++j) {
         bp[j] = new double[maxSlp];
     }
-    Nka   = new int[maxSlp];
-    Nd    = new int[maxSlp];
-    iBout = new int[maxSlp];
+    valarray<int>    Nka(0,maxSlp);
+    valarray<int>    Nd(0,maxSlp);
+    valarray<int> iBout(0,maxSlp);
     atb = new double*[maxA];
     pka = new double*[maxA];
     for (i = 0; i < maxA; i++) {
         atb[i] = new double[maxSlp];
         pka[i] = new double[maxSlp];
     }
-    tl = new double[maxSlp];
+    valarray<double> tl(0.0,maxSlp);
     pd = new double*[maxC];
     cl = new double*[maxC];
     for (i = 0; i < maxC; i++) {
@@ -405,7 +400,7 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
         cl[i] = new double[maxSlp];
     }
 
-    ll    = new int[maxChn];
+    valarray<int> ll(0,maxChn);
     Ntr   = new int[maxChn];
     llOut = new int[maxChn];
     Rp  = new double*[Nrp];
@@ -416,15 +411,18 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     }
     vector<int> kllout(maxResponse);
     Qmap   = new int[maxResponse];
-    Xlat   = new double[maxTGauge];
-    Xlong  = new double[maxTGauge];
-    elevtg = new double[maxTGauge];
+    valarray<double>   Xlat(0.0,maxTGauge);
+    valarray<double>  Xlong(0.0,maxTGauge);
+    valarray<double> elevtg(0.0,maxTGauge);
     temper_id = new int[maxTGauge];
     dtBar  = new double*[12];
     bdtBar = new double*[12];
     for (i = 0; i < 12; i++) {
         dtBar[i]  = new double[maxTGauge];
         bdtBar[i] = new double[maxSlp];
+        for (j = 0; j < maxSlp; ++j) {
+            bdtBar[i][j] = 0.0;
+        }
     }
 
     // ***********************************************************************
@@ -433,16 +431,17 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     modelId = "TOP model";
     cliParam(Xlat, Xlong, stdlon, elevtg, dtBar, ns_temper, temper_id);
     iret = 0;
+
     mdData(model1::nGauge, model1::Ns, model1::Nrch, Nka, tl, atb, pka, Nd, cl, pd, units, ll, Ntr, Nts, linkS,
            linkR, Sid, Spd, Rpd, iret, model4::pmap, Npar, lrg, wrg, iex, llOut, Neq, model4::Nout, model4::nBout, iBout,
            nRchSav, Qmap, rel, relFlag, constr::minSp, constr::maxSp, constr::minSi, constr::maxSi,
            constr::minRp, constr::maxRp, constr::limitC, ClinkR, kllout, ishift0, maxInt,
-           maxGauge, maxSlp, maxResponse, maxA, maxC, maxChn, maxRchAreas, maxSites, bp, bXlat, bXlon, wrg1);
+           maxGauge, maxSlp, maxResponse, maxA, maxC, maxChn, maxRchAreas, maxSites, bp, bXlat, bXlon, wrg1);cerr << 444 << endl;
     // Added the next bit for Neq = 0;
     neq_temp = Neq;
     hyData(model2::sDate, model2::sHour, model2::interval, model2::m, model2::mi, model2::mps, model2::mpe, model1::nGauge, Neq,
            bRain, flow, iret, dewp, trange, dtBar, model1::Ns, wrg, lrg, elevtg, bTmax, bTmin, bTdew, bdtBar, Spd,
-           maxGauge, maxInt, maxSites, maxResponse, maxTGauge, wind2m, wrg1, idebugoutput, idebugbasin, idebugcase);
+           maxGauge, maxInt, maxSites, maxResponse, maxTGauge, wind2m, wrg1, idebugoutput, idebugbasin, idebugcase, "inputT()");
     if ( iret != 0 ) {
         cerr << " **** an error has occurred on data input (hyData())\n";
         exit(EXIT_FAILURE);
@@ -518,7 +517,6 @@ L150:
     delete [] bTmin;
     delete [] bTdew;
 
-    delete [] wind2m;
     for (i = 0; i < maxResponse; i++) {
         delete [] flow[i];
     }
@@ -547,27 +545,16 @@ L150:
     }
     delete [] pd;
     delete [] cl;
-
-    delete [] tl;
-    delete [] Nka;
-    delete [] Nd;
-    delete [] iBout;
     delete [] Qmap;
     delete [] Nts;
     delete [] rel;
     delete [] ishift0;
-    delete [] ll;
     delete [] Ntr;
     delete [] llOut;
 
     // Following are variable arrays left undeleted in the fortran code
     // which are then reallocated in subroutine model().
-    delete [] bXlat;
-    delete [] bXlon;
-    delete [] Xlat;
-    delete [] Xlong;
     delete [] temper_id;
-    delete [] elevtg;
     for (i = 0; i < 12; i++) {
         delete [] dtBar[i];
         delete [] bdtBar[i];
@@ -630,7 +617,8 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     // Passed variables
     vector<vector<int> >  linkR(4,vector<int>(maxChn));
     vector<vector<int> > ClinkR(3,vector<int>(maxChn));
-    int *ll, *Ntr, *llOut;
+    valarray<int> ll(0,maxChn);
+    int *Ntr, *llOut;
     int *Nts;
     int *Qmap;
     int iret;
@@ -652,12 +640,11 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     int relflag;
     int ngut, jg1, jg, irch, jr, jr1, ipos;
     double *rel;
-    int *Nka, *Nd, *iBout;
-    int *lOut;
-    int *iReach, *knt;
+    valarray<int> lOut(0,maxResponse);
+    valarray<int> knt(0,maxResponse);
     int neq_temp;
 
-    double **atb, **pka, *tl;
+    double **atb, **pka;
     double **pd, **cl;
     double units;
 
@@ -680,15 +667,11 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     int ndump;
     double **bTmax;
     double **bTmin;
-    double *wind2m;
     double **bTdew;
-    double *bXlat;
-    double *bXlon;
     double **flow;
     //     etvariables  dgt
-    double *Xlat, *Xlong;
     double stdlon;
-    double *elevtg, **dtBar, **bdtBar;
+    double **dtBar, **bdtBar;
     int *temper_id;
     valarray<double> temper(maxInt);
     valarray<double> dewp(0.0,maxInt);
@@ -724,7 +707,58 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
     iret = 0;
     static valarray<double> dFlow(maxResponse);
     static valarray<double> trange(maxInt);
-
+    valarray<int> Nka(0,maxSlp);
+    valarray<double> Xlat(0.0,maxTGauge);
+    valarray<double> Xlong(0.0,maxTGauge);
+    valarray<int> iBout(0,maxSlp);
+    valarray<int> Nd(0,maxSlp);
+    valarray<int>iReach(0,maxResponse);
+    valarray<double> elevtg(0.0,maxTGauge);
+    valarray<double> bXlat(0.0,maxSlp);
+    valarray<double> bXlon(0.0,maxSlp);
+    valarray<double> tl(0.0,maxSlp);
+    bTmax = new double*[maxSlp];
+    bTmin = new double*[maxSlp];
+    bTdew = new double*[maxSlp];
+    for (i = 0; i < maxSlp; i++) {
+        bTmax[i] = new double[maxInt];
+        bTmin[i] = new double[maxInt];
+        bTdew[i] = new double[maxInt];
+    }
+    dtBar  = new double*[12];
+    bdtBar = new double*[12];
+    for (i = 0; i < 12; i++) {
+        dtBar[i] = new double[maxTGauge];
+        bdtBar[i] = new double[maxSlp];
+        for (j = 0; j < maxSlp; ++j) {
+            bdtBar[i][j] = 0.0;
+        }
+    }
+    valarray<double> wind2m(0.0,maxInt);
+    Si  = new double*[Nsi];
+    Sid = new double*[Nsi];
+    for (i = 0; i < Nsi; i++) {
+        Si[i]  = new double[maxSlp];
+        Sid[i] = new double[maxSlp];
+    }
+    atb = new double*[maxA];
+    pka = new double*[maxA];
+    for (i = 0; i < maxA; i++) {
+        atb[i] = new double[maxSlp];
+        pka[i] = new double[maxSlp];
+    }
+    pd = new double*[maxC];
+    cl = new double*[maxC];
+    for (i = 0; i < maxC; i++) {
+        pd[i] = new double[maxSlp];
+        cl[i] = new double[maxSlp];
+    }
+    Rp  = new double*[Nrp];
+    Rpd = new double*[Nrp];
+    for (i = 0; i < Nrp; i++) {
+        Rp[i]  = new double[maxChn];
+        Rpd[i] = new double[maxChn];
+    }
     if (model_master::iDoIt == 0) {
         model_master::iDoIt = 1;
 
@@ -735,78 +769,26 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
         //       ALLOCATE DYNAMIC ARRAYS
         rel  = new double[maxRchAreas];
         ishift0 = new int[maxRchAreas];
-        bTmax = new double*[maxSlp];
-        bTmin = new double*[maxSlp];
-        bTdew = new double*[maxSlp];
         vector<vector<double> > wrg(maxSlp,vector<double>(maxGauge));
         vector<vector<double> > wrg1(maxSlp,vector<double>(maxGauge));	//  Interpolation weights
         vector<vector<int> > lrg(maxSlp,vector<int>(maxGauge));
         Nts = new int[maxSlp];
-        for (i = 0; i < maxSlp; i++) {
-            bTmax[i] = new double[maxInt];
-            bTmin[i] = new double[maxInt];
-            bTdew[i] = new double[maxInt];
-        }
-        wind2m = new double[maxInt];
-        bXlat  = new double[maxSlp];
-        bXlon  = new double[maxSlp];
         flow = new double*[maxResponse];
         for (i = 0; i < maxResponse; i++) {
             flow[i] = new double[maxInt];
         }
-        elevtg = new double[maxTGauge];
         temper_id = new int[maxTGauge];
-        dtBar  = new double*[12];
-        bdtBar = new double*[12];
-        for (i = 0; i < 12; i++) {
-            dtBar[i] = new double[maxTGauge];
-            bdtBar[i] = new double[maxSlp];
-        }
         vector<vector<int> > linkS(2,vector<int>(maxSlp));
-        Si  = new double*[Nsi];
-        Sid = new double*[Nsi];
-        for (i = 0; i < Nsi; i++) {
-            Si[i]  = new double[maxSlp];
-            Sid[i] = new double[maxSlp];
-        }
-        Nka   = new int[maxSlp];
-        Nd    = new int[maxSlp];
-        iBout = new int[maxSlp];
-        atb = new double*[maxA];
-        pka = new double*[maxA];
-        for (i = 0; i < maxA; i++) {
-            atb[i] = new double[maxSlp];
-            pka[i] = new double[maxSlp];
-        }
-        tl = new double[maxSlp];
-        pd = new double*[maxC];
-        cl = new double*[maxC];
-        for (i = 0; i < maxC; i++) {
-            pd[i] = new double[maxSlp];
-            cl[i] = new double[maxSlp];
-        }
-        ll    = new int[maxChn];
+
         Ntr   = new int[maxChn];
         llOut = new int[maxChn];
-        Rp  = new double*[Nrp];
-        Rpd = new double*[Nrp];
-        for (i = 0; i < Nrp; i++) {
-            Rp[i]  = new double[maxChn];
-            Rpd[i] = new double[maxChn];
-        }
         vector<int> kllout(maxResponse);
         Qmap   = new int[maxResponse];
-        lOut   = new int[maxResponse];
-        iReach = new int[maxResponse];
-        knt    = new int[maxResponse];
         vector<double> suma(maxResponse);
         fill(suma.begin(), suma.end(), 0.0);
-        Xlat   = new double[maxTGauge];
-        Xlong  = new double[maxTGauge];
 
         for (n = 0; n < maxResponse; ++n) {
             Qmap[n]   = 0;
-            lOut[n]   = 0;
             iReach[n] = 0;
             knt[n]    = 0;
         }
@@ -828,7 +810,7 @@ int Model(const int it, const int iflag, const int iopt, const char prt, int &Ne
         neq_temp = Neq;
         hyData(model2::sDate, model2::sHour, model2::interval, model2::m, model2::mi, model2::mps, model2::mpe, model1::nGauge, Neq,
                bRain, flow, iret, dewp, trange, dtBar, model1::Ns, wrg, lrg, elevtg, bTmax, bTmin, bTdew, bdtBar, Spd,
-               maxGauge, maxInt, maxSites, maxResponse, maxTGauge, wind2m, wrg1, idebugoutput, idebugbasin,  idebugcase);
+               maxGauge, maxInt, maxSites, maxResponse, maxTGauge, wind2m, wrg1, idebugoutput, idebugbasin,  idebugcase, "Model()");
 
         if (iret != 0) {
             cerr << " **** An error has occurred on data input\n";
@@ -1120,7 +1102,7 @@ L150:
             }
             mse = mse/double(model2::m);
             mae = mae/double(model2::m);
-            cerr << " Mean Sq. Error and Mean Abs. Error " << mse << " " << mae << '\n';
+            //cerr << " Mean Sq. Error and Mean Abs. Error " << mse << " " << mae << '\n';
         }
 
 
@@ -1178,8 +1160,8 @@ L150:
 // ************************************************************************
 
 int set_cor_data(const vector<vector<int> > &linkR, const int Neq, const int Nout, const int Nrch, const int Ns,
-                 const vector<int> &kllout, double **flow, const vector<vector<double> > &Spd, const double *bArea, const int *ll,
-                 const int *llOut, valarray<double> &dFlow, vector<double> &suma, int *knt, int *iReach, int *lOut, const int maxInt,
+                 const vector<int> &kllout, double **flow, const vector<vector<double> > &Spd, const double *bArea, const valarray<int> &ll,
+                 const int *llOut, valarray<double> &dFlow, vector<double> &suma, valarray<int> &knt, valarray<int> &iReach, valarray<int> &lOut, const int maxInt,
                  const int maxSlp, const int maxChn, const int maxResponse)
 {
     double fArea[maxResponse], nflow_mean,  pArea[maxResponse];
@@ -1359,8 +1341,9 @@ L51:
 // *****************************************************************************
 //     SUBROUTINE SETUP_ZBAR0S
 // *****************************************************************************
-int setup_zbar0s(const int Ns, double **Si, const vector<vector<double> > &Sp, const double *tl, const long int dt,
-                 const int *lOut, const int *iReach, const valarray<double> &dFlow, const int *knt, const int maxResponse, const int maxSlp)
+int setup_zbar0s(const int Ns, double **Si, const vector<vector<double> > &Sp, const valarray<double> &tl, const long int dt,
+    const valarray<int> &lOut, const valarray<int> &iReach, const valarray<double> &dFlow, const valarray<int> &knt,
+    const int maxResponse, const int maxSlp)
 {
     double sumF[maxResponse], sumC[maxResponse];
     double area[maxSlp], k[maxSlp], f[maxSlp], Lambda[maxSlp];

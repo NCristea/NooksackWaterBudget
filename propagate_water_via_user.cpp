@@ -140,8 +140,10 @@ int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int
 		Link[j_return-1].Flow += RF;
 		//    end do
 		Link[j_sink-1].Flow -= RF;
-debugFile << " return: Link[" << dec << setw(3) << j_return << "].Flow=";  //debug
-debugFile << fixed << setw(13) << setprecision(6) << Link[j_return-1].Flow << endl;
+#ifdef DEBUG
+        debugFile << " return: Link[" << dec << setw(3) << j_return << "].Flow=";  //debug
+        debugFile << fixed << setw(13) << setprecision(6) << Link[j_return-1].Flow << endl;
+#endif
 	}
 
 	BalanceFlowsAtReservoirs(NumNode, NumLink, NumUser, NumReservoir, ReservoirNetStorage);
