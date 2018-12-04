@@ -25,7 +25,7 @@
 
 // itb setup for nooksack
 const int Nmx   =    17;	// Maximum number of model parameters
-const int Nrx   = 22000;	// Number of observations in longest response record
+const int Nrx   = 32000;	// Number of observations in longest response record
 const int iex   =   500;	// Maximum number of responses used in fitting of model
 const int mArMa =     2;	// Max number of AR or MA parameters
 
