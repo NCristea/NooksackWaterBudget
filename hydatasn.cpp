@@ -164,15 +164,16 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
     // then tm_hour = 0 is the model start time needed here.
 
     // get current timeinfo and modify it
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
+    time( &rawtime );
+    //timeinfo = localtime ( &rawtime );
+    timeinfo = gmtime( &rawtime );
     timeinfo->tm_year = year - 1900;// years since 1900
     timeinfo->tm_mon = month - 1;   // months since January	0-11
     timeinfo->tm_mday = day;        // day of the month	1-31
     timeinfo->tm_hour = 0;          // hours since midnight	0-23
     timeinfo->tm_min = minutes;     // minutes after the hour	0-59
     timeinfo->tm_sec = seconds;     // seconds after the minute	0-60
-    timeinfo->tm_zone = "PST";
+    timeinfo->tm_zone = "UTC";
     timeinfo->tm_isdst = -1;        // we don't want daylight saving time here
 
     // call mktime: timeinfo->tm_wday will be set

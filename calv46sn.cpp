@@ -674,7 +674,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
 #endif
         if (timeinfo->tm_mday == 1) {
             strftime(dateStr, 11,"%Y %m %d", timeinfo);
-            cout << "--------------------------- " << dec << setw(4) << istep << " --- " << dateStr << "---------------------------\n";
+            cout << "--------------------------- " << dec << setw(5) << istep << " --- " << dateStr << "-----------------------------\n";
         }
         //   LOOP OVER SUBBASINS
         // Work through basins in "stream order" order, i.e.,
@@ -1240,8 +1240,15 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             updatetime(iyear, month, iday, hour1, timestep);
         }
         timeinfo->tm_mday += 1;
-        timeinfo->tm_hour = 0;
         mktime(timeinfo);
+        if (timeinfo->tm_hour == 1) {
+            timeinfo->tm_hour -=1;
+            mktime(timeinfo);
+        }
+        if (timeinfo->tm_hour == 23) {
+            timeinfo->tm_hour +=1;
+            mktime(timeinfo);
+        }
     }	// time_loop
     // Final totals
     strftime(dateStr, 11,"%Y %m %d", timeinfo);
