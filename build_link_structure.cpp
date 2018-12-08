@@ -46,7 +46,7 @@ int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSo
 	//Link=[]
 	// Connect drainage nodes and stream nodes
 	for (i = 1; i <= NumDrainage; i++) {
-		//two links for each drainagenode-streamnode connection, one to carry surface runoff and one for baseflow
+		// two links for each drainagenode-streamnode connection, one to carry surface runoff and one for baseflow
 		// find2()
 		found = false;
 		for (n = 0; n < NumNode; n++) {

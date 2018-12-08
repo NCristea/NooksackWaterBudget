@@ -51,7 +51,7 @@ namespace model1 {	// shared by inputT() and model()
 namespace model2 {	// shared by inputT() and model()
 	int sDate;
 	int sHour;
-	long int interval;	// int
+	unsigned long int interval;	// int
 	int m;
 	int mi;
 	int mps;
@@ -100,7 +100,8 @@ ifstream topinpFile, modelspcFile, rchareasFile, rainFile;
     ofstream zbarFile;
 #endif
 #ifdef DEBUG
-    ofstream debugFile;
+    ofstream debugFile1, debugFile2, debugFile3;
+    bool flag1,flag2,flag3;
 #endif
 ofstream r3File;
 ofstream rdFile;
@@ -127,7 +128,12 @@ int main()
     zbarFile.open("results/zbar.dat");
 #endif
 #ifdef DEBUG
-    debugFile.open("results/debug.dat");
+    debugFile1.open("results/debug_1.dat");
+    debugFile2.open("results/debug_2.dat");
+    debugFile3.open("results/debug_3.dat");
+    flag1 = true;
+    flag2 = true;
+    flag3 = true;
 #endif
     inputT(initT, iend, Neq, qact, actime, modelid, Npar, Nrx, iex);
 	if (Neq > iex)
@@ -178,7 +184,8 @@ int main()
 #endif
     r3File.close();
 #ifdef DEBUG
-    debugFile.close();
+    debugFile1.close();
+    debugFile2.close();
 #endif
     return 0;
 }

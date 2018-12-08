@@ -45,7 +45,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 	static valarray<double> DrainageOutFlow;
 	static string dirname;
 
-	static long int i8startsecs;
+	static unsigned long int i8startsecs;
 	static int doy, ThisMonth, ThisDay, dt, yyyymmdd, hhmmss;
 	int *rfType, *rfLocn;
 	static int nReturnFlows_to_GW = 0;
@@ -94,19 +94,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		//NodeSave = new NodeType[MaxNodes];
 		NodeSave.resize(MaxNodes);
 		NodeSave = Node;
-		/*for (i = 0; i < MaxNodes; i++) {
-			NodeSave[i].Title      = Node[i].Title;
-			NodeSave[i].Type       = Node[i].Type;
-			NodeSave[i].IntExt     = Node[i].IntExt;
-			NodeSave[i].StoreMin   = Node[i].StoreMin;
-			NodeSave[i].StoreMax   = Node[i].StoreMax;
-			NodeSave[i].Store      = Node[i].Store;
-			NodeSave[i].StoreOld   = Node[i].StoreOld;
-			NodeSave[i].DrainageID = Node[i].DrainageID;
-			NodeSave[i].SelfID     = Node[i].SelfID;
-		}
-		delete [] Node;*/
-		//Node = new NodeType[NumNode];
+
 		Node.resize(NumNode);
 		for (i = 0; i < NumNode; i++) {
 			Node[i].Title      = NodeSave[i].Title;
@@ -130,15 +118,6 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 
 		LinkSave.resize(MaxLinks);
 		LinkSave = Link;
-		/*for (i = 0; i < MaxLinks; i++) {
-			LinkSave[i].Title        = Link[i].Title;
-			LinkSave[i].LinkCode     = Link[i].LinkCode;
-			LinkSave[i].IntExtCode   = Link[i].IntExtCode;
-			LinkSave[i].USNode       = Link[i].USNode;
-			LinkSave[i].DSNode       = Link[i].DSNode;
-			LinkSave[i].Flow         = Link[i].Flow;
-			LinkSave[i].ReturnFlowID = Link[i].ReturnFlowID;
-		}*/
 
 		Link.resize(NumLink);
 		for (i = 0; i < NumLink; i++) {
@@ -661,17 +640,16 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 	return 0;
 }
 
-
 int timecalcs(const int Timestep, const int dt, const long int i8startsecs,
 	int &doy, int &ThisMonth, int &ThisDay, int &yyyymmdd, int &hhmmss)
 {
 	int hh, mm, ss, yyyymmdd2, ihour2, ThisYear;
-	long int i8nowsecs, i8StartofCalendarYearsecs;
+	unsigned long int i8nowsecs, i8StartofCalendarYearsecs;
 
 	//inputs: Timestep, dt, i8startsecs
 	//outputs: DOY, ThisMonth, ThisDay, yyyymmdd,hhmmss
 	//figure out ThisMonth, ThisDate (and DOY in case we have DailyDemandFraction varying by DOY)
-	i8nowsecs = i8startsecs + (long int)((Timestep - 1)*dt);
+	i8nowsecs = i8startsecs + (unsigned long int)(Timestep - 1)*(unsigned long int)dt;
 	td81micdh(yyyymmdd, hhmmss, i8nowsecs); //seconds to now since start of 1 Jan 1940
 	datevec(yyyymmdd, hhmmss, ThisYear, ThisMonth, ThisDay, hh, mm, ss);
 	undatevec(ThisYear, 1, 1, 0, 0, 0, yyyymmdd2, ihour2);

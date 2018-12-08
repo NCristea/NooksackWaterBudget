@@ -137,7 +137,6 @@ int BuildNodeStructure(const int NumDrainage, int &NumUser, const int NumReservo
 		CreateUser(NumUser, ReservoirReleaseUseCode, Reservoir[i-1].DrainageID, temp, 1.0, 0,
 			ReturnFlow[j_ret-1].ReturnFlowID, 0, 1, &Source[j_src-1].SourceID, 0);
 		//END of Preparation for second new user node
-
 	} //of loop on Reservoirs
 
        //Users

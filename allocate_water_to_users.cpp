@@ -56,7 +56,10 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 		User[i].Withdrawal[Timestep-1] = 0.0;
 	}
 #ifdef DEBUG
-    debugFile << " AllocateWaterToUsers(), Timestep " << dec << setw(4) << Timestep << " -> PropagateWaterViaUser()\n";
+if (timeinfo->tm_mon == 8 && timeinfo->tm_mday == 30) {
+    debugFile1 << " AllocateWaterToUsers(), Timestep " << dec << setw(4) << Timestep << " -> PropagateWaterViaUser()\n";
+    debugFile2 << " AllocateWaterToUsers(), Timestep " << dec << setw(4) << Timestep << " -> PropagateWaterViaUser()\n";
+}
 #endif
 	for (ii = 1; ii <= NumUserSource; ii++) {
 		k = UserSourceOrder[ii-1];
@@ -81,7 +84,9 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 		}
 		if (User[i-1].DemandToday > 0.0) {
 			j = UserSourceTable[k-1].SourceCounter;
-
+#ifdef DEBUG
+            int foundIndex = 0;
+#endif
 			// find1()
 			nfound = 0; //none found
 			ifound = new int[NumSource];
@@ -90,6 +95,9 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 				if (Source[n].SourceID == User[i-1].SourceID[j-1]) {
 					nfound += 1;
 					ifound[nfound-1] = n+1;
+#ifdef DEBUG
+                    foundIndex = n;
+#endif
 				}
 			}   // end find1()
 
@@ -112,34 +120,17 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 			AllocatedFlow = 0.0;
 			LinkSave = Link;
             NodeSave = Node;
-			/*for (n = 0; n < NumLink; n++) {
-				LinkSave[n].Title        = Link[n].Title;
-				LinkSave[n].LinkCode     = Link[n].LinkCode;
-				LinkSave[n].IntExtCode   = Link[n].IntExtCode;
-				LinkSave[n].USNode       = Link[n].USNode;
-				LinkSave[n].DSNode       = Link[n].DSNode;
-				LinkSave[n].Flow         = Link[n].Flow;
-				LinkSave[n].ReturnFlowID = Link[n].ReturnFlowID;
-			}
-
-			for (n = 0; n < NumNode; n++) {
-				NodeSave[n].Title      = Node[n].Title;
-				NodeSave[n].Type       = Node[n].Type;
-				NodeSave[n].IntExt     = Node[n].IntExt;
-				NodeSave[n].StoreMin   = Node[n].StoreMin;
-				NodeSave[n].StoreMax   = Node[n].StoreMax;
-				NodeSave[n].Store      = Node[n].Store;
-				NodeSave[n].StoreOld   = Node[n].StoreOld;
-				NodeSave[n].DrainageID = Node[n].DrainageID;
-				NodeSave[n].SelfID     = Node[n].SelfID;
-			} */
-
 			i_count = 1;
 			i_count_max = 100;
 #ifdef DEBUG
-            debugFile <<  "UserSourceTable[" << dec << setw(3) << k << "].UserID " << dec << setw(3) << UserSourceTable[k-1].UserID;
-            debugFile << " DrainageID " << dec << setw(3) << UserSourceTable[k-1].DrainageID;//debug
-            debugFile << " Source[" << dec << setw(3) << ii << "] " << Source[ii-1].SourceID;
+if (timeinfo->tm_mon == 8 && timeinfo->tm_mday == 30) {
+            debugFile1 << "Source[" << dec << setw(3) << foundIndex+1 << "] " << dec << setw(3) << Source[foundIndex].SourceID;
+            debugFile1 << " UserSourceTable[" << dec << setw(3) << k << "].UserID " << dec << setw(3) << UserSourceTable[k-1].UserID;
+            debugFile1 << " DrainageID " << dec << setw(3) << UserSourceTable[k-1].DrainageID << '\n';
+            debugFile2 << "Source[" << dec << setw(3) << foundIndex+1 << "] " << dec << setw(3) << Source[foundIndex].SourceID;
+            debugFile2 << " UserSourceTable[" << dec << setw(3) << k << "].UserID " << dec << setw(3) << UserSourceTable[k-1].UserID;
+            debugFile2 << " DrainageID " << dec << setw(3) << UserSourceTable[k-1].DrainageID;
+}
 #endif
 			while (Qtry > (0.01*Qtry0) && AllocatedFlow == 0.0 && i_count <= i_count_max) {
 				//give Qtry to the user node and follow it through
@@ -162,26 +153,6 @@ int AllocateWaterToUsers(const int Timestep, const int NumNode, const int NumLin
 					Qtry = max(0.0, min(Qtry + Capacity, Qtry0*(1.0 - static_cast<double>(i_count)/static_cast<double>(i_count_max))));
 					Link = LinkSave;
 					Node = NodeSave;
-					/*for (n = 0; n < NumLink; n++) {
-						Link[n].Title        = LinkSave[n].Title;
-						Link[n].LinkCode     = LinkSave[n].LinkCode;
-						Link[n].IntExtCode   = LinkSave[n].IntExtCode;
-						Link[n].USNode       = LinkSave[n].USNode;
-						Link[n].DSNode       = LinkSave[n].DSNode;
-						Link[n].Flow         = LinkSave[n].Flow;
-						Link[n].ReturnFlowID = LinkSave[n].ReturnFlowID;
-					}
-					for (n = 0; n < NumNode; n++) {
-						Node[n].Title      = NodeSave[n].Title;
-						Node[n].Type       = NodeSave[n].Type;
-						Node[n].IntExt     = NodeSave[n].IntExt;
-						Node[n].StoreMin   = NodeSave[n].StoreMin;
-						Node[n].StoreMax   = NodeSave[n].StoreMax;
-						Node[n].Store      = NodeSave[n].Store;
-						Node[n].StoreOld   = NodeSave[n].StoreOld;
-						Node[n].DrainageID = NodeSave[n].DrainageID;
-						Node[n].SelfID     = NodeSave[n].SelfID;
-					} */
 					i_count++;
 				} // iFeasible == 1
 			} // while.  Here we are done iterating.  Assignments below are permanent

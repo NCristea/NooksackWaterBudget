@@ -75,7 +75,7 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     int relFlag, neq_temp;
     int *Qmap;
     double *rel;	// for forecasting e
-    long int stim8;
+    unsigned long int stim8;
 
     int *ishift0;
     double **bTmax;
@@ -436,7 +436,7 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
            linkR, Sid, Spd, Rpd, iret, model4::pmap, Npar, lrg, wrg, iex, llOut, Neq, model4::Nout, model4::nBout, iBout,
            nRchSav, Qmap, rel, relFlag, constr::minSp, constr::maxSp, constr::minSi, constr::maxSi,
            constr::minRp, constr::maxRp, constr::limitC, ClinkR, kllout, ishift0, maxInt,
-           maxGauge, maxSlp, maxResponse, maxA, maxC, maxChn, maxRchAreas, maxSites, bp, bXlat, bXlon, wrg1);cerr << 444 << endl;
+           maxGauge, maxSlp, maxResponse, maxA, maxC, maxChn, maxRchAreas, maxSites, bp, bXlat, bXlon, wrg1);
     // Added the next bit for Neq = 0;
     neq_temp = Neq;
     hyData(model2::sDate, model2::sHour, model2::interval, model2::m, model2::mi, model2::mps, model2::mpe, model1::nGauge, Neq,
