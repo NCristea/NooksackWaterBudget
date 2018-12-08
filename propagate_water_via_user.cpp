@@ -141,8 +141,10 @@ int PropagateWaterViaUser(const int i, const int j, const double Qtry, const int
 		//    end do
 		Link[j_sink-1].Flow -= RF;
 #ifdef DEBUG
-        debugFile << " return: Link[" << dec << setw(3) << j_return << "].Flow=";  //debug
-        debugFile << fixed << setw(13) << setprecision(6) << Link[j_return-1].Flow << endl;
+if (timeinfo->tm_mon == 8 && timeinfo->tm_mday == 30) {
+        debugFile2 << ", Propagate via user, return flow: Link[" << dec << setw(3) << j_return << "].Flow=";  //debug
+        debugFile2 << fixed << setw(13) << setprecision(6) << Link[j_return-1].Flow << endl;
+}
 #endif
 	}
 

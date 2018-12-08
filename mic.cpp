@@ -56,7 +56,7 @@ int td81micdh(int &idate, int &ihour, const long int jsec)
 }
 
 //-------------------------------------------------------------------
-int td8micsec(const int jdatem, int &jhour, long int &isec)
+int td8micsec(const int jdatem, int &jhour, unsigned long int &isec)
 {
 	// convert date & time to seconds
 
@@ -88,7 +88,6 @@ int td8micsec(const int jdatem, int &jhour, long int &isec)
 		d += 1;
 		ihr = 0;
 	}
-
 
 	struct tm rTime, fileTime;
 	time_t refTime, thisTime;

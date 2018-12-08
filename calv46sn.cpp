@@ -1165,28 +1165,28 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         // ---------------------------------------------------------------------------------------------
         if (istep > 0) {
 #ifdef DEBUG
-            for (i = 0; i < NumUser; ++i) {
-                debugFile << "User[" << dec << setw(3) << i+1 << "].LinkUserToReturnflow[1] = ";
-                int j_return = input_structures::User[i].LinkUserToReturnflow[0];
-                debugFile << j_return << "  Link[" << j_return << "].Flow = ";
-                debugFile << fixed << setw(13) << setprecision(6) << other_structures::Link[j_return-1].Flow;
-                debugFile << " Link.Title = "  << other_structures::Link[j_return-1].Title;
-                debugFile << " Link.USNode = " << other_structures::Link[j_return-1].USNode;
-                debugFile << " Link.DSNode = " << other_structures::Link[j_return-1].DSNode << endl;
+            if (timeinfo->tm_mon == 8 && timeinfo->tm_mday == 30) {
+                for (i = 0; i < NumUser; ++i) {
+                    debugFile1 << "User[" << dec << setw(3) << i+1 << "].LinkUserToReturnflow[1] = ";
+                    int j_return = input_structures::User[i].LinkUserToReturnflow[0];
+                    debugFile1 << dec << setw(3) << j_return;
+                    debugFile1 << " Link[" << j_return << "].USNode = " << other_structures::Link[j_return-1].USNode;
+                    debugFile1 << " Link[" << j_return << "].DSNode = " << other_structures::Link[j_return-1].DSNode;
+                    debugFile1 << j_return << "  Link[" << j_return << "].Flow = ";
+                    debugFile1 << fixed << setw(13) << setprecision(6) << other_structures::Link[j_return-1].Flow << '\n';
+                }
             }
 #endif
             // ---------------------------------------------------------------------------------------------
             // The code in the next two blocks must come after watermgmt() is called.
+            returnflow = 0.0;   // initialize for this time step
             for (i = 0; i < NumUser; ++i) { // NumUsers > NumuserSourceReturn
                 j = input_structures::User[i].LinkUserToReturnflow[0];
                 n = other_structures::UserSourceTable[i].DrainageID;
-                returnflow[n-1] = other_structures::Link[j-1].Flow;
+                cout << i << " " << j << " " << n << endl;
+                returnflow[n-1] += other_structures::Link[j-1].Flow;    // += because some drainages have more than one user.
                 monthly_returnflow[n-1] += other_structures::Link[j-1].Flow;
                 annual_returnflow[n-1]  += other_structures::Link[j-1].Flow;
-                //cout << "i " << dec << setw(3) << i+1 << " j_return ";
-                //cout << dec << setw(3) << j << " UserID " << other_structures::UserSourceTable[i].UserID;
-                //cout << " DrainageID " << other_structures::UserSourceTable[i].DrainageID;
-                //cout << " Flow " << other_structures::Link[j-1].Flow << endl;
             }
             // ---------------------------------------------------------------------------------------------
             for (int ncode = 0; ncode < NuserTypes; ++ncode) {
@@ -1195,14 +1195,19 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                         n = other_structures::UserSourceTable[i].DrainageID;
                         BasinWithdrawalByUser[userTypeCode[ncode]-1][n-1] += input_structures::User[i].Withdrawal[istep-1];
 #ifdef DEBUG
-                        debugFile << "Drainage " << dec << setw(3) << n << " User " << dec << setw(3) << i+1;
-                        debugFile << " UserType " << dec << setw(3) << userTypeCode[ncode] << " ReturnFlowID ";
-                        debugFile << dec << setw(3) << input_structures::User[i].ReturnFlowID;
-                        debugFile << " SourceMixingID "  << dec << setw(3) <<  input_structures::User[i].SourceMixingID << endl;
+                        if (flag3) {
+                            debugFile3 << "UserType " << left << setw(32) << UserTypeNames[userTypeCode[ncode]] << "  ReturnFlowID ";
+                            debugFile3 << dec << setw(3) << input_structures::User[i].ReturnFlowID;
+                            debugFile3 << " Drainage " << dec << setw(3) << n << " User " << dec << setw(3) << i+1;
+                            debugFile3 << " SourceMixingID "  << dec << setw(3) <<  input_structures::User[i].SourceMixingID << endl;
+                        }
 #endif
                     }
                 }
             }
+#ifdef DEBUG
+            flag3 = false;
+#endif
             // ---------------------------------------------------------------------------------------------
 
             scalefactor = 1.0;
@@ -1290,10 +1295,11 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     }
     // ---------------------------------------------------------------------------------------------
     // The code in this block must come after watermgmt() is called.
+    returnflow = 0.0;   // initialize for this final time step
     for (i = 0; i < NumUser; ++i) { // NumUsers > NumuserSourceReturn
         j = input_structures::User[i].LinkUserToReturnflow[0];
         n = other_structures::UserSourceTable[i].DrainageID;
-        returnflow[n-1] = other_structures::Link[j-1].Flow;
+        returnflow[n-1] += other_structures::Link[j-1].Flow;
         monthly_returnflow[n-1] += other_structures::Link[j-1].Flow;
         annual_returnflow[n-1]  += other_structures::Link[j-1].Flow;
         //cout << "i " << dec << setw(3) << i+1 << " j_return ";

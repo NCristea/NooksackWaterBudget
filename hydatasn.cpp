@@ -32,7 +32,7 @@ time_t startAnnual;
 
 // This version, V2, has enhanced checking for missing data in the RAMS input and rainfilling
 // V3 also has checking/matching of the flow sites with reaches.
-int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
+int hyData(int &sDate, int &sHour, unsigned long int &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
 	vector<vector<double> >  &bRain, double **flow, int &iret, valarray<double> &dewp, valarray<double> &trange, double **dtBar,
 	const int Ns, vector<vector<double> >&wrg, vector<vector<int> > &lrg, const valarray<double> &elevtg, double **bTmax, double **bTmin, double
 	**bTdew, double **bdtBar, const vector<vector<double> > &Sp, const int maxGauge, const int maxInt, const int maxSites,
@@ -45,7 +45,7 @@ int hyData(int &sDate, int &sHour, long &interval, int &m, int &mi, int &mps, in
 
     time_t rawtime;
 
-	long itemp1, itemp2, itemp3;
+	unsigned long int itemp1, itemp2, itemp3;
 	int kk;
 	vector<double> tempr(maxSites), tempr_last(maxSites);
 	vector<vector<double> > tempt(maxSites,vector<double>(3));

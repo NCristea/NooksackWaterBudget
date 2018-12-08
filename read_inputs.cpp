@@ -425,12 +425,20 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumSource); //SourceID	Type	SourceLocationID	PhysicalDailyMax	PhysicalAnnMax
 	Source = new SourceType[NumSource+2*NumReservoir];
 	for (i = 0; i < NumSource; i++) {
-		Source[i].SourceID         = real_array[i][0];
-		Source[i].Type             = real_array[i][1];
-		Source[i].SourceLocationID = real_array[i][2];
+		Source[i].SourceID         = int(real_array[i][0]);
+		Source[i].Type             = int(real_array[i][1]);
+		Source[i].SourceLocationID = int(real_array[i][2]);
 		Source[i].PhysicalDailyMax = real_array[i][3];
 		Source[i].PhysicalAnnMax   = real_array[i][4];
 	}
+	// Initialize the rest.
+	for (i = NumSource; i < NumSource+2*NumReservoir; i++) {
+        Source[i].SourceID         = -1;
+		Source[i].Type             = -1;
+		Source[i].SourceLocationID = -1;
+		Source[i].PhysicalDailyMax = -1.0;
+		Source[i].PhysicalAnnMax   = -1.0;
+    }
 	//convert references to a DrainageID into the CatchID
 	for (i = 1; i <= NumSource; i++) {
 		Source[i-1].RealSourceLocationID = Source[i-1].SourceLocationID;
