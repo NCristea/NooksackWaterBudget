@@ -447,6 +447,8 @@ int Write_OutputLine_vector(std::ofstream &oFile, const std::string fileName, co
     const std::vector<double> &Rvariable, const int NumDrainage, const double scalefactor);
 int Write_OutputLine_valarray(std::ofstream &oFile, const std::string fileName, const int timestep,
     const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
+int Write_Line_valarray(std::ofstream &oFile, const std::string fileName, const int timestep,
+    const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
 int Write_OutputTotal_valarray(std::ofstream &oFile, const std::string fileName, const std::string timestamp,
     const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
 int Write_OutputTotal_vector(std::ofstream &oFile, const std::string fileName, const std::string timestamp,

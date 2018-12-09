@@ -94,7 +94,6 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		//NodeSave = new NodeType[MaxNodes];
 		NodeSave.resize(MaxNodes);
 		NodeSave = Node;
-
 		Node.resize(NumNode);
 		for (i = 0; i < NumNode; i++) {
 			Node[i].Title      = NodeSave[i].Title;
@@ -107,9 +106,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 			Node[i].DrainageID = NodeSave[i].DrainageID;
 			Node[i].SelfID     = NodeSave[i].SelfID;
 		}
-		//delete [] NodeSave;
-		//NodeSave = new NodeType[NumNode];
-		Node.resize(NumNode);
+		NodeSave.resize(NumNode);
 
 		//Build Link Structure
 		MaxLinks = 3*NumDrainage + 5*(NumUser + 2*NumReservoir) + NumMeasuredFlowData;
@@ -564,8 +561,8 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 		if (RunControl.AllocationMode != NoAllocationCode) {
 			AllocateWaterToUsers(Timestep, NumNode, NumLink, NumUser, NumReservoir, NumSource, NumRights, NumSourceMixing,
 				DrainageOrder, NumDrainage, NumReturnFlow, NumUserSource, volume_irrig_sup, groundwater_to_take, DrainageOutFlow);
-			for (i = 1; i <= nReturnFlows_to_GW; i++) { //if any of the return flows deliver water to GW, tell Topnet about it.
-				groundwater_to_take[ReturnFlows_to_GW_DrainageID[i-1]-1] -= Link[ReturnFlows_to_GW_LinkID[i-1]-1].Flow;
+			for (i = 0; i < nReturnFlows_to_GW; i++) { //if any of the return flows deliver water to GW, tell Topnet about it.
+				groundwater_to_take[ReturnFlows_to_GW_DrainageID[i]-1] -= Link[ReturnFlows_to_GW_LinkID[i]-1].Flow;
 					//note that the return flows are subtracted because they reduce the amount of water that is to be abstracted from groundwater
 					//the array groundwater_to_take is also altered for effects of GW abstraction inside AllocateWaterToUsers
 					//thus a value of groundwater_to_take can be either positive (abstraction>returnflow) or negative (returnflow>abstraction)

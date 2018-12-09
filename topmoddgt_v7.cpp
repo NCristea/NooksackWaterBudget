@@ -177,8 +177,8 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 	chv        = Sp[8][isub-1];
 	cc         = Sp[9][isub-1];
 	cr         = Sp[10][isub-1];   //  Ratio by which evaporation from interception
-	fi         = Sp[14][isub-1]; // raw 12-jan-2005 fraction impervious
-	fsprinkler = Sp[20][isub-1];
+	fi         = Sp[14][isub-1];   // raw 12-jan-2005 fraction impervious
+	fsprinkler = Sp[20][isub-1];   // (bert) sprinkler fraction of irrigation
 	crop_coeff = Sp[24+imonth][isub-1];
 	ccompr2::t0 = Sp[25+12][isub-1];
 	//    Derived parameters
