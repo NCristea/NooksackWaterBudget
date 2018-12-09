@@ -459,7 +459,7 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 			integer_array[j][i+1] = DateTime_yyyymmdd_hhmmss[j][i];
     	}
     }
-	write_struct_to_text(filenm, headers, nrows, ncols, icall);exit(0);
+	write_struct_to_text(filenm, headers, nrows, ncols, icall);
 
 	icall++;
 	// 	nv=size(TotalRunoff_cms,2) !second dimension is location
