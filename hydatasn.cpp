@@ -32,7 +32,7 @@ time_t startAnnual;
 
 // This version, V2, has enhanced checking for missing data in the RAMS input and rainfilling
 // V3 also has checking/matching of the flow sites with reaches.
-int hyData(int &sDate, int &sHour, unsigned long int &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
+int hyData(int &sDate, int &sHour, long long int &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
 	vector<vector<double> >  &bRain, double **flow, int &iret, valarray<double> &dewp, valarray<double> &trange, double **dtBar,
 	const int Ns, vector<vector<double> >&wrg, vector<vector<int> > &lrg, const valarray<double> &elevtg, double **bTmax, double **bTmin, double
 	**bTdew, double **bdtBar, const vector<vector<double> > &Sp, const int maxGauge, const int maxInt, const int maxSites,
@@ -45,7 +45,7 @@ int hyData(int &sDate, int &sHour, unsigned long int &interval, int &m, int &mi,
 
     time_t rawtime;
 
-	unsigned long int itemp1, itemp2, itemp3;
+	long long int itemp1, itemp2, itemp3;
 	int kk;
 	vector<double> tempr(maxSites), tempr_last(maxSites);
 	vector<vector<double> > tempt(maxSites,vector<double>(3));
@@ -267,10 +267,10 @@ L203: for (jj = 0; jj < ntri; jj++) {
     td8micsec(date, hour, itemp1);
 	if (i == 0) {
 		// data starts after given start - flag as an error
-		if ( itemp2 < itemp1-interval) {
+		if ( itemp2 < itemp1-interval) {    // interval is the timestep interval in seconds
 			cerr << calledFrom << ": hyData():  Start time of the rainfall, or runoff data " << dec << setw(9) << date;
 			cerr << dec << setw(7) << hour;
-			cerr << " before start of filed data at " << dec << setw(9) << sDate;
+			cerr << " after model start at " << dec << setw(9) << sDate;
 			cerr << dec << setw(7) << sHour << ". Exiting.\n";;
 			exit(EXIT_FAILURE);	// iret != 0 in the fortran code stops the program
 		}

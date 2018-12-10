@@ -75,7 +75,7 @@ int inputT(int initT[], int iend[], int &Neq, vector<vector<double> > &Qact, dou
     int relFlag, neq_temp;
     int *Qmap;
     double *rel;	// for forecasting e
-    unsigned long int stim8;
+    long long int stim8;
 
     int *ishift0;
     double **bTmax;
