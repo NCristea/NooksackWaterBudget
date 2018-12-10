@@ -56,7 +56,7 @@ int td81micdh(int &idate, int &ihour, const long int jsec)
 }
 
 //-------------------------------------------------------------------
-int td8micsec(const int jdatem, int &jhour, unsigned long int &isec)
+int td8micsec(const int jdatem, int &jhour, long long int &isec)
 {
 	// convert date & time to seconds
 

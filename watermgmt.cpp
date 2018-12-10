@@ -45,7 +45,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 	static valarray<double> DrainageOutFlow;
 	static string dirname;
 
-	static unsigned long int i8startsecs;
+	static long long int i8startsecs;
 	static int doy, ThisMonth, ThisDay, dt, yyyymmdd, hhmmss;
 	int *rfType, *rfLocn;
 	static int nReturnFlows_to_GW = 0;
@@ -600,12 +600,12 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timeste
 
 		t2 = (double)clock()/(double)CLOCKS_PER_SEC;
 		cerr << t2 - t1 << " seconds to calculate flows\n";
-		cerr << "writing files\n";
+		cerr << "watermgmt(): writing final output files\n";
 
 		//now write the output tables
 		Write_Static_Output_Tables("results", NumUserSourceReturn);
 		//call CreateMoreOutputTables(NumUser,RunControl%NumTimesteps)
-		Write_TimeVaryingOutput_Tables("results", NumUser, RunControl.NumTimesteps, NumNode, NumLink, NumReturnFlow, NumWWTP);
+        Write_TimeVaryingOutput_Tables("results", NumUser, RunControl.NumTimesteps, NumNode, NumLink, NumReturnFlow, NumWWTP);
 
 		//  Writing as we go close files
 		scalefactor = 1.0;
@@ -641,12 +641,12 @@ int timecalcs(const int Timestep, const int dt, const long int i8startsecs,
 	int &doy, int &ThisMonth, int &ThisDay, int &yyyymmdd, int &hhmmss)
 {
 	int hh, mm, ss, yyyymmdd2, ihour2, ThisYear;
-	unsigned long int i8nowsecs, i8StartofCalendarYearsecs;
+	long long int i8nowsecs, i8StartofCalendarYearsecs;
 
 	//inputs: Timestep, dt, i8startsecs
 	//outputs: DOY, ThisMonth, ThisDay, yyyymmdd,hhmmss
 	//figure out ThisMonth, ThisDate (and DOY in case we have DailyDemandFraction varying by DOY)
-	i8nowsecs = i8startsecs + (unsigned long int)(Timestep - 1)*(unsigned long int)dt;
+	i8nowsecs = i8startsecs + (long long int)(Timestep - 1)*(long long int)dt;
 	td81micdh(yyyymmdd, hhmmss, i8nowsecs); //seconds to now since start of 1 Jan 1940
 	datevec(yyyymmdd, hhmmss, ThisYear, ThisMonth, ThisDay, hh, mm, ss);
 	undatevec(ThisYear, 1, 1, 0, 0, 0, yyyymmdd2, ihour2);

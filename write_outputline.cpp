@@ -204,7 +204,7 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
 	return 0;
 }
 
-int Write_Line_valarray(ofstream &oFile, const string fileName, const int timestep,
+int Write_Line_valarray(ofstream &oFile, const string fileName, const string dateStr,
 const valarray<double> &Rvariable, const int NumDrainage, const double scalefactor)
 {
 	int j;
@@ -213,12 +213,12 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
         cerr << fileName << " is not open\n";
         exit(EXIT_FAILURE);
     }
-    oFile << dec << setw(12) << timestep;
+    oFile << dec << setw(12) << dateStr;
     for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
         if (fabs(Rvariable[j]*scalefactor) < 0.1) {
-            oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+            oFile << scientific << setw(17) << setprecision(9) << Rvariable[j]*scalefactor;
         } else {
-            oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+            oFile << fixed << setw(17) << setprecision(5) << Rvariable[j]*scalefactor;
         }
     }
     oFile << endl;
@@ -247,7 +247,7 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
             oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
         }
     }
-    oFile << '\n';
+    oFile << endl;
 
 	return 0;
 }

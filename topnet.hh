@@ -40,7 +40,7 @@
 //#define ZBAR_IN
 //#define WRIA1
 //#define LNWB
-#define DEBUG
+//#define DEBUG
 
 #if TRACE
     extern std::ofstream traceFile;
@@ -255,7 +255,7 @@ namespace model1 {
 namespace model2 {
 	extern int sDate;
 	extern int sHour;
-	extern unsigned long int interval;
+	extern long long int interval;
 	extern int m;
 	extern int mi;
 	extern int mps;
@@ -368,7 +368,7 @@ int mdData(int &Ngauge, int &Ns, int &Nrch, std::valarray<int> &Nka, std::valarr
 	int *ishift0, const int maxInt, const int maxGuage, const int maxSlp, const int maxResponse, const int maxA, const int maxC,
 	const int maxChn, const int maxRchAreas, const int maxSites, double **bp,
 	std::valarray<double> &bXlat, std::valarray<double> &bXlon, std::vector<std::vector<double> > &wrg1);
-int hyData(int &sDate, int &sHour, unsigned long int &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
+int hyData(int &sDate, int &sHour, long long int &interval, int &m, int &mi, int &mps, int &mpe, int &Ngauge, int &Neq,
 	std::vector<std::vector<double> > &bRain, double **flow, int &iret, std::valarray<double> &dewp, std::valarray<double> &trange, double **dtBar, const int Ns, std::vector<std::vector<double> > &wrg,
 	std::vector<std::vector<int> > &lrg, const std::valarray<double> &elevtg, double **bTmax, double **bTmin, double **bTdew, double **bdtBar, const std::vector<std::vector<double> > &Sp,
 	const int maxGauge, const int maxInt, const int maxSites, const int maxResponse, const int maxTGauge, std::valarray<double> &wind2m, std::vector<std::vector<double> > &wrg1,
@@ -422,7 +422,7 @@ int snowueb(const int istep, const int jsub, const std::array<double,Nsv> &snows
     const double timestep, const int nstepday, double &surfacewaterinput, double &snowevaporation,  //outputs (both in m/h)
     double &areafractionsnow, const int modelelement);
 double svp(const double t);
-int td8micsec(const int jdatem, int &jhour, unsigned long int &isec);
+int td8micsec(const int jdatem, int &jhour, long long int &isec);
 int td81micdh(int &idate, int &ihour, const long int jsec);
 int topmod(double **si, const std::vector<std::vector<double> > &Sp, const int isub, const std::valarray<int> &Nka, const double Lambda,
 	double **atb, double **pka, const std::valarray<int> &nd, double **cl, double **pd, const double units,
@@ -447,7 +447,7 @@ int Write_OutputLine_vector(std::ofstream &oFile, const std::string fileName, co
     const std::vector<double> &Rvariable, const int NumDrainage, const double scalefactor);
 int Write_OutputLine_valarray(std::ofstream &oFile, const std::string fileName, const int timestep,
     const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
-int Write_Line_valarray(std::ofstream &oFile, const std::string fileName, const int timestep,
+int Write_Line_valarray(std::ofstream &oFile, const std::string fileName, const std::string dateStr,
     const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
 int Write_OutputTotal_valarray(std::ofstream &oFile, const std::string fileName, const std::string timestamp,
     const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);

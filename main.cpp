@@ -51,7 +51,7 @@ namespace model1 {	// shared by inputT() and model()
 namespace model2 {	// shared by inputT() and model()
 	int sDate;
 	int sHour;
-	unsigned long int interval;	// int
+	long long int interval;	// int
 	int m;
 	int mi;
 	int mps;

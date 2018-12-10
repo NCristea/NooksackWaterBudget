@@ -235,11 +235,11 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             cerr << "Failed to open " << extraFileNames[i] << '\n';
             exit(EXIT_FAILURE);
         } else {
-            cerr << extraFileNames[i] << " opened" << endl;
+            cerr << "Extra File # " << dec << setw(2) << i << " " << extraFileNames[i] << " opened" << endl;
         }
-        extraFiles[i] << left << dec << setw(12) << "timestep";
+        extraFiles[i] << left << dec << setw(12) << "Date";
         for (jsub = 1; jsub <= Nsub; jsub++) {
-            extraFiles[i] << setw(12) << "Drainage" << dec << setw(3) << jsub;
+            extraFiles[i] << setw(14) << "Drainage" << dec << setw(3) << jsub;
         }
         extraFiles[i] << endl;
     }
@@ -250,7 +250,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             cerr << "Failed to open " << resultsFileNames[i-offset] << '\n';
             exit(EXIT_FAILURE);
         } else {
-            cerr << resultsFileNames[i-offset] << " opened" << endl;
+            cerr << "File # " << dec << setw(2) << i << " " << resultsFileNames[i-offset] << " opened" << endl;
         }
         oFile[i] << dec << setw(11) << dateStr;
         for (jsub = 1; jsub <= Nsub; jsub++) {
@@ -264,7 +264,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             cerr << "Failed to open " << resultsFileNames[i-offset] << '\n';
             exit(EXIT_FAILURE);
         } else {
-            cerr << "# " << dec << setw(2) << i << " " << resultsFileNames[i-offset] << " opened" << endl;
+            cerr << "File # " << dec << setw(2) << i << " " << resultsFileNames[i-offset] << " opened" << endl;
         }
         if (i == 34 || i == 37) {
             oFile[i] << setw(11) << "Months";
@@ -282,18 +282,17 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         AcodeStr << "results/AnnAveDrainageWithdrawalByUserType_" << userTypeCode[ncode] << "_cmy.txt";    // cubic meters per year
         oFile[i+ncode].open(TcodeStr.str());
         oFile[i+ncode+NuserTypes].open(AcodeStr.str());
-
         if (!oFile[i+ncode].is_open()) {
             cerr << "Failed to open " << TcodeStr.str() << '\n';
             exit(EXIT_FAILURE);
         } else {
-            cerr << "# " << dec << setw(2) << i+ncode << " " << TcodeStr.str() << " opened" << endl;
+            cerr << "File # " << dec << setw(2) << i+ncode << " " << TcodeStr.str() << " opened" << endl;
         }
         if (!oFile[i+ncode+NuserTypes].is_open()) {
             cerr << "Failed to open " << AcodeStr.str() << '\n';
             exit(EXIT_FAILURE);
         } else {
-            cerr << AcodeStr.str() << " opened" << endl;
+            cerr << "File # " << dec << setw(2) << i+ncode+NuserTypes << " " << AcodeStr.str() << " opened" << endl;
         }
         drainageWithdrawalTotalsFileNames[ncode] = TcodeStr.str();
         drainageWithdrawalAnnAveFileNames[ncode] = AcodeStr.str();
@@ -1148,13 +1147,14 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         }
 
         scalefactor = 1.0;
+        strftime(dateStr, 11,"%Y %m %d", timeinfo);
         if (istep > 0) {
-            Write_Line_valarray(extraFiles[0], extraFileNames[0], istep, irrigated_natural_upwelling,   Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[1], extraFileNames[1], istep, irrigated_tile_upwelling,      Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[2], extraFileNames[2], istep, irrigated_ditch_upwelling,     Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[3], extraFileNames[3], istep, unirrigated_natural_upwelling, Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[4], extraFileNames[4], istep, unirrigated_tile_upwelling,    Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[5], extraFileNames[5], istep, unirrigated_ditch_upwelling,   Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[0], extraFileNames[0], dateStr, irrigated_natural_upwelling,   Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[1], extraFileNames[1], dateStr, irrigated_tile_upwelling,      Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[2], extraFileNames[2], dateStr, irrigated_ditch_upwelling,     Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[3], extraFileNames[3], dateStr, unirrigated_natural_upwelling, Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[4], extraFileNames[4], dateStr, unirrigated_tile_upwelling,    Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[5], extraFileNames[5], dateStr, unirrigated_ditch_upwelling,   Nsub, scalefactor);
         }
         irrigated_natural_upwelling   = 0.0;
         irrigated_tile_upwelling      = 0.0;
@@ -1164,12 +1164,12 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         unirrigated_ditch_upwelling   = 0.0;
 
         if (istep > 0) {
-            Write_Line_valarray(extraFiles[6],  extraFileNames[6],  istep, irrigated_natural_recharge,   Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[7],  extraFileNames[7],  istep, irrigated_tile_recharge,      Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[8],  extraFileNames[8],  istep, irrigated_ditch_recharge,     Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[9],  extraFileNames[9],  istep, unirrigated_natural_recharge, Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[10], extraFileNames[10], istep, unirrigated_tile_recharge,    Nsub, scalefactor);
-            Write_Line_valarray(extraFiles[11], extraFileNames[11], istep, unirrigated_ditch_recharge,   Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[6],  extraFileNames[6],  dateStr, irrigated_natural_recharge,   Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[7],  extraFileNames[7],  dateStr, irrigated_tile_recharge,      Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[8],  extraFileNames[8],  dateStr, irrigated_ditch_recharge,     Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[9],  extraFileNames[9],  dateStr, unirrigated_natural_recharge, Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[10], extraFileNames[10], dateStr, unirrigated_tile_recharge,    Nsub, scalefactor);
+            Write_Line_valarray(extraFiles[11], extraFileNames[11], dateStr, unirrigated_ditch_recharge,   Nsub, scalefactor);
         }
         irrigated_natural_recharge   = 0.0;
         irrigated_tile_recharge      = 0.0;
@@ -1363,8 +1363,24 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         }
     }	// time_loop
 
-    // Final totals
+    // Final outputs
+    scalefactor = 1.0;
     strftime(dateStr, 11,"%Y %m %d", timeinfo);
+    Write_Line_valarray(extraFiles[0], extraFileNames[0], dateStr, irrigated_natural_upwelling,   Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[1], extraFileNames[1], dateStr, irrigated_tile_upwelling,      Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[2], extraFileNames[2], dateStr, irrigated_ditch_upwelling,     Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[3], extraFileNames[3], dateStr, unirrigated_natural_upwelling, Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[4], extraFileNames[4], dateStr, unirrigated_tile_upwelling,    Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[5], extraFileNames[5], dateStr, unirrigated_ditch_upwelling,   Nsub, scalefactor);
+
+    Write_Line_valarray(extraFiles[6],  extraFileNames[6],  dateStr, irrigated_natural_recharge,   Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[7],  extraFileNames[7],  dateStr, irrigated_tile_recharge,      Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[8],  extraFileNames[8],  dateStr, irrigated_ditch_recharge,     Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[9],  extraFileNames[9],  dateStr, unirrigated_natural_recharge, Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[10], extraFileNames[10], dateStr, unirrigated_tile_recharge,    Nsub, scalefactor);
+    Write_Line_valarray(extraFiles[11], extraFileNames[11], dateStr, unirrigated_ditch_recharge,   Nsub, scalefactor);
+
+    // Final totals
     daysInYear = difftime(mktime(timeinfo),startAnnual)/86400.0;
     cout << "daysInYear " << fixed << setw(5) << setprecision(0) << daysInYear;
     if (daysInYear >= 365.0) {
@@ -1372,7 +1388,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     } else {
         scalefactor = 365.0/daysInYear;
     }
-    cout << fixed << setw(9) << setprecision(6) << " scalefactor " << 365.0/daysInYear;
+    cout << fixed << setw(9) << setprecision(6) << " scalefactor " << scalefactor;
     Write_OutputTotal_valarray(oFile[18], resultsFileNames[18-offset], dateStr, annual_upwelling,     Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[19], resultsFileNames[19-offset], dateStr, annual_recharge,      Nsub, scalefactor);
     Write_OutputTotal_valarray(oFile[20], resultsFileNames[20-offset], dateStr, annual_precipitation, Nsub, scalefactor);
@@ -1410,10 +1426,6 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         returnflow[n-1] += other_structures::Link[j-1].Flow;
         monthly_returnflow[n-1] += other_structures::Link[j-1].Flow;
         annual_returnflow[n-1]  += other_structures::Link[j-1].Flow;
-        //cout << "i " << dec << setw(3) << i+1 << " j_return ";
-        //cout << dec << setw(3) << j << " UserID " << other_structures::UserSourceTable[i].UserID;
-        //cout << " DrainageID " << other_structures::UserSourceTable[i].DrainageID;
-        //cout << " Flow " << other_structures::Link[j-1].Flow << endl;
     }
 
     scalefactor = 1.0;
@@ -1435,8 +1447,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             annAve_basin_withdrawal[ncode], Nsub, scalefactor);
     }
     // -----------------------------------------------------------------------------------------------------
-    //  Close files on additional writes for Christina
-    istep = -1;
+    istep = -1;     //  Close files on additional writes for Christina
     scalefactor = 1.0;
     Write_OutputLine_valarray(oFile[0],"results/Potential_evapotranspiration_mm.txt", istep, potentialevap, Nsub, scalefactor);
     Write_OutputLine_vector(oFile[1],"results/TemperatureAve_C.txt",                  istep, tempave,       Nsub, scalefactor);
