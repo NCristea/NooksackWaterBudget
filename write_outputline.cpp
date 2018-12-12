@@ -40,7 +40,7 @@ int Write_OutputLine(ofstream &oFile, const string fileName, const int timestep,
 		LocationTypeString = "Drainage";
 		oFile << setw(9) << "TimeStep     ";
 		for (i = 1; i <= NumDrainage; i++) {
-			oFile << setw(12) << LocationTypeString << dec << setw(3) << i;
+			oFile << setw(10) << LocationTypeString << left << dec << setw(5) << i;
 		}
 		oFile << '\n';
 	} else if (timestep > 0) {
@@ -135,7 +135,7 @@ const vector<double> &Rvariable, const int NumDrainage, const double scalefactor
 		LocationTypeString = "Drainage";
 		oFile << setw(9) << "TimeStep     ";
 		for (i = 1; i <= NumDrainage; i++) {
-			oFile << setw(12) << LocationTypeString << dec << setw(3) << i;
+			oFile << setw(10) << LocationTypeString << left << dec << setw(5) << i;
 		}
 		oFile << '\n';
 	} else if (timestep > 0) {
@@ -162,7 +162,7 @@ const vector<double> &Rvariable, const int NumDrainage, const double scalefactor
 
 //========================= valarray =========================
 
-int Write_OutputLine_valarray(ofstream &oFile, const string fileName, const int timestep,
+int Write_OutputLine_valarray(ofstream &oFile, const string fileName, const int timestep, const string dateStr,
 const valarray<double> &Rvariable, const int NumDrainage, const double scalefactor)
 {
 	string LocationTypeString;
@@ -176,10 +176,10 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
 		} else {
 			cerr << fileName << " opened" << endl;
 		}
-		LocationTypeString = "Drainage";
-		oFile << setw(9) << "TimeStep     ";
+		LocationTypeString = "Drainage ";
+		oFile << setw(9) << "Date         ";
 		for (i = 1; i <= NumDrainage; i++) {
-			oFile << setw(12) << LocationTypeString << dec << setw(3) << i;
+			oFile << setw(10) << LocationTypeString << left << dec << setw(5) << i;
 		}
 		oFile << '\n';
 	} else if (timestep > 0) {
@@ -187,7 +187,7 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
 			cerr << fileName << " is not open\n";
 			exit(EXIT_FAILURE);
 		}
-		oFile << dec << setw(12) << timestep;
+		oFile << setw(12) << dateStr;
 		for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
             if (fabs(Rvariable[j]*scalefactor) < 0.1) {
                 oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
