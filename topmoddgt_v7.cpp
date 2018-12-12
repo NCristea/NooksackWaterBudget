@@ -57,7 +57,7 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 	double &sumsle, double &sumr1, double &qb, vector<double> &qinst, vector<double> &dr, double &sumqv,
 	double &sumse, double &zbar, const double zbar_new, double **tdh, double &zr, double &ak0fzrdt, double &logoqm,
 	double &qvmin, double &dth, double &sumad, double &evap_mm, double &qlat_mm,
-	const int ipflag, array<double,Nip1> &rirr, const int js, double &upwelling, double &recharge)
+	const int ipflag, array<double,Nip1> &rirr, const int js, double &upwelling, double &recharge, double &precip_minus_et)
 {
 	//         reversed the  order of DR and QINST back to what they were 25/9/98
 	//   DGT had problems with qinst flows not preserving mass balance so resorted
@@ -335,7 +335,7 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 	// 12-jan-2005 of the irrig water, a fraction 1-fsprinkler bypasses the canopy and reaches the ground directly
 	//so don't apply all the water to the canopy top. add some of it to the thrufall instead
 	intercept(cv, rit - (1.0 - fsprinkler)*rate_irrig*units, ae, dt, cc, cr, r1, ud);  // dgt 8/18/05  multiplied rate_irrig by units
-	r1 += (1.0 - fsprinkler)*rate_irrig*units;
+	r1 += (1.0 - fsprinkler)*rate_irrig*units;  // (bert) mm -> m
 	sumce += ae;
 	sumr1 += r1;
 	//	write(21,*)'it,balcv,rit,cv,cvs,r1,ae', it,balcv,rit,cv,cvs,r1,ae
@@ -356,8 +356,9 @@ int topmod(double **si, const vector<vector<double> > &Sp, const int isub, const
 	sume = ae + min(r1, ud); // removed the subscript as unnecessary
 	//   basinwide soil zone calculations
 	soil(sr, r2, r3, rie, rd, srn, zr, dth1, dth2, szf, ak0fzrdt, c, soilc, psif, true, ad_cap, ad_now);
-	upwelling = r3;
-	recharge  = rd;
+	upwelling = r3/units;
+	recharge  = rd/units;
+	precip_minus_et = r2/units;
 	//   calculate saturation thresholds
 	atbsat = szf*zbar + Lambda;   //  Saturation threshold
 	//       Points with ln(a/tan b) greater than this are saturated

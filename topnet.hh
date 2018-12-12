@@ -436,8 +436,8 @@ int topmod(double **si, const std::vector<std::vector<double> > &Sp, const int i
 	double &sumsle, double &sumr1, double &qb, std::vector<double> &qinst, std::vector<double> &dr, double &sumqv,
 	double &sumse, double &zbar, const double zbar_new, double **tdh, double &zr, double &ak0fzrdt, double &logoqm,
 	double &qvmin, double &dth, double &sumad, double &evap_mm, double &qlat_mm,
-	const int ipflag, std::array<double,Nip1> &rirr, const int js, double &upwelling, double &recharge);
-int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const int Timestep, const int NSteps,
+	const int ipflag, std::array<double,Nip1> &rirr, const int js, double &upwelling, double &recharge, double &precip_minus_et);
+int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const std::string dateStr, const int Timestep, const int NSteps,
 	std::vector<double> &RunoffTopnet, std::vector<double> &BaseflowTopnet, const std::valarray<double> &ArtDrainageTopnet,
 	const std::vector<double> &vol_irrig_demand, const int maxSlp, const std::valarray<double> &evaporation,
 	const std::valarray<double> &precipitation,	std::valarray<double> &volume_irrig_sup, double *groundwater_to_take);
@@ -445,7 +445,7 @@ int Write_OutputLine(std::ofstream &oFile, const std::string filenm, const int t
 	const int NumDrainage, const double scalefactor);
 int Write_OutputLine_vector(std::ofstream &oFile, const std::string fileName, const int timestep,
     const std::vector<double> &Rvariable, const int NumDrainage, const double scalefactor);
-int Write_OutputLine_valarray(std::ofstream &oFile, const std::string fileName, const int timestep,
+int Write_OutputLine_valarray(std::ofstream &oFile, const std::string fileName, const int timestep, const std::string dateStr,
     const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
 int Write_Line_valarray(std::ofstream &oFile, const std::string fileName, const std::string dateStr,
     const std::valarray<double> &Rvariable, const int NumDrainage, const double scalefactor);
