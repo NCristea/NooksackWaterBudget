@@ -24,6 +24,41 @@ using namespace constant_definitions; //define names for numeric codes (types of
 using namespace data_array;
 using namespace input_structures;
 using namespace other_structures;
+vector<int> index_to_real_DID;
+
+int build_topnet_to_client_index()
+{
+    int i;
+	string fileName = "basinpars.txt";
+	int expected_numcols = 45;  // each line has 45 numbers
+	const int ncommentlines = 1;
+
+    map<int,int> drainageMap;
+	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumDrainage); //CatchID,DrainageID,NodeID,CatchArea
+	Drainage.resize(NumDrainage);
+
+	//CatchID, DownCatchID, DrainID, NodeId, Reach_number, Outlet_X, Outlet_Y, direct_area, f, k, dth1, dth2,
+	// soilc, c, psif, chv, can_capacity, cr, Albedo, Lapse_rate, average_elevation, lambda, std_dev_of_lambda
+	for (i = 0; i < NumDrainage; i++) {
+		Drainage[i].DrainageID     = real_array[i][0];
+		Drainage[i].RealDrainageID = real_array[i][2];
+		drainageMap[Drainage[i].RealDrainageID] = Drainage[i].DrainageID;
+//cerr << Drainage[i].RealDrainageID << " " << drainageMap[Drainage[i].RealDrainageID] << endl;
+	}
+	index_to_real_DID.resize(NumDrainage);
+    map<int, int>::iterator it = drainageMap.begin();
+    i = 0;
+    while(it != drainageMap.end()) {
+//        cerr << it->first << " :: " << it->second << endl;
+        index_to_real_DID[i] = it->second-1;
+        i++;
+        it++;
+    }
+//    for (i = 0; i < NumDrainage; i++) {
+//        cerr << i << " " << index_to_real_DID[i]+1 << " " << Drainage[index_to_real_DID[i]].RealDrainageID << endl;
+//    }
+    return 0;
+}
 
 // EXAMPLE DATA
 int read_inputs(const string dirname, const int dt, const int StartDateTopnet, int &NumDrainage,
@@ -70,7 +105,7 @@ int read_inputs(const string dirname, const int dt, const int StartDateTopnet, i
 	expected_numcols = 45;  // each line has 45 numbers
 	ncommentlines = 1;
 	read_struct_from_text(fileName, expected_numcols, ncommentlines, NumDrainage); //CatchID,DrainageID,NodeID,CatchArea
-	Drainage.resize(NumDrainage);
+	//Drainage.resize(NumDrainage);
 
 	//CatchID, DownCatchID, DrainID, NodeId, Reach_number, Outlet_X, Outlet_Y, direct_area, f, k, dth1, dth2,
 	// soilc, c, psif, chv, can_capacity, cr, Albedo, Lapse_rate, average_elevation, lambda, std_dev_of_lambda

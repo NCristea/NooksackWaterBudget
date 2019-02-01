@@ -71,7 +71,7 @@ int Write_Static_Output_Tables(const string dirname, const int NumUserSourceRetu
 	ncols = 2;
     filenm = dirname + "/" + "DrainageID.txt";
 	nrows = StaticOutput.DrainageIDSize; // size(StaticOutput%DrainageID)
-	integer_array.resize(nrows,vector<int>(ncols));
+    integer_array.resize(nrows,vector<int>(ncols));
 	for (int j = 0; j < nrows; ++j) {
         integer_array[j].resize(ncols);
     }
@@ -509,7 +509,6 @@ int Write_TimeVaryingOutput_Tables(const string dirname, const int NumUser, cons
 	//		do j=1,nrows; real_array(j,i+1)=Artificial_Drainage(j,i); end do
 	//	end do;
 	//	call write_struct_to_text(filenm,headers,nrows,ncols,icall)
-
 
 	icall++;
 	//	nv=size(Baseflow_cms,2) !second dimension is location

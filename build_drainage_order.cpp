@@ -43,7 +43,6 @@ int BuildDrainageOrder(const int NumDrainage, int *DrainageOrder)
 		// find first unordered drainage
         SetOrder(i, DrainageOrder, Position, NumDrainage);
 	}
-
 	return 0;
 }
 
