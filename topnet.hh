@@ -33,6 +33,7 @@
 #include <valarray>
 #include <array>
 #include <ctime>
+#include <map>
 
 #define TRACE 10
 #define MAX_TRACE 5
@@ -73,9 +74,12 @@
 #endif
 
 extern int *ifound;
-extern struct tm *timeinfo;  // Initialized in hyData()
-extern time_t startAnnual;   // Initialized in hyData()
-extern int NumUserSourceReturn; // initialized in AssignPriorityOrder()
+extern struct tm *timeinfo;                      // Initialized in hyData()
+extern time_t startAnnual;                       // Initialized in hyData()
+extern int NumUserSource;                        // Initialized in AssignPriorityOrder(), declared in watermgmt.cpp
+extern int NumUserSourceReturn;                  // initialized in AssignPriorityOrder(), declared in watermgmt.cpp
+extern std::vector<int> sourceUserMap;           // initialized in AssignPriorityOrder(), declared in assign_priority_order.cpp
+extern std::vector<int> index_to_real_DID;       // declared and initialized in read_inputs.cpp
 extern std::ofstream topErrorFile;
 extern std::vector<int> iFound;
 extern std::vector<int> find_counts;
@@ -320,6 +324,7 @@ int BalanceFlowsAtReservoirs(const int NumNode, const int NumLink, const int Num
 	const int NumReservoir, std::vector<double> &ReservoirNetStorage);
 int BalanceFlowsAtStreamNodes(int *DrainageOrder, const int NumDrainage, std::valarray<double> &DrainageOutFlow);
 int bcparm(std::array<double,12> &dtBar, double &bca, double &bcc, const std::string bcFile);
+int build_topnet_to_client_index();
 int BuildDrainageOrder(const int NumDrainage, int *DrainageOrder);
 int BuildLinkStructure(const int NumDrainage, const int NumUser, const int NumSource,
 	const int NumReturnFlow, const int NumReservoir, const int NumMeasuredFlowInfo, const int NumNode, int &NumLink);

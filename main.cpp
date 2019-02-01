@@ -131,9 +131,9 @@ int main()
     debugFile1.open("results/debug_1.dat");
     debugFile2.open("results/debug_2.dat");
     debugFile3.open("results/debug_3.dat");
-    flag1 = true;
-    flag2 = true;
-    flag3 = true;
+    flag1 = false;
+    flag2 = false;
+    flag3 = false;
 #endif
     inputT(initT, iend, Neq, qact, actime, modelid, Npar, Nrx, iex);
 	if (Neq > iex)

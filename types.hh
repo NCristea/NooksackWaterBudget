@@ -23,7 +23,7 @@
 #include <vector>
 
 const int MaxMeasuredFlowSites = 100;
-const int MaxNumTimesteps      = 366*86;
+const int MaxNumTimesteps      = 366*86;    // originally 366*60;
 const int MaxNumSources        = 10;
 const int MaxNumReturnFlows    = 10;
 const int MaxNumDrainage       = 500;

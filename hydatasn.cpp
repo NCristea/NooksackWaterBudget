@@ -270,7 +270,7 @@ L203: for (jj = 0; jj < ntri; jj++) {
 		if ( itemp2 < itemp1-interval) {    // interval is the timestep interval in seconds
 			cerr << calledFrom << ": hyData():  Start time of the rainfall, or runoff data " << dec << setw(9) << date;
 			cerr << dec << setw(7) << hour;
-			cerr << " after model start at " << dec << setw(9) << sDate;
+			cerr << " is after model start at " << dec << setw(9) << sDate;
 			cerr << dec << setw(7) << sHour << ". Exiting.\n";;
 			exit(EXIT_FAILURE);	// iret != 0 in the fortran code stops the program
 		}

@@ -27,6 +27,7 @@ using namespace input_structures;
 using namespace other_structures;
 
 int *DrainageOrder;
+int NumUserSource;
 int NumUserSourceReturn;
 
 int timecalcs(const int Timestep, const int dt, const long int i8startsecs,
@@ -39,7 +40,7 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const string date
 {
 	int i, j, k, m, n, ii, jj, kk, nfound, *ifound;
 	int isink, j_source, iSrcLocnID, i_node, j_sink, j_r, j_drainage;
-	static int NumUserSource, NumReturnFlows;
+	static int NumReturnFlows;
 	//save !so we remember from one Timestep to the next without passing stuff
 	double scalefactor;
 	static valarray<double> DrainageOutFlow;
@@ -569,7 +570,6 @@ int watermgmt(const int StartDateTopnet, int &StartHourTopnet, const string date
 			}
 
 		}
-
 		// make some entries in the output tables
 		Append_To_Output_Tables(Timestep, dt, NumStreamNode, yyyymmdd, hhmmss, NumLink, NumNode, NSteps, NumUser);
 

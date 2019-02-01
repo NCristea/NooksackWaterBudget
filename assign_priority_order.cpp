@@ -24,6 +24,7 @@ using namespace constant_definitions;
 using namespace input_structures;
 using namespace other_structures;
 using namespace std;
+std::vector<int> sourceUserMap;
 
 int isort(const UserSourceTableType *table, const int n, int *s);
 
@@ -156,6 +157,7 @@ int AssignPriorityOrder(const int NumUser, const int NumSource, const int NumRig
 				default:;
 			}
 			UserSourceTable[NumUserSource-1].DrainageID = ID;
+			sourceUserMap.push_back(User[i-1].UserID-1);    // -1 because the map will be used as an index
 			if (User[i-1].ReturnFlowID >= 0) {
 				// find1()
 				nfound = 0; //none found
@@ -218,6 +220,7 @@ int AssignPriorityOrder(const int NumUser, const int NumSource, const int NumRig
 			k += nfound;
 		}
 	}
+
 #if TRACE
 	double tm1 = static_cast<double>(clock())/static_cast<double>(CLOCKS_PER_SEC);
     caller = save_caller;

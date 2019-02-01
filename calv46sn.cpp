@@ -227,6 +227,7 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
 
     string drainageWithdrawalTotalsFileNames[NuserTypes], drainageWithdrawalAnnAveFileNames[NuserTypes];
 
+    build_topnet_to_client_index();     // Early initialization of TopNet to Client drainage number conversion array.
     // annual, monthly and average files must be opened and initialized here because their
     // write routines cannot look for timestep = 0
     strftime(dateStr, 11,"%Y %m %d", timeinfo);
@@ -240,8 +241,9 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             cerr << "Extra File # " << dec << setw(2) << i << " " << extraFileNames[i] << " opened" << endl;
         }
         extraFiles[i] << left << dec << setw(11) << "Date";
-        for (jsub = 1; jsub <= Nsub; jsub++) {
-            extraFiles[i] << setw(12) << "Drainage " << left << dec << setw(5) << jsub;
+        for (jsub = 0; jsub < Nsub; jsub++) {
+            extraFiles[i] << setw(12) << "Drainage " << left << dec << setw(5)
+                          << input_structures::Drainage[index_to_real_DID[jsub]].RealDrainageID;
         }
         extraFiles[i] << endl;
     }
@@ -255,8 +257,9 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             cerr << "File # " << dec << setw(2) << i << " " << resultsFileNames[i-offset] << " opened" << endl;
         }
         oFile[i] << dec << setw(11) << "Date";
-        for (jsub = 1; jsub <= Nsub; jsub++) {
-            oFile[i] << setw(10) << "Drainage " << left << dec << setw(5) << jsub;
+        for (jsub = 0; jsub < Nsub; jsub++) {
+            oFile[i] << setw(10) << "Drainage " << left << dec << setw(5)
+                     << input_structures::Drainage[index_to_real_DID[jsub]].RealDrainageID;;
         }
         oFile[i] << '\n';
     }
@@ -273,8 +276,9 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         } else {
             oFile[i] << setw(11) << "Years";
         }
-        for (jsub = 1; jsub <= Nsub; jsub++) {
-            oFile[i] << setw(10) << "Drainage " << left << dec << setw(5) << jsub;
+        for (jsub = 0; jsub < Nsub; jsub++) {
+            oFile[i] << setw(10) << "Drainage " << left << dec << setw(5)
+                     << input_structures::Drainage[index_to_real_DID[jsub]].RealDrainageID;;
         }
         oFile[i] << '\n';
     }
@@ -308,9 +312,11 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         } else {
             oFile[i+ncode+NuserTypes] << setw(11) << "Years";
         }
-        for (jsub = 1; jsub <= Nsub; jsub++) {
-            oFile[i+ncode] << setw(10) << "Drainage " << left << dec << setw(5) << jsub;
-            oFile[i+ncode+NuserTypes] << setw(10) << "Drainage " << left << dec << setw(5) << jsub;
+        for (jsub = 0; jsub < Nsub; jsub++) {
+            oFile[i+ncode] << setw(10) << "Drainage " << left << dec << setw(5)
+                           << input_structures::Drainage[index_to_real_DID[jsub]].RealDrainageID;
+            oFile[i+ncode+NuserTypes] << setw(10) << "Drainage " << left << dec << setw(5)
+                                      << input_structures::Drainage[index_to_real_DID[jsub]].RealDrainageID;
         }
         oFile[i+ncode] << '\n';
         oFile[i+ncode+NuserTypes] << '\n';
@@ -324,8 +330,9 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
         cerr << "results/recharge_mm.txt opened" << endl;
     }
     oFile[16] << left << dec << setw(11) << "Date";
-    for (jsub = 1; jsub <= Nsub; jsub++) {
-        oFile[16] << setw(12) << "Drainage " << left << dec << setw(5) << jsub;
+    for (jsub = 0; jsub < Nsub; jsub++) {
+        oFile[16] << setw(12) << "Drainage " << left << dec << setw(5)
+                  << input_structures::Drainage[index_to_real_DID[jsub]].RealDrainageID;
     }
     oFile[16] << endl;
     //----------------------------------------------------------------------------------------------------
@@ -1304,8 +1311,9 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
             returnflow = 0.0;   // initialize for this time step
             GroundWaterReturnFlow = 0.0;
             SurfaceWaterReturnFlow = 0.0;
-            for (i = 0; i < NumUser; ++i) { // NumUsers > NumuserSourceReturn
-                j = input_structures::User[i].LinkUserToReturnflow[0];
+            for (i = 0; i < NumUserSource; ++i) { // NumUsers > NumuserSourceReturn
+                j = input_structures::User[sourceUserMap[i]].LinkUserToReturnflow[0];
+                n = other_structures::UserSourceTable[i].DrainageID;
                 if (other_structures::Link[j].LinkCode == constant_definitions::ReturnFlowLinkCode) {
                     if (other_structures::Node[other_structures::Link[j-1].DSNode-1].Type == constant_definitions::GroundwaterNodeCode) {
                         GroundWaterReturnFlow[n-1] += other_structures::Link[j-1].Flow;
@@ -1313,23 +1321,24 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
                         SurfaceWaterReturnFlow[n-1] += other_structures::Link[j-1].Flow;
                     }
                 }
-                n = other_structures::UserSourceTable[i].DrainageID;
                 returnflow[n-1] += other_structures::Link[j-1].Flow;    // += because some drainages have more than one user.
                 monthly_returnflow[n-1] += other_structures::Link[j-1].Flow;
                 annual_returnflow[n-1]  += other_structures::Link[j-1].Flow;
             }
             // ---------------------------------------------------------------------------------------------
             for (int ncode = 0; ncode < NuserTypes; ++ncode) {
-                for (i = 0; i < NumUser; i++) {
-                    if (input_structures::User[i].UsersType == userTypeCode[ncode]) {
+                for (i = 0; i < NumUserSource; i++) {
+                    if (input_structures::User[sourceUserMap[i]].UsersType == userTypeCode[ncode]) {
                         n = other_structures::UserSourceTable[i].DrainageID;
-                        BasinWithdrawalByUser[userTypeCode[ncode]-1][n-1] += input_structures::User[i].Withdrawal[istep-1];
+                        BasinWithdrawalByUser[userTypeCode[ncode]-1][n-1] += input_structures::User[sourceUserMap[i]].Withdrawal[istep-1];
 #ifdef DEBUG
-                        if (flag3) {
-                            debugFile3 << "UserType " << left << setw(32) << UserTypeNames[userTypeCode[ncode]] << "  ReturnFlowID ";
-                            debugFile3 << dec << setw(3) << input_structures::User[i].ReturnFlowID;
-                            debugFile3 << " Drainage " << dec << setw(3) << n << " User " << dec << setw(3) << i+1;
-                            debugFile3 << " SourceMixingID "  << dec << setw(3) <<  input_structures::User[i].SourceMixingID << endl;
+                        if (flag3  && (n == 87)) {
+                            debugFile3 << "UserType " << left << setw(32) << UserTypeNames[userTypeCode[ncode]-1] << "  ReturnFlowID ";
+                            debugFile3 << dec << setw(3) << input_structures::User[sourceUserMap[i]].ReturnFlowID;
+                            debugFile3 << " Drainage " << dec << setw(3) << n << " User " << dec << setw(3) << sourceUserMap[i];
+                            debugFile3 << " SourceMixingID "  << dec << setw(3) <<  input_structures::User[sourceUserMap[i]].SourceMixingID  << " ";
+                            debugFile3 << input_structures::User[sourceUserMap[i]].UserID << " User[" << sourceUserMap[i] << "].Withdrawal[" << istep-1 << "] "<<
+                                 input_structures::User[sourceUserMap[i]].Withdrawal[istep-1] << endl;
                         }
 #endif
                     }
@@ -1443,8 +1452,8 @@ int calcts( double **Si,            const vector<vector<double> > &Sp,  double *
     // ---------------------------------------------------------------------------------------------
     // The code in this block must come after watermgmt() is called.
     returnflow = 0.0;   // initialize for this final time step
-    for (i = 0; i < NumUser; ++i) { // NumUsers > NumuserSourceReturn
-        j = input_structures::User[i].LinkUserToReturnflow[0];
+    for (i = 0; i < NumUserSource; ++i) { // NumUsers > NumuserSourceReturn
+        j = input_structures::User[sourceUserMap[i]].LinkUserToReturnflow[0];
         n = other_structures::UserSourceTable[i].DrainageID;
         returnflow[n-1] += other_structures::Link[j-1].Flow;
         monthly_returnflow[n-1] += other_structures::Link[j-1].Flow;

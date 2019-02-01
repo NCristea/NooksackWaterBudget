@@ -21,13 +21,14 @@
 #include <iomanip>
 
 using namespace std;
+using namespace input_structures;
 
 //  Subroutine to write output at each time step
 //  David Tarboton  6/29/05
 int Write_OutputLine(ofstream &oFile, const string fileName, const int timestep, const double *Rvariable, const int NumDrainage, const double scalefactor)
 {
 	string LocationTypeString, str;
-	int i, j;
+	int i, j, n;
 
 	if (timestep == 0) {  // Initialize
 		oFile.open(fileName.c_str());
@@ -37,10 +38,11 @@ int Write_OutputLine(ofstream &oFile, const string fileName, const int timestep,
 		} //else {
 			//cout << '\'' << fileName << "' opened" << endl;
 		//}
-		LocationTypeString = "Drainage";
-		oFile << setw(9) << "TimeStep     ";
-		for (i = 1; i <= NumDrainage; i++) {
-			oFile << setw(10) << LocationTypeString << left << dec << setw(5) << i;
+		LocationTypeString = "Drainage ";
+		oFile << setw(13) << "TimeStep     ";
+		for (i = 0; i < NumDrainage; i++) {
+			oFile << setw(10) << LocationTypeString << left << dec << setw(5)
+			      << Drainage[index_to_real_DID[i]].RealDrainageID;
 		}
 		oFile << '\n';
 	} else if (timestep > 0) {
@@ -50,13 +52,14 @@ int Write_OutputLine(ofstream &oFile, const string fileName, const int timestep,
 		}
 		oFile << dec << setw(12) << timestep;
 		for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
-            if (fabs(Rvariable[j]*scalefactor) < 1.0e-99) {
+            n =index_to_real_DID[j];
+            if (fabs(Rvariable[n]*scalefactor) < 1.0e-99) {
                 oFile << fixed << setw(15) << setprecision(5) << 0.0;
             } else {
-                if (fabs(Rvariable[j]*scalefactor) < 0.1) {
-                    oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+                if (fabs(Rvariable[n]*scalefactor) < 0.1) {
+                    oFile << scientific << setw(15) << setprecision(7) << Rvariable[n]*scalefactor;
                 } else {
-                    oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+                    oFile << fixed << setw(15) << setprecision(5) << Rvariable[n]*scalefactor;
                 }
             }
         }
@@ -122,7 +125,7 @@ int Write_OutputLine_vector(ofstream &oFile, const string fileName, const int ti
 const vector<double> &Rvariable, const int NumDrainage, const double scalefactor)
 {
 	string LocationTypeString, str;
-	int i, j;
+	int i, j, n;
 
 	if (timestep == 0) {  // Initialize
 		oFile.open(fileName.c_str());
@@ -132,10 +135,11 @@ const vector<double> &Rvariable, const int NumDrainage, const double scalefactor
 		} //else {
 			//cerr << fileName << " opened" << endl;
 		//}
-		LocationTypeString = "Drainage";
-		oFile << setw(9) << "TimeStep     ";
-		for (i = 1; i <= NumDrainage; i++) {
-			oFile << setw(10) << LocationTypeString << left << dec << setw(5) << i;
+		LocationTypeString = "Drainage ";
+		oFile << setw(13) << "TimeStep     ";
+		for (i = 0; i < NumDrainage; i++) {
+			oFile << setw(10) << LocationTypeString << left << dec << setw(5)
+			      << Drainage[index_to_real_DID[i]].RealDrainageID;
 		}
 		oFile << '\n';
 	} else if (timestep > 0) {
@@ -145,10 +149,11 @@ const vector<double> &Rvariable, const int NumDrainage, const double scalefactor
 		}
 		oFile << dec << setw(12) << timestep;
 		for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
-            if (fabs(Rvariable[j]*scalefactor) < 0.1) {
-                oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+            n = index_to_real_DID[j];
+            if (fabs(Rvariable[n]*scalefactor) < 0.1) {
+                oFile << scientific << setw(15) << setprecision(7) << Rvariable[n]*scalefactor;
             } else {
-                oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+                oFile << fixed << setw(15) << setprecision(5) << Rvariable[n]*scalefactor;
             }
 		}
 		oFile << '\n';
@@ -166,7 +171,7 @@ int Write_OutputLine_valarray(ofstream &oFile, const string fileName, const int 
 const valarray<double> &Rvariable, const int NumDrainage, const double scalefactor)
 {
 	string LocationTypeString;
-	int i, j;
+	int i, j, n;
 
 	if (timestep == 0) {  // Initialize
 		oFile.open(fileName.c_str());
@@ -177,9 +182,10 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
 			cerr << fileName << " opened" << endl;
 		}
 		LocationTypeString = "Drainage ";
-		oFile << setw(9) << "Date         ";
-		for (i = 1; i <= NumDrainage; i++) {
-			oFile << setw(10) << LocationTypeString << left << dec << setw(5) << i;
+		oFile << setw(13) << "Date         ";
+		for (i = 0; i < NumDrainage; i++) {
+			oFile << setw(10) << LocationTypeString << left << dec << setw(5)
+			      << Drainage[index_to_real_DID[i]].RealDrainageID;
 		}
 		oFile << '\n';
 	} else if (timestep > 0) {
@@ -189,10 +195,11 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
 		}
 		oFile << setw(12) << dateStr;
 		for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
-            if (fabs(Rvariable[j]*scalefactor) < 0.1) {
-                oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+            n = index_to_real_DID[j];
+            if (fabs(Rvariable[n]*scalefactor) < 0.1) {
+                oFile << scientific << setw(15) << setprecision(7) << Rvariable[n]*scalefactor;
             } else {
-                oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+                oFile << fixed << setw(15) << setprecision(5) << Rvariable[n]*scalefactor;
             }
 		}
 		oFile << endl;
@@ -207,7 +214,7 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
 int Write_Line_valarray(ofstream &oFile, const string fileName, const string dateStr,
 const valarray<double> &Rvariable, const int NumDrainage, const double scalefactor)
 {
-	int j;
+	int j, n;
 
     if (!oFile.is_open()) {
         cerr << fileName << " is not open\n";
@@ -215,10 +222,11 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
     }
     oFile << dec << setw(12) << dateStr;
     for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
-        if (fabs(Rvariable[j]*scalefactor) < 0.1) {
-            oFile << scientific << setw(17) << setprecision(9) << Rvariable[j]*scalefactor;
+        n = index_to_real_DID[j];
+        if (fabs(Rvariable[n]*scalefactor) < 0.1) {
+            oFile << scientific << setw(17) << setprecision(9) << Rvariable[n]*scalefactor;
         } else {
-            oFile << fixed << setw(17) << setprecision(5) << Rvariable[j]*scalefactor;
+            oFile << fixed << setw(17) << setprecision(5) << Rvariable[n]*scalefactor;
         }
     }
     oFile << endl;
@@ -232,7 +240,7 @@ int Write_OutputTotal_valarray(ofstream &oFile, const string fileName, const str
 const valarray<double> &Rvariable, const int NumDrainage, const double scalefactor)
 {
 	string LocationTypeString, str;
-	int j;
+	int j, n;
 	// Writing totals happens after timestep 0 so file initialization must be done before this
 	// subroutine is called.
     if (!oFile.is_open()) {
@@ -241,10 +249,11 @@ const valarray<double> &Rvariable, const int NumDrainage, const double scalefact
     }
     oFile << dec << setw(11) << timestamp;
     for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
-        if (fabs(Rvariable[j]*scalefactor) < 0.1) {
-            oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+        n = index_to_real_DID[j];
+        if (fabs(Rvariable[n]*scalefactor) < 0.1) {
+            oFile << scientific << setw(15) << setprecision(7) << Rvariable[n]*scalefactor;
         } else {
-            oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+            oFile << fixed << setw(15) << setprecision(5) << Rvariable[n]*scalefactor;
         }
     }
     oFile << endl;
@@ -256,7 +265,7 @@ int Write_OutputTotal_vector(ofstream &oFile, const string fileName, const strin
 const vector<double> &Rvariable, const int NumDrainage, const double scalefactor)
 {
 	string LocationTypeString, str;
-	int j;
+	int j, n;
 	// Writing totals happens after timestep 0 so file initialization must be done before this
 	// subroutine is called.
     if (!oFile.is_open()) {
@@ -265,10 +274,11 @@ const vector<double> &Rvariable, const int NumDrainage, const double scalefactor
     }
     oFile << dec << setw(11) << timestamp;
     for (j = 0; j < NumDrainage; j++) {     // remove branch below (remove fixed) in the release version
-        if (fabs(Rvariable[j]*scalefactor) < 0.1) {
-            oFile << scientific << setw(15) << setprecision(7) << Rvariable[j]*scalefactor;
+        n = index_to_real_DID[j];
+        if (fabs(Rvariable[n]*scalefactor) < 0.1) {
+            oFile << scientific << setw(15) << setprecision(7) << Rvariable[n]*scalefactor;
         } else {
-            oFile << fixed << setw(15) << setprecision(5) << Rvariable[j]*scalefactor;
+            oFile << fixed << setw(15) << setprecision(5) << Rvariable[n]*scalefactor;
         }
     }
     oFile << '\n';
